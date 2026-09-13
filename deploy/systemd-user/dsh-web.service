@@ -1,0 +1,18 @@
+[Unit]
+Description=DeepSeek Harness (dsh) Web UI
+After=network-online.target
+Wants=network-online.target
+# DSH 正常退出时 status=0，systemd 视作「任务完成」——Restart=on-failure 不会拉起，
+# 服务会静默趴窝（dev 单元 2026-09-12 23:25 就这样死了 47 分钟）。
+# 与 dev 单元 dsh-web-dev.service 保持同一策略：always + 关掉启动限流。
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=%h/.dsh/dsh-web-launch.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

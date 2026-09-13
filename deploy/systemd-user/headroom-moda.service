@@ -1,0 +1,23 @@
+[Unit]
+Description=Headroom proxy - 魔搭社区 ModelScope (deepseek flash + pro, passthrough) on :8790
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=HEADROOM_PORT=8790
+Environment=HEADROOM_HOST=127.0.0.1
+Environment=ALL_PROXY=
+Environment=all_proxy=
+Environment=HTTP_PROXY=
+Environment=http_proxy=
+Environment=HTTPS_PROXY=
+Environment=https_proxy=
+Environment=OPENAI_TARGET_API_URL=https://api-inference.modelscope.cn/v1
+WorkingDirectory=%h
+ExecStart=%h/.local/bin/headroom proxy --no-optimize
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

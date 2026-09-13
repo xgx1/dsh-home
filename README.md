@@ -69,23 +69,46 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 
 `chmod 600` 不是可选项：POSIX 上 DSH 会拒绝加载任何其他用户可读的凭据文件。
 
+## systemd 用户单元（同样不在仓库里，靠部署脚本落地）
+
+`~/.config/systemd/user/` 不受任何 git 管理，但这些服务是生产实例与 MCP 的前置。
+权威副本在 **`deploy/systemd-user/`**，用脚本落地：
+
+```bash
+~/.dsh/deploy/install-systemd-units.sh --dry-run   # 先看会做什么
+~/.dsh/deploy/install-systemd-units.sh             # 写入 + daemon-reload + enable
+~/.dsh/deploy/install-systemd-units.sh --start     # 新设备：顺带启动 headroom-*
+```
+
+| unit | 作用 |
+|---|---|
+| `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
+| `headroom-deepseek.service` | `:8787` 代理——`mcp-headroom` 连的就是它 |
+| `headroom-scnet` / `headroom-siliconflow` / `headroom-moda` | 另外三个上游代理（`:8789` / `:8788` / `:8790`） |
+
+unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
+的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
+
+`headroom-moda.service` 在本机是 `disabled` 的（休眠条目），脚本仍会部署它；启动与否由你决定。
+
 ## MCP 前置依赖（配置同步 ≠ 那台设备能用）
 
 `profiles/web/cordis.patch.yml` 里的 MCP 条目（cbm / ue / headroom / playwright）**随本仓库同步**，
 但每条 `stdio` 型 MCP 都要**在设备上有那个命令**，否则 DSH 会静默跳过它（配置里带着
 `failOnStartupError: false`），表现为"工具凭空消失"而没有任何报错。新设备需要另行安装：
 
-| MCP | 命令 | 安装方式 |
-|---|---|---|
-| cbm | `codebase-memory-mcp` | 自管理（`~/.cache/codebase-memory-mcp/`） |
-| playwright | `playwright-mcp` | `npm i -g @playwright/mcp`，软链到 `~/.local/bin` |
-| headroom | `headroom` | `uv tool install headroom-ai` |
+| MCP | 命令 | 安装方式 | 本机版本 |
+|---|---|---|---|
+| cbm | `codebase-memory-mcp` | `uv tool install codebase-memory-mcp` | v0.10.8 |
+| playwright | `playwright-mcp` | `npm i -g @playwright/mcp`（软链到 `~/.local/bin`） | 0.0.80 |
+| headroom | `headroom` | `uv tool install headroom-ai` | v0.37.0 |
 
 装完用 `command -v <命令>` 逐个确认，再重启 `dsh-web.service`（MCP 子进程由它拉起）。
 `http` 型（如 `mcp-ue` 的 `127.0.0.1:8000`）不依赖命令，依赖那台设备的服务在跑。
 
 `headroom` 那条还必须清代理——它要连本机 8787，而 `dsh-web` 继承的 `all_proxy=socks5://…`
 会让子进程报 `socksio` 缺失；该条目的 `env` 段就是为此显式清空 `*_proxy` 并设 `no_proxy`。
+**它连的 8787 由 `headroom-deepseek.service` 提供**，所以那份 unit 也是前置（见上一节）。
 
 ## 凭据机制备忘
 
