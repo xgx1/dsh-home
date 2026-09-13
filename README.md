@@ -83,13 +83,14 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 | unit | 作用 |
 |---|---|
 | `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
-| `headroom-deepseek.service` | `:8787` 代理——`mcp-headroom` 连的就是它 |
-| `headroom-scnet` / `headroom-siliconflow` / `headroom-moda` | 另外三个上游代理（`:8789` / `:8788` / `:8790`） |
+| `headroom-deepseek.service` | `:8787` 代理——`mcp-headroom` 连的就是它，也是 `settings.yaml` 模型 `baseURL` 的目标 |
 
 unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
 的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
 
-`headroom-moda.service` 在本机是 `disabled` 的（休眠条目），脚本仍会部署它；启动与否由你决定。
+> **2026-09-13 移除**：`headroom-scnet`（`:8789`）/ `headroom-siliconflow`（`:8788`）/
+> `headroom-moda`（`:8790`）三个上游代理已彻底删除——三者的 unit 文件、仓库副本、
+> 与 systemd 注册一并清除，只保留 `headroom-deepseek`（唯一 active + enabled 的）。
 
 ## MCP 前置依赖（配置同步 ≠ 那台设备能用）
 
