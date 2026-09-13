@@ -51,7 +51,7 @@
 cd ~/projects/MyAI/dsh-extensions && git submodule update --init --recursive
 
 # 2. 取回本仓库（若 ~/.dsh 已存在，先保证它与远端一致）
-cd ~/.dsh && git init -b main && git remote add origin <本仓库 URL>
+cd ~/.dsh && git init -b main && git remote add origin https://github.com/xgx1/dsh-home.git
 git fetch origin && git checkout -f main
 
 # 3. 重建 profile 依赖（link: 指向刚备好的 dsh-extensions）

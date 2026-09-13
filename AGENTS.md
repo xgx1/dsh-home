@@ -12,6 +12,7 @@
 - `dsh-extensions/` 的 `vendor/`（第三方上游克隆，生产 `link:` 目标）与 `skills/`（技能分组仓）**都是 git submodule**，各自带独立 `.git` 与远端：改它们要在各自目录里提交、推送，再回 `dsh-extensions` 更新指针（见 MyAI `docs/adr/0005`）。`vendor/` 与 `skills/` 不再被 `.gitignore` 忽略。
 - `rider-skills` 曾于 2026-09-13 因无消费者删除，同日随技能归位**重新引入**——现在是 `dsh-extensions/skills/rider-skills`（fork `xgx1/rider-skills`）。
 - `update-app`（CLI + `update-all` 技能）已移出工作区，独立仓库位于 `~/projects/update-app`。
+- **`~/.dsh` 本身已是 git 仓库**（2026-09-13 起，`main` → `xgx1/dsh-home`，公开），只跟踪「配置层」：`AGENTS.md`、`settings.yaml`、`.agent-presets/`（含 preset 自带技能）、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链等）永不入库**——改这里之后要提交并推送，新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。新设备恢复步骤亦见该 README（依赖 `~/projects/MyAI` 与 `update-app` 先就位）。
 
 ## 技能：分组仓 + 一键部署（2026-09-13 起）
 
