@@ -27,3 +27,7 @@ locale:
   preference: zh
 llm-pi-ai:
   providers: {}
+ui-theme:
+  fontSize: 17
+ui-conversation:
+  busyEnter: steer
