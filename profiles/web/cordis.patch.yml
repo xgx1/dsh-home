@@ -242,3 +242,36 @@
 # 原 2026-08-24 的召回上限覆盖（contextMaxChars 12000 / toolResultMaxChars 3000）
 # 随插件一起删除——插件不在，覆盖无对象。
 
+# ── 用户要求（2026-09-13）：接入 zvec-grep（本地优先检索层）────────────────
+# 上游 zvec-ai/zvec-grep v0.2.2，npm 全局装：npm i -g @zvec/zvec-grep，
+# 再软链 ~/.local/bin/zg（本机 ~/.npm-global/bin 不在 dsh-web 的 PATH 里，
+# 与 playwright-mcp 同一处理）。它自带 ripgrep（@vscode/ripgrep）与本地
+# embedding（local/potion-code-16m-v2，CPU），全局配置在 ~/.zvec-grep/config.json。
+#
+# 用 --stdio：DSH 拉起子进程并复用共享 daemon，无需预先 `zg server on`，
+# 也不会出现「守护进程没起就静默消失」的失败模式。
+#
+# 工具集（重要）：默认 agent toolset **只暴露 zvec_grep_search 一个工具**，
+# 精确检索交给本机已有的 grep/glob；--mcp-toolset full 才会另外暴露托管 rg
+# 与 index/status 管理工具——那会让 agent 获得改索引的能力，故不用 full。
+#
+# 前置条件（新设备部署时）：
+#   1. npm i -g @zvec/zvec-grep && ln -sfn ~/.npm-global/lib/node_modules/@zvec/zvec-grep/dist/cli/index.js ~/.local/bin/zg
+#   2. zg config model set local/potion-code-16m-v2 --device cpu --default
+#   3. 每个要检索的工作区需**工作区级**索引：cd <root> && zg index --device cpu
+#      （不给 root 只建子目录索引的话，工作区根上查不到，会报
+#        ZVEC_GREP.ENGINE.SERVICE.WORKSPACE_INDEX_NOT_FOUND）
+#   4. 索引落在 <root>/.zvec-grep/（已在各仓 .gitignore 排除）
+# 不写 failOnStartupError：首次接入保持默认(true)，让命令缺失/加载失败立刻可见。
+- insert:
+    - id: mcp-zvecgrep
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: zvecgrep
+        transport: stdio
+        command: zg
+        args:
+          - server
+          - '--stdio'
+
+

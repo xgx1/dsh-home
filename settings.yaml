@@ -21,29 +21,6 @@ llm-deepseek:
       contextWindow: 1000000
       inputModalities:
         - text
-context-compression:
-  profile: off
-  custom:
-    version: 3
-    unit: tokens
-    fresh:
-      enabled: true
-      trigger: 8192
-      target: 3072
-    aggregate:
-      enabled: true
-      trigger: 32768
-      target: 12288
-    history:
-      enabled: true
-      trigger: 500000
-      keepRecentToolCalls: 10
-      keepRecentTokens: 64000
-      minReclaim: 96000
-    prefixPolicy: pressure-break
-    tailTrim:
-      enabled: false
-      trigger: 700000
 shell:
   timeoutMs: 1800000
 locale:
