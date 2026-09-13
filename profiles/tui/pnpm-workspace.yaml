@@ -1,0 +1,8 @@
+packages:
+  - .
+
+nodeLinker: hoisted
+autoInstallPeers: false
+
+allowBuilds:
+  '@deepseek-ai/dsh-tui@git+https://github.com/dsh-external/turtle-ui.git#b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2': true

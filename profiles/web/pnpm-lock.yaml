@@ -1,0 +1,28 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@changfenhuang/dsh-genui':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-genui
+      '@deepseek-ai/dsh-toolkit':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-toolkit
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-toolkit
+      '@dsh-external/dsh-drop-to-path':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path
+      dsh-sidebar-taskbar:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+      dsh-task-manager:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+      web-dsh-web-extension:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension

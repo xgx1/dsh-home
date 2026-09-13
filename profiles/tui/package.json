@@ -1,0 +1,15 @@
+{
+  "name": "dsh-profile-tui",
+  "private": true,
+  "dependencies": {
+    "@deepseek-ai/dsh-tui": "git+https://github.com/dsh-external/turtle-ui.git"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-tui"
+      ]
+    }
+  }
+}

@@ -1,0 +1,244 @@
+# dsh web profile MCP servers (migrated from OMP mcp.json).
+# One @deepseek-ai/dsh-mcp-client instance per server.
+- insert:
+    - id: mcp-cbm
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: cbm
+        transport: stdio
+        command: codebase-memory-mcp
+        args:
+          - '--ui=true'
+          - '--port=9749'
+
+    - id: mcp-ue
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: ue
+        transport: streamable-http
+        url: http://127.0.0.1:8000/mcp
+        failOnStartupError: false
+
+# ── 用户调整（2026-09-10）：headroom MCP 从死配置改为 stdio 直连 ─────────
+# headroom 自带 MCP：`headroom mcp serve`（serverName=headroom，v1.29.1），
+# 暴露 headroom_compress / headroom_retrieve / headroom_stats 三个工具，
+# 数据取自常驻代理 headroom-deepseek.service（127.0.0.1:8787，实测在跑）。
+# 旧配置写的是 streamable-http://127.0.0.1:8791/mcp —— 本机从来没有 8791 服务
+# （仅从旧客户端 mcp.json 迁移过来的条目），又带 failOnStartupError:false，
+# DSH 静默跳过，导致会话里一直没有 mcp__headroom__* 工具。
+# 改 stdio 后由 dsh-web 自己拉起，与 cbm / playwright 同一机制，
+# 不再依赖外部守护进程，也不会再有"服务没起就静默消失"的失败模式。
+# 实测：初始化握手 639ms，环境 PATH 含 ~/.local/bin，headroom 可解析。
+# 又实测：DSH 会热加载本 patch —— 改完立刻重拉 MCP 子进程，无需重启 dsh-web。
+# 必须清代理：dsh-web 继承 ~/.config/environment.d/99-proxy.conf 的
+# all_proxy=socks5://127.0.0.1:7897，MCP 子进程拿 httpx 走它去连本地 8787，
+# 报 "Using SOCKS proxy, but the 'socksio' package is not installed" → stats 里
+# proxy 显示 unreachable（no_proxy 对 all_proxy 的 all:// 挂载不生效）。
+# 这与 headroom-*.service 里 Environment=ALL_PROXY= 的既有做法一致：
+# MCP 只连本机 8787，代理必须清空；no_proxy 一并显式给上以兼顾其他库。
+# 若日后要改回共享服务，用 headroom mcp serve --transport http --port 8791
+# （实测 HTTP 通道握手正常），补个 systemd 用户单元再换回 streamable-http 即可。
+- insert:
+    - id: mcp-headroom
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: headroom
+        transport: stdio
+        command: headroom
+        args:
+          - mcp
+          - serve
+        env:
+          all_proxy: ''
+          ALL_PROXY: ''
+          http_proxy: ''
+          HTTP_PROXY: ''
+          https_proxy: ''
+          HTTPS_PROXY: ''
+          no_proxy: 'localhost,127.0.0.1,::1'
+          NO_PROXY: 'localhost,127.0.0.1,::1'
+        failOnStartupError: false
+
+# ── 用户调整（2026-09-06）：新增 Playwright 浏览器 MCP ──────────────
+# 全局安装 npm i -g @playwright/mcp（v0.0.80），软链 ~/.npm-global/bin/playwright-mcp → ~/.local/bin。
+# 本机无 DISPLAY 必须 --headless；无 chrome 渠道，实测必须 --browser chromium。
+# 升级方式：npm update -g @playwright/mcp 后跑技能 browser-unreal-mcp 的 probe-mcp.mjs 重新核对工具清单。
+- insert:
+    - id: mcp-playwright
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: playwright
+        transport: stdio
+        command: playwright-mcp
+        args:
+          - '--headless'
+          - '--browser'
+          - 'chromium'
+        failOnStartupError: false
+
+# ── 用户覆盖：彻底移除沙箱层 + 开启会话全文搜索 ────────────────────────────
+# 所有会话永久全权限，无 read-only/workspace-write 档位。
+# - sandbox（执行器）关闭：命令执行不再受限
+# - sandbox-policy 保持启用（2026-09-12 修复）：dsh 0.1.5 起 workspace-files /
+#   ui-deliverables 硬依赖 ctx.sandboxPolicy；禁用会导致插件树 pending，
+#   dsh-web 启动即崩（NRestarts 24）。policy 服务本身不执行任何管控，
+#   真正的执行/围栏后端（sandbox / bash-sandbox / fs-sandbox）仍全部关闭。
+# - sandbox-policy 默认 mode 固定 danger-full-access（2026-09-12）：
+#   base 默认是 workspace-write，而 terminal-bash 的 spawnArgv 只在
+#   danger-full-access 时短路返回裸 argv；其他档位会硬要 ctx.sandbox
+#   provider（已禁用）→ "requires a ctx.sandbox provider" 报错。
+#   policy 只是把模式告诉消费者，本身不做执行，故对全权限语义无副作用。
+#   注意：patch 整行替换 config（不合并），两个键都要复述。
+# - bash-sandbox / pwsh-sandbox 关闭：不挂受限 shell 执行器
+# - fs-sandbox 关闭 → fs-local 接管 fs 服务（无政策围栏的本地后端）
+# - bash-local 提供 shell 服务（普通 bash 进程，无受限令牌包装）
+# - permission / ui-permission 关闭：permission-presets 在无限制执行器下
+#   会硬性加载失败（要求 shell.sandboxMode 存在），权限切换页随之移除
+# - approval 固定 never：无 permission 服务驱动会话策略后，保持当前
+#   无审批弹窗行为
+
+- id: sandbox
+  disabled: true
+
+- id: sandbox-policy
+  config:
+    mode: danger-full-access
+    workspaceRoot: !!js process.cwd()
+
+- id: bash-sandbox
+  disabled: true
+
+- id: pwsh-sandbox
+  disabled: true
+
+- id: fs-sandbox
+  disabled: true
+
+- id: permission
+  disabled: true
+
+- id: ui-permission
+  disabled: true
+
+# approval：完全关闭审批 seam（disabled 后不加载，不再有 policy）
+- id: approval
+  disabled: true
+
+# 会话全文搜索：首个搜索请求时惰性建库（不拖慢启动），索引落在 DSH_HOME 根下
+- id: session-query-sqlite
+  config:
+    path: !!js dshHomePath('session-search.db')
+    openAt: first-search
+
+# 无沙箱替代品：本地文件系统 + 本地 bash 执行器
+- insert:
+    - id: bash-local
+      name: '@deepseek-ai/dsh-bash-local'
+
+    - id: fs-local
+      name: '@deepseek-ai/dsh-fs-local'
+
+# ── 模型路由：子 agent 固定走 DeepSeek 官方 headroom（deepseek-v4.1-flash-expires-on-0910）──
+# 主 agent 默认模型同为 deepseek-official / deepseek-v4.1-flash-expires-on-0910。
+# 此 patch 在 dsh-web 重启后生效。
+# 整行替换 config（patch 不合并）。
+- id: tool-subagent
+  config:
+    provider: spawn
+    toolName: subagent
+    backgroundMode: continuable
+    agentOptions:
+      provider: deepseek-official
+      model: deepseek-v4.1-flash-expires-on-0910
+
+- id: tool-subagent-fork
+  config:
+    provider: fork
+    toolName: subagent_fork
+    backgroundMode: one-shot
+    agentOptions:
+      provider: deepseek-official
+      model: deepseek-v4.1-flash-expires-on-0910
+
+# ── 用户要求关闭（2026-08-23）：精简能力面 ─────────────────────────────
+# 关闭：会话日志导出 / Ralph 循环 / 目标系统全套(goal·goal-round-driver·
+# command-goal·tool-goal) / 审批 seam / read-before-edit 强制策略 /
+# GUI 目标栏与 plan 模式。
+# ── 用户恢复（2026-08-28）：重新启用 DeepSeek 搜索 provider ──────────
+# web-search-deepseek disabled:false，凭据已在 ~/.dsh/.credentials.yaml
+# （DEEPSEEK_API_KEY），无需环境变量；改后需重启 dsh web 生效。
+- id: session-log-download
+  disabled: true
+
+- id: tool-ralph
+  disabled: true
+
+- id: goal
+  disabled: true
+
+- id: goal-round-driver
+  disabled: true
+
+- id: command-goal
+  disabled: true
+
+- id: tool-goal
+  disabled: true
+
+- id: web-search-deepseek
+  disabled: false
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+
+# ── 用户要求（2026-09-06）：搜索 provider 切到 Exa ─────────────────────
+# 现用 web-search-deepseek 每次搜索 = 一次完整辅助模型请求（烧 DeepSeek 令牌），
+# Exa 是普通 HTTP POST /search（不走模型），返回 URL+标题+高亮摘要，最省。
+# 包来源：官方 harness packages/web/web-search-exa（本仓库现成插件，未开发新代码）。
+# 接线：apps/cli/package.json 加依赖 → profiles/node_modules 建 symlink（heal 会接管）。
+# 切换步骤（key 到位后）：① EXA_API_KEY=<key> 写进 ~/.dsh/.env；② 下面 web 条目的
+# searchProvider 改成 exa；③ pm2 restart dsh-web（launch env 是启动时快照，必须重启）。
+- insert:
+    - id: web-search-exa
+      name: '@deepseek-ai/dsh-web-search-exa'
+
+# searchProvider 整行替换覆盖（2026-09-06 key 已入 credentials.yaml 并实测通过）：
+- id: web
+  config:
+    searchProvider: exa
+
+- id: fs-observation-policy
+  disabled: true
+
+- id: ui-goal
+  disabled: true
+
+- id: ui-plan
+  disabled: true
+
+# 顺手关闭：OTel 遥测管道（默认 DISABLED 不发送，但整体移除更干净）
+- id: session-telemetry-otel
+  disabled: true
+
+# ── 用户调整（2026-08-23 第二批，待重启生效）────────────────────────
+# 启用 agent-instructions：显式 disabled:false 覆盖 dsh-web-app 层的 disabled
+- id: agent-instructions
+  disabled: false
+
+# 关闭 message-feedback / command-feedback
+# token-meter 保留：omni 预设的 compaction-basic / tool-result-pruner 依赖 tokenMeter 服务
+- id: message-feedback
+  disabled: true
+
+- id: command-feedback
+  disabled: true
+
+# ── 用户调整（2026-08-24）：dsh-automation 已卸载 ─────────────────────────
+# 依赖 / bundles / node_modules 链接 / lockfile 均已移除；此前的并发/超时覆盖随之删除。
+
+# ── 用户要求（2026-09-13）：MemOS 记忆插件彻底移除 ────────────────────────
+# 依赖 / bundles / cordis patch config / node_modules 依赖树 / 数据目录
+# （~/.dsh/memos-plugin/，含 memos.db 的 102 条 trace）均已删除。
+# 移除后：memos_* 工具与每轮的 <memos_context> 自动召回一并消失。
+# 原 2026-08-24 的召回上限覆盖（contextMaxChars 12000 / toolResultMaxChars 3000）
+# 随插件一起删除——插件不在，覆盖无对象。
+

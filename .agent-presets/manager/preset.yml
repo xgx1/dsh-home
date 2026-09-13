@@ -1,0 +1,2 @@
+name: 管理模式
+description: Manager 编排模式：在全能模式之上注入 Manager 编排协议 persona（读单→动态分类→派发→巡检→形式核验→失败重试一次→挂单上报→需终审停 waiting-check），并经 tools 子路径行（dsh-task-manager/tools，ADR-0004）挂载 7 个任务工具（管理 5 + 队长 2）；队长会话为本预设的 continuable 子会话，工具面由 per-child toolFilter 裁剪（docs/adr/0003）。2026-09-10 实测：standingKeyFor('manager') 通过，7 个 task_* 工具在该预设作用域可见（当时代码经 dev worktree 部署——该 worktree 已于 2026-09-13 下线，现走工作区 dsh-extensions/plugins/dsh-task-manager）。

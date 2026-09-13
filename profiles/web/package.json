@@ -1,0 +1,26 @@
+{
+  "name": "dsh-profile-web",
+  "private": true,
+  "dependencies": {
+    "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui",
+    "@deepseek-ai/dsh-toolkit": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-toolkit",
+    "@dsh-external/dsh-drop-to-path": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path",
+    "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
+    "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager",
+    "web-dsh-web-extension": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "web-dsh-web-extension",
+        "@dsh-external/dsh-drop-to-path",
+        "@changfenhuang/dsh-genui",
+        "@deepseek-ai/dsh-toolkit",
+        "dsh-task-manager",
+        "dsh-sidebar-taskbar"
+      ]
+    }
+  }
+}

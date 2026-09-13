@@ -1,0 +1,19 @@
+packages:
+  - .
+
+nodeLinker: hoisted
+autoInstallPeers: false
+
+# hoisted 布局保留：早期第三方插件（已卸载的 @linxin666/dsh-web-ui）要求平铺 node_modules；
+# 改动它会重排整棵 node_modules，非必要不动。
+# 2026-09-13：MemOS 插件彻底移除后，其依赖树的构建放行条目
+# （@memtensor/memos-local-plugin / better-sqlite3 / onnxruntime-node /
+# protobufjs / sharp / esbuild）连同此前遗留的 cloudflared / cpu-features /
+# ssh2 一并清空——这些包已不在 lockfile 也不在 node_modules 里。
+# 留着它们会让本文件「只放行真正需要的构建脚本」的政策失真：
+# 日后新增带 postinstall 的依赖时，pnpm 会以 ERR_PNPM_IGNORED_BUILDS 报错并点名，
+# 届时再按需添加即可。
+allowBuilds: {}
+minimumReleaseAgeExclude:
+  - '@nanmicoder/dsh-agent-teams@0.1.2 || 0.1.5'
+  - '@anionex/dsh-vision-toolkit@0.1.7'

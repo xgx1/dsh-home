@@ -1,0 +1,86 @@
+# The `simple` agent preset (简单模式): a bare, prompt-free coding-agent composition.
+#
+# The single persona row is the ENTIRE system prompt. `complete: true` makes this
+# text the whole prompt, so global identity, Web orientation, AGENTS.md
+# (`dsh-agent-instructions`) and the skill index can never add prompt text. Its
+# text is empty, so there is NO system prompt at all. `includeRuntimeContext:
+# false` suppresses runtime-context snapshots.
+#
+# The skill-calling system is absent by design: no `dsh-skill-filesystem`, no
+# `dsh-tool-skill`. The agent only gets the persistent shell and a filesystem
+# editor. Context compaction is absent.
+
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    prefix: ''
+    complete: true
+    includeRuntimeContext: false
+
+# The PTY registry is an agent-owned service, so it lives in an entry-local
+# realm. The backend still consumes the host sandbox policy and subprocess
+# implementation, while the tool registers into this agent's scoped catalog.
+# Exactly one shell stack mounts per host: the bash stack gates off win32 and
+# its pwsh twin gates off POSIX, mirroring the one-shot shell rows.
+- id: persistent-shell
+  name: cordis:group
+  group: true
+  isolate:
+    terminals: true
+  config:
+    - id: pty
+      name: '@deepseek-ai/dsh-terminal'
+
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+
+    - id: persistent-bash
+      name: '@deepseek-ai/dsh-tool-bash-persistent'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a bash shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * You do have access to a mirror of common linux and python packages via apt and pip.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect
+          * the current directory or workspace, first run the command "pwd" or "ls -la".
+
+    - id: terminal-pwsh
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        timeoutMs: 300000
+
+    - id: persistent-pwsh
+      name: '@deepseek-ai/dsh-tool-pwsh-persistent'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a PowerShell shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * You do have access to a mirror of common linux and python packages via apt and pip.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect
+          * the current directory or workspace, first run the command "pwd" or "ls".
+
+# Filesystem: consume the host `fs` service (its policy stays on the host), so a
+# second standalone mount never collides with an already-registered `fs`. Plus a
+# file-editing tool.
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+- id: str-replace-editor
+  name: '@deepseek-ai/dsh-tool-str-replace-editor'

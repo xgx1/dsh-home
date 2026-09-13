@@ -1,0 +1,53 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  keys.example.yaml — ~/.dsh/.credentials.yaml 的模板（此模板本身不含任何密钥）
+#
+#  新设备初始化：
+#      cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml
+#      chmod 600 ~/.dsh/.credentials.yaml      # 权限不是 600 时 DSH 会拒绝加载
+#      然后填入真实值，或直接用 dsh 配置界面逐个保存（推荐后者）
+#
+#  格式硬约束（详见 deepseek-harness/packages/credentials/credentials-local）：
+#    · version 必须存在且为 1（缺失会被当成 pre-release 扁平布局而报错）
+#    · 顶层只允许 version / refs / records，出现其他键会「大声拒绝」，不是静默忽略
+#    · refs 的键 = 环境变量名；值 = 密钥原文（可为多行，无需转义）
+#    · 空值非法：删除一个键是删掉该行，不是留空
+#    · 文件只能被当前 OS 用户可读，否则 POSIX 上拒绝加载（见上面 chmod）
+#
+#  查找优先级（先命中者胜）：
+#    1. 启动环境  DEEPSEEK_API_KEY=… dsh     ← 只读，本次运行覆盖一切
+#    2. 本文件（存储文件）
+#    3. 项目 .env（<cwd>/.env）
+#    4. $DSH_HOME/.env
+# ══════════════════════════════════════════════════════════════════════════
+
+version: 1
+
+# 键名是环境变量名。下面列出本机曾用过的键，按需保留并填值。
+# 本机做法：dsh-env.sh 会把 *_API_KEY 全部导出到 dsh-web.service 的启动环境。
+refs:
+  # ── 对话模型 ──
+  # DEEPSEEK_API_KEY:            sk-...
+  # SILICONFLOW_API_KEY:         sk-...
+  # OPENCODE_API_KEY:            ...
+  # ── 国内云平台 ──
+  # BAILIAN_API_KEY:             ...      # 阿里百炼（JWT 形态，较长）
+  # GUOJIA_API_KEY:              ...
+  # SCNET_API_KEY:               ...
+  # ── 聚合/中转 ──
+  # BL_API_KEY:                  ...
+  # BLL_API_KEY:                 ...
+  # BBBB_API_KEY:                ...
+  # MD_API_KEY:                  ...
+  # GJ_API_KEY:                  ...
+  # GJX_API_KEY:                 ...
+  # FREE_API_KEY:                ...
+  # DOLPHIN_API_KEY:             ...
+  # SC_API_KEY:                  ...
+  # ── 检索与工具 ──
+  # OPENROUTER_API_KEY:          sk-or-...
+  # EXA_API_KEY:                 ...
+  # AL_API_KEY:                  ...      # 阿里云（JWT 形态，较长）
+
+# records 由插件自行管理（<owner>/<id>，如 client-connection/browser-session）。
+# 不要手工编辑：换设备时它本就应该重新生成。
+# records: {}
