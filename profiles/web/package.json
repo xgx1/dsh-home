@@ -5,6 +5,7 @@
     "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui",
     "@deepseek-ai/dsh-toolkit": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-toolkit",
     "@dsh-external/dsh-drop-to-path": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path",
+    "@graysilver/dsh-evolve-modes": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager",
     "web-dsh-web-extension": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension"
@@ -19,7 +20,8 @@
         "@changfenhuang/dsh-genui",
         "@deepseek-ai/dsh-toolkit",
         "dsh-task-manager",
-        "dsh-sidebar-taskbar"
+        "dsh-sidebar-taskbar",
+        "@graysilver/dsh-evolve-modes"
       ]
     }
   }

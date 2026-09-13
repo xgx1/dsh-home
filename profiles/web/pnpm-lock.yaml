@@ -17,6 +17,9 @@ importers:
       '@dsh-external/dsh-drop-to-path':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-drop-to-path
+      '@graysilver/dsh-evolve-modes':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
       dsh-sidebar-taskbar:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
