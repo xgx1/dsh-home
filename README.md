@@ -69,6 +69,24 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 
 `chmod 600` 不是可选项：POSIX 上 DSH 会拒绝加载任何其他用户可读的凭据文件。
 
+## MCP 前置依赖（配置同步 ≠ 那台设备能用）
+
+`profiles/web/cordis.patch.yml` 里的 MCP 条目（cbm / ue / headroom / playwright）**随本仓库同步**，
+但每条 `stdio` 型 MCP 都要**在设备上有那个命令**，否则 DSH 会静默跳过它（配置里带着
+`failOnStartupError: false`），表现为"工具凭空消失"而没有任何报错。新设备需要另行安装：
+
+| MCP | 命令 | 安装方式 |
+|---|---|---|
+| cbm | `codebase-memory-mcp` | 自管理（`~/.cache/codebase-memory-mcp/`） |
+| playwright | `playwright-mcp` | `npm i -g @playwright/mcp`，软链到 `~/.local/bin` |
+| headroom | `headroom` | `uv tool install headroom-ai` |
+
+装完用 `command -v <命令>` 逐个确认，再重启 `dsh-web.service`（MCP 子进程由它拉起）。
+`http` 型（如 `mcp-ue` 的 `127.0.0.1:8000`）不依赖命令，依赖那台设备的服务在跑。
+
+`headroom` 那条还必须清代理——它要连本机 8787，而 `dsh-web` 继承的 `all_proxy=socks5://…`
+会让子进程报 `socksio` 缺失；该条目的 `env` 段就是为此显式清空 `*_proxy` 并设 `no_proxy`。
+
 ## 凭据机制备忘
 
 `~/.dsh/dsh-env.sh` 把 `.credentials.yaml` 里所有 `*_API_KEY` 导出到启动环境——所以本机走的是
