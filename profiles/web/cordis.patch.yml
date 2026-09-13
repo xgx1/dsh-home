@@ -251,9 +251,11 @@
 # 用 --stdio：DSH 拉起子进程并复用共享 daemon，无需预先 `zg server on`，
 # 也不会出现「守护进程没起就静默消失」的失败模式。
 #
-# 工具集（重要）：默认 agent toolset **只暴露 zvec_grep_search 一个工具**，
-# 精确检索交给本机已有的 grep/glob；--mcp-toolset full 才会另外暴露托管 rg
-# 与 index/status 管理工具——那会让 agent 获得改索引的能力，故不用 full。
+# 工具集（2026-09-13 调整）：改用 **full** toolset。
+# 原因是同日按用户要求禁用了内建 grep/glob（omni 预设的 tool-fs-search 行），
+# 精确检索需要替补——agent toolset 只暴露 zvec_grep_search（语义、需索引），
+# 而 full 会额外暴露**托管 rg** 与四个 index/status 管理工具，把精确检索补回来。
+# 代价：agent 由此获得改索引的能力（index/drop），且工具目录多 5 项。
 #
 # 前置条件（新设备部署时）：
 #   1. npm i -g @zvec/zvec-grep && ln -sfn ~/.npm-global/lib/node_modules/@zvec/zvec-grep/dist/cli/index.js ~/.local/bin/zg
@@ -273,5 +275,7 @@
         args:
           - server
           - '--stdio'
+          - '--mcp-toolset'
+          - full
 
 
