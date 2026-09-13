@@ -91,7 +91,6 @@
 
 - id: tool-fs-search
   name: '@deepseek-ai/dsh-tool-fs-search'
-  disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
   config:
     sampleOverCapGlobResults: false
 
