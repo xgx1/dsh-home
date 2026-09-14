@@ -17,10 +17,14 @@ llm-deepseek:
   reasoningEffort: max
   models:
     - id: deepseek-flash
-      name: DeepSeek-V4-Flash
+      name: DeepSeek-V41-Flash
       contextWindow: 1000000
       inputModalities:
         - text
+        - image
+      imagePixelBudget: 640000
+      imageMaxBytes: 1048576
+      systemPromptUpdate: in-history
 shell:
   timeoutMs: 1800000
 locale:
