@@ -30,6 +30,13 @@
 - 信息不全时先用只读工具铺开再动手，不猜测文件名与路径；代码库里的检索走「cbm 查图优先」（见下节），glob/grep 是兜底而不是起点。
 - 长任务分步提交，每步先验证再继续；失败时先看错误原文再换方案。
 
+## GUI 窗口（AI 窗口隔离，2026-09-17 起）
+
+- 助手拉起的图形程序一律自动落到 **AI 工作区（Hyprland workspace 10）**，不抢焦点、不切用户工作区，用户 `Super+0` 随时可看。判据是**窗口进程的 cgroup** 落在 `dsh-*`（`dsh-web.service` / `dsh-subprocess-*.scope`；setsid / nohup / 被 reparent 都改不掉），实现在 `~/.config/hypr/hyprland.lua` 的「AI 窗口隔离」段；用户自己起的程序（`session-N.scope`）不受影响。
+- **启动 GUI 程序用 `aiw <命令>`**（`~/.local/bin/aiw`）：由 Hyprland 执行器起，带 `workspace 10 silent` 规则直接落位，且**进程不会随命令结束被回收**——在 DSH 的 bash 里直接 `setsid nohup` 起的图形进程会在该命令 scope 拆除时一起被杀（2026-09-17 实测）。
+- 要主动打开给用户看：`aiw --here <命令>`；没走 `aiw` 的直接启动则带 `AIW_SHOW=1` 跳过兜底规则。换目标工作区用 `AIW_WS=7 aiw …`。
+- 本机 Hyprland 0.56 的派发一律是 Lua：`hyprctl dispatch 'hl.dsp.…'`（旧写法 `hyprctl dispatch fullscreen 0` 会被当 Lua 求值报错），另有 `hyprctl eval` / `hyprctl repl` 可现场读写状态。
+
 ## 代码检索（cbm 查图优先）
 
 - 在代码库里找代码：先用 codebase-memory MCP 查图——search_graph 定符号、trace_path 查调用链/影响面、get_architecture 看架构、search_code 图增强搜索；grep/glob 只做兜底（字面量、文件名、原始计数）。
