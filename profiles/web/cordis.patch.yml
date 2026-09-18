@@ -59,9 +59,13 @@
           NO_PROXY: 'localhost,127.0.0.1,::1'
         failOnStartupError: false
 
-# ── 用户调整（2026-09-06）：新增 Playwright 浏览器 MCP ──────────────
+# ── 用户调整（2026-09-06 新增；2026-09-18 改为有头 + 固定 profile） ──────
 # 全局安装 npm i -g @playwright/mcp（v0.0.80），软链 ~/.npm-global/bin/playwright-mcp → ~/.local/bin。
-# 本机无 DISPLAY 必须 --headless；无 chrome 渠道，实测必须 --browser chromium。
+# 无 chrome 渠道，实测必须 --browser chromium。
+# 2026-09-18 改有头（去掉 --headless）：淘宝等站风控对无头浏览器每次加载都弹滑块，
+# 有头模式可用人工配合且更接近真实浏览器。dsh-web 本身没有 DISPLAY/WAYLAND_DISPLAY，
+# 必须由 env 注入；窗口按 Hyprland 规则落在 AI 工作区（Super+0 可看）。
+# --user-data-dir 显式指向固定目录：登录态（淘宝 s_xgx1 等）跨会话复用，别删这个目录。
 # 升级方式：npm update -g @playwright/mcp 后跑技能 browser-unreal-mcp 的 probe-mcp.mjs 重新核对工具清单。
 - insert:
     - id: mcp-playwright
@@ -71,9 +75,14 @@
         transport: stdio
         command: playwright-mcp
         args:
-          - '--headless'
           - '--browser'
           - 'chromium'
+          - '--user-data-dir'
+          - '/home/sx/.cache/ms-playwright-mcp/mcp-chrome-for-testing-755d810'
+        env:
+          XDG_RUNTIME_DIR: '/run/user/1000'
+          WAYLAND_DISPLAY: 'wayland-1'
+          DISPLAY: ':0'
         failOnStartupError: false
 
 # ── 用户覆盖：彻底移除沙箱层 + 开启会话全文搜索 ────────────────────────────
