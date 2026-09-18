@@ -75,10 +75,10 @@
         transport: stdio
         command: playwright-mcp
         args:
-          - '--browser'
-          - 'chromium'
-          - '--user-data-dir'
-          - '/home/sx/.cache/ms-playwright-mcp/mcp-chrome-for-testing-755d810'
+          # 2026-09-18 起不再自己拉起浏览器：attach 到 CLI 管的共享 Chrome（find-work browser start），
+          # 这样 CLI 与会话共用同一个已登录 profile，不会互抢 profile 锁（见 find-work docs/adr/0004）。
+          - '--cdp-endpoint'
+          - 'http://127.0.0.1:9222'
         env:
           XDG_RUNTIME_DIR: '/run/user/1000'
           WAYLAND_DISPLAY: 'wayland-1'
