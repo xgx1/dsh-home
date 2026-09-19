@@ -1,5 +1,5 @@
 [Unit]
-Description=Headroom proxy - SenseNova token-plan (sensenova-6.8-flash-lite / glm-5.2 / kimi-k3) on :8788
+Description=Headroom proxy - SenseNova token-plan (sensenova-6.8-flash-lite) on :8788
 After=network-online.target
 Wants=network-online.target
 
