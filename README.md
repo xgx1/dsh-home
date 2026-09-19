@@ -83,14 +83,23 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 | unit | 作用 |
 |---|---|
 | `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
-| `headroom-deepseek.service` | `:8787` 代理——`mcp-headroom` 连的就是它，也是 `settings.yaml` 模型 `baseURL` 的目标 |
+| `headroom-deepseek.service` | `:8787` 代理 → `api.deepseek.com`；`mcp-headroom` 连的就是它，也是 `settings.yaml` 里 `llm-deepseek` 的 `baseURL` 目标 |
+| `headroom-sensenova.service` | `:8788` 代理 → `token.sensenova.cn`；对应 `settings.yaml` 里 `llm-pi-ai.providers.sensenova` 路由 |
 
 unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
 的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
+headroom 代理同样不持密钥：客户端发来的 `Authorization` 被原样转发到上游，所以
+`sensenova` 路由只要 `apiKeyEnv: SENSENOVA_API_KEY`（客户端侧解析）即可。
 
 > **2026-09-13 移除**：`headroom-scnet`（`:8789`）/ `headroom-siliconflow`（`:8788`）/
 > `headroom-moda`（`:8790`）三个上游代理已彻底删除——三者的 unit 文件、仓库副本、
-> 与 systemd 注册一并清除，只保留 `headroom-deepseek`（唯一 active + enabled 的）。
+> 与 systemd 注册一并清除。
+>
+> **2026-09-19 新增**：`headroom-sensenova`（`:8788`，复用原 siliconflow 的端口）接商汤
+> 日日新 token-plan 免费套餐。`settings.yaml` 里只挂了 `sensenova-6.8-flash-lite`
+> 一个模型（多模态 + `reasoning_effort` 支持 low/medium/high/xhigh/none）。两个易踩点：
+> ① 上游**不接受 `developer` 角色**，必须 `compat: { supportsDeveloperRole: false }`；
+> ② 上游**不接受 `reasoning_effort: minimal`**，所以只声明 off/low/medium/high/xhigh。
 
 ## MCP 前置依赖（配置同步 ≠ 那台设备能用）
 

@@ -72,8 +72,8 @@ done
 echo "  已 enable 全部 unit（随用户会话自启）"
 
 if [ "$start" = 1 ]; then
-  systemctl --user start headroom-deepseek.service headroom-scnet.service \
-    headroom-siliconflow.service headroom-moda.service 2>/dev/null || true
+  systemctl --user start headroom-deepseek.service \
+    headroom-sensenova.service 2>/dev/null || true
   echo "  headroom-* 已启动"
   echo "  dsh-web 最后启动（它会中断当前会话）：systemctl --user start dsh-web.service"
 fi

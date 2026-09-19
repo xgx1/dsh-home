@@ -21,8 +21,11 @@ cache/
 # ── 存储与服务状态 ────────────────────────────────────────────────────────
 # workspace.json / session_projcache.json 里全是本机绝对路径，跨设备会互相覆盖
 storages/
-session-search.db
+# 含 -shm / -wal 两个 SQLite 伴随文件
+session-search.db*
 task-manager/
+# DeepSeek 文件上传索引（files-v3.json，本机运行时状态）
+llm-deepseek/
 
 # ── 技能：根目录 301 条全是软链，由 install-skill.sh 从仓库外部生成 ────────
 # 只锚根目录！`.agent-presets/*/skills/` 是 preset 自带的技能，必须跟踪。
@@ -40,6 +43,8 @@ patches/
 *.log
 
 # ── 运行时噪音 ────────────────────────────────────────────────────────────
+# install-skill.sh --force 前的真实目录备份，本机专属
+skill-backups/
 .anonymous-user-id
 remote-web-ui-devices.json
 *.tmp

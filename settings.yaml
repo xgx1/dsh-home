@@ -3,7 +3,7 @@ ui-onboarding:
 agent-default-model:
   provider: deepseek-official
   model: deepseek-flash
-  reasoningEffort: max
+  reasoningEffort: low
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -61,13 +61,26 @@ llm-pi-ai:
                   name: "Bonsai 2 27B (local AMD)",
                   contextWindow: 102400,
                   maxTokens: 32768,
-                  reasoningEfforts:
-                    {
-                      "off": none,
-                      low: low,
-                      medium: medium,
-                      xhigh: xhigh
-                    }
+                  reasoningEfforts: { "off": none, low: low, medium: medium, xhigh: xhigh }
+                }
+            ]
+        },
+      sensenova:
+        {
+          displayName: "SenseNova 6.8 Flash-Lite (headroom :8788)",
+          apiKeyEnv: SENSENOVA_API_KEY,
+          api: openai-completions,
+          baseURL: "http://127.0.0.1:8788/v1",
+          compat: { supportsDeveloperRole: false },
+          models:
+            [
+              {
+                  id: sensenova-6.8-flash-lite,
+                  name: "SenseNova 6.8 Flash-Lite",
+                  contextWindow: 262144,
+                  maxTokens: 65536,
+                  input: [text, image],
+                  reasoningEfforts: { "off": none, low: low, medium: medium, high: high, xhigh: xhigh }
                 }
             ]
         }
