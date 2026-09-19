@@ -53,13 +53,21 @@ llm-pi-ai:
           api: openai-completions,
           baseURL: "http://127.0.0.1:8081/v1",
           headers: { Authorization: "Bearer local-no-auth" },
+          reasoning: medium,
           models:
             [
               {
                   id: bonsai2-27b,
                   name: "Bonsai 2 27B (local AMD)",
                   contextWindow: 102400,
-                  maxTokens: 32768
+                  maxTokens: 32768,
+                  reasoningEfforts:
+                    {
+                      "off": none,
+                      low: low,
+                      medium: medium,
+                      xhigh: xhigh
+                    }
                 }
             ]
         }
