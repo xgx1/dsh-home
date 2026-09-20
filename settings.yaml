@@ -3,7 +3,7 @@ ui-onboarding:
 agent-default-model:
   provider: deepseek-official
   model: deepseek-flash
-  reasoningEffort: low
+  reasoningEffort: max
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -67,7 +67,7 @@ llm-pi-ai:
         },
       sensenova:
         {
-          displayName: "SenseNova 6.8 Flash-Lite (headroom :8788)",
+          displayName: "SenseNova token plan (headroom :8788)",
           apiKeyEnv: SENSENOVA_API_KEY,
           api: openai-completions,
           baseURL: "http://127.0.0.1:8788/v1",
@@ -79,8 +79,24 @@ llm-pi-ai:
                   name: "SenseNova 6.8 Flash-Lite",
                   contextWindow: 262144,
                   maxTokens: 65536,
-                  input: [text, image],
+                  input: [ text, image ],
                   reasoningEfforts: { "off": none, low: low, medium: medium, high: high, xhigh: xhigh }
+                },
+              {
+                  id: kimi-k3,
+                  name: "Kimi K3",
+                  contextWindow: 1048576,
+                  maxTokens: 65536,
+                  # SenseNova reports text-only for kimi-k3, but the model takes
+                  # images as base64 data-URLs (public URLs are rejected upstream),
+                  # so declare the capability here.
+                  input: [ text, image ],
+                  # temperature/top_p/frequency_penalty/presence_penalty are fixed
+                  # upstream; generation length uses max_completion_tokens, not max_tokens.
+                  compat: { maxTokensField: max_completion_tokens },
+                  # Kimi K3 always reasons; low/high/max, upstream default max. "off"
+                  # has no wire value, so leave the level undeclared.
+                  reasoningEfforts: { low: low, high: high, max: max }
                 }
             ]
         }
@@ -89,3 +105,19 @@ ui-theme:
   fontSize: 17
 ui-conversation:
   busyEnter: steer
+subagent-model-selection:
+  enabled: true
+  allowedModels:
+    - provider: deepseek-official
+      model: deepseek-flash
+    - provider: md
+      model: deepseek-ai/DeepSeek-V4.1-Flash
+    - provider: local-bonsai
+      model: bonsai2-27b
+    - provider: sensenova
+      model: sensenova-6.8-flash-lite
+    - provider: sensenova
+      model: kimi-k3
+subagent:
+  maxDepth: 10
+  maxActiveSubagents: 20
