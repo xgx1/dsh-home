@@ -9,6 +9,16 @@
 - 改任何 git submodule 要在**各自目录里**提交、推送，再回上层仓库更新指针；上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——改完要提交并推送，新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
 
+## DSH 开发红线
+
+以下几条都是崩过生产换来的，别删、别绕：
+
+- **不许删 `packages/llm/llm/src/index.ts` 里的 `assertNever` 兼容导出**（L54-57，注释写明了保留条件）：外部 turtle-ui TUI 还在从这个包 import；删掉再重建，`dsh tui` 的 import 必挂。等 turtle-ui 迁完再删。
+- **新增插件包必须走完五件套**，漏一步 preset 就起不来：① 包内 `tsconfig.json`（extends 根 `tsconfig.base.json`、`rootDir: src`、`outDir: lib/types`、references 声明依赖）→ ② 根 `tsconfig.host.json` 的 `references` 加引用 → ③ `pnpm run gen-tsconfig-paths` 重生成包别名 → ④ `apps/cli/package.json` 加依赖 + `pnpm install` → ⑤ 全量 `pnpm run build:lib:host` 通过且该包测试通过。**preset 引用了未构建好的包 = 所有用该 preset 的新会话起不来**，而 `omni` 是默认 preset。
+- **包装 provider 时，候选技能上的 `provider` 必须等于外层注册名**：别让内层 provider 顶着旧名字返回数据——名字不匹配会解析到错误的 provider。
+- **更新 CBM（`codebase-memory-mcp`）二进制后必须重启 `codebase-memory.service`**，否则常驻 daemon 握着旧 inode，全线 MCP 请求超时。该 unit 是**用户级**：`systemctl --user restart codebase-memory.service`。
+- **改完 `~/.dsh/.agent-presets/` 或 `profiles/` 后，先确认能加载，再重启 `dsh-web.service`**：顺序反了就是先断了当前对话、再发现 preset 加载不了。
+
 ## 技能
 
 - 运行时技能目录 `~/.dsh/skills/` 里**受管技能全是软链，不是副本**；**不要手工往里面复制技能**——副本会与仓库漂移。
