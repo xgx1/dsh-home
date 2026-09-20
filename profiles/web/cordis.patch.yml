@@ -75,10 +75,13 @@
 # 只能挂一个，不能"全部挂上"。三个包的依赖都已装进 apps/cli/package.json，
 # 切换只需在本文件里换段，不用重装、不用改检出。
 #
-# attach 模式的行为差异（比旧裸 MCP 更严格）：新 live Session 在初始化时认领
+# attach 模式的独占语义：默认 `exclusive: true`，新 live Session 在初始化时认领
 # attachment 并持有到卸载；attachment 忙时该次激活**直接跳过浏览器、后续轮次不重试**；
-# 另一个 Session 直连会失败。也就是说同一时刻只有一个会话能用 9222 那个 Chrome。
-# 想多会话共用，就用 launch 模式（但 launch 起的是全新 profile，没有登录态）。
+# 另一个 Session 直连会失败。也就是说默认同一时刻只有一个会话能用 9222 那个 Chrome。
+# 下面 config 里已显式关掉（`exclusive: false`）：每个 live Session 各自起一个
+# @playwright/mcp 挂同一个 9222，谁创建谁都能拿到浏览器工具，不用再"先关别的会话"。
+# 代价是没有串行保证——多会话同时操作同一个 Chrome 需要自己排队
+# （find-work/docs/adr/0004-shared-browser-session.md 本来就是这个约定）。
 - insert:
     - id: browser-use
       name: '@deepseek-ai/dsh-browser-use'
@@ -87,6 +90,7 @@
       config:
         mode: attach
         endpoint: 'http://127.0.0.1:9222'
+        exclusive: false
 
     # 备选 1：Chrome DevTools MCP（与 Playwright 同构配置）
     #   工具命名空间 `mcp__chrome-devtools-mcp__*`（与 playwright-mcp 不同，
