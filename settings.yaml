@@ -1,9 +1,9 @@
 ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
 agent-default-model:
-  provider: deepseek-official
-  model: deepseek-flash
-  reasoningEffort: max
+  provider: step
+  model: step-5-preview
+  reasoningEffort: high
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -12,6 +12,10 @@ agent-presets:
   default: omni
 llm-deepseek:
   apiKeyEnv: DEEPSEEK_API_KEY
+  # headroom (:8787) 只放行 OpenAI 兼容的 /v1/chat/completions；默认 messages
+  # 协议会打到 /v1/messages，headroom 返回 403 "Request not allowed"，被 DSH
+  # 归类成 AUTH，UI 显示“API 密钥无效”（并非 key 问题）。
+  protocol: chat-completions
   baseURL: http://127.0.0.1:8787/v1
   thinking: enabled
   reasoningEffort: max
@@ -71,32 +75,69 @@ llm-pi-ai:
           apiKeyEnv: SENSENOVA_API_KEY,
           api: openai-completions,
           baseURL: "http://127.0.0.1:8788/v1",
-          compat: { supportsDeveloperRole: false },
+          reasoning: xhigh,
+          compat:
+            {
+              supportsDeveloperRole: false,
+              supportsReasoningEffort: true,
+              maxTokensField: max_tokens
+            },
           models:
             [
               {
+                  id: deepseek-v4-flash,
+                  name: deepseek-v4-flash,
+                  contextWindow: 1000000,
+                  maxTokens: 65536,
+                  input: [ text ],
+                  reasoningEfforts: { off: none, low: low, medium: medium, high: high, xhigh: xhigh }
+                },
+              {
                   id: sensenova-6.8-flash-lite,
-                  name: "SenseNova 6.8 Flash-Lite",
+                  name: sensenova-6.8-flash-lite,
                   contextWindow: 262144,
                   maxTokens: 65536,
                   input: [ text, image ],
-                  reasoningEfforts: { "off": none, low: low, medium: medium, high: high, xhigh: xhigh }
-                },
+                  reasoningEfforts: { off: none, low: low, medium: medium, high: high, xhigh: xhigh }
+                }
+            ]
+        },
+      step:
+        {
+          # 走 headroom :8789（单元 headroom-step.service，上游
+        # OPENAI_TARGET_API_URL=https://api.stepfun.com/step_plan）。
+        # 思考强度只有 low/medium/high —— Step Plan 没有 off/none，也没有
+        # xhigh/max，所以 reasoningEfforts 只声明这三档；不声明的档位
+        # thinkingLevelMap 为 null，选择器里自动隐藏。
+          displayName: "StepFun Step Plan (headroom :8789)",
+          apiKeyEnv: STEP_API_KEY,
+          api: openai-completions,
+          baseURL: "http://127.0.0.1:8789/v1",
+          reasoning: medium,
+          compat:
+            {
+              # pi-ai 对未识别的 baseURL 默认发 max_completion_tokens，StepFun
+            # 只认 max_tokens；不覆盖会 400。
+              supportsReasoningEffort: true,
+              supportsDeveloperRole: false,
+              maxTokensField: max_tokens
+            },
+          # 只挂 step-5-preview（StepFun 新一代旗舰基模，2026-09-20 起 preview）：
+          # 1M tokens 上下文与最大输出，文本/图片/视频输入，编程与 Agent 场景。
+          # step-router-v1 是按请求在 deepseek-v4-pro 与 flash 系列间切换的路由，
+          # 不透明；step-3.7-flash / step-3.5 系列是旧代，均不上。
+          # 模型支持视频输入，但 DSH 的 modality gate 只有 text/image，视频走不通。
+          models:
+            [
               {
-                  id: kimi-k3,
-                  name: "Kimi K3",
-                  contextWindow: 1048576,
-                  maxTokens: 65536,
-                  # SenseNova reports text-only for kimi-k3, but the model takes
-                  # images as base64 data-URLs (public URLs are rejected upstream),
-                  # so declare the capability here.
+                  id: step-5-preview,
+                  name: step-5-preview,
+                  contextWindow: 1000000,
+                  # 文档写明 max_tokens 默认 INF、由模型自决；这里给 128K 作上界，
+                  # 单条回复用不到，纯为兜住失控输出吃掉套餐 Credit。
+                  maxTokens: 131072,
                   input: [ text, image ],
-                  # temperature/top_p/frequency_penalty/presence_penalty are fixed
-                  # upstream; generation length uses max_completion_tokens, not max_tokens.
-                  compat: { maxTokensField: max_completion_tokens },
-                  # Kimi K3 always reasons; low/high/max, upstream default max. "off"
-                  # has no wire value, so leave the level undeclared.
-                  reasoningEfforts: { low: low, high: high, max: max }
+                  reasoningEfforts: { low: low, medium: medium, high: high }
                 }
             ]
         }
@@ -108,8 +149,6 @@ ui-conversation:
 subagent-model-selection:
   enabled: true
   allowedModels:
-    - provider: deepseek-official
-      model: deepseek-flash
     - provider: md
       model: deepseek-ai/DeepSeek-V4.1-Flash
     - provider: local-bonsai
@@ -117,7 +156,7 @@ subagent-model-selection:
     - provider: sensenova
       model: sensenova-6.8-flash-lite
     - provider: sensenova
-      model: kimi-k3
+      model: deepseek-v4-flash
 subagent:
   maxDepth: 10
   maxActiveSubagents: 20
