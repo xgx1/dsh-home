@@ -1,9 +1,9 @@
 ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
 agent-default-model:
-  provider: step
-  model: step-5-preview
-  reasoningEffort: high
+  provider: sensenova
+  model: deepseek-v4-flash
+  reasoningEffort: xhigh
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -123,10 +123,10 @@ llm-pi-ai:
               maxTokensField: max_tokens
             },
           # 只挂 step-5-preview（StepFun 新一代旗舰基模，2026-09-20 起 preview）：
-          # 1M tokens 上下文与最大输出，文本/图片/视频输入，编程与 Agent 场景。
-          # step-router-v1 是按请求在 deepseek-v4-pro 与 flash 系列间切换的路由，
-          # 不透明；step-3.7-flash / step-3.5 系列是旧代，均不上。
-          # 模型支持视频输入，但 DSH 的 modality gate 只有 text/image，视频走不通。
+        # 1M tokens 上下文与最大输出，文本/图片/视频输入，编程与 Agent 场景。
+        # step-router-v1 是按请求在 deepseek-v4-pro 与 flash 系列间切换的路由，
+        # 不透明；step-3.7-flash / step-3.5 系列是旧代，均不上。
+        # 模型支持视频输入，但 DSH 的 modality gate 只有 text/image，视频走不通。
           models:
             [
               {
@@ -134,7 +134,7 @@ llm-pi-ai:
                   name: step-5-preview,
                   contextWindow: 1000000,
                   # 文档写明 max_tokens 默认 INF、由模型自决；这里给 128K 作上界，
-                  # 单条回复用不到，纯为兜住失控输出吃掉套餐 Credit。
+                # 单条回复用不到，纯为兜住失控输出吃掉套餐 Credit。
                   maxTokens: 131072,
                   input: [ text, image ],
                   reasoningEfforts: { low: low, medium: medium, high: high }

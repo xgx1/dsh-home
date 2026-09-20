@@ -3,14 +3,17 @@
 # it this preset adds exactly what each other shipped mode contributes, and
 # nothing else:
 #
-# - From `code` (PTC 模式): the `tool-presentation` row — configured
-#   `mode: both` rather than PTC's `code`, so this agent sees every native
-#   schema AND `run_code` with the generated SDK, instead of trading one form
-#   away for the other.
-# - From `cordis` (创造模式): the persona paragraphs that teach the two-plane
-#   rule, the `tool-cordis` runtime-inspection toolset, and the two
-#   preset-traveling authoring skills (`editing-cordis-compositions`,
-#   `cordis-plugin-development`) via `skill-filesystem.customSkillDirs`.
+# - From `code` (PTC 模式): the `tool-presentation` row. Originally
+#   `mode: both` — every native schema AND `run_code` with the generated SDK.
+#   2026-09-20 changed to `mode: native` by user decision: `both` sent the
+#   whole catalog twice (native 98,533 chars + Code Mode SDK 69,017 chars,
+#   58% of fixed injection) while measured `run_code` usage was zero. Cost:
+#   `run_code` is no longer in the catalog.
+# - From `cordis` (创造模式): the `tool-cordis` runtime-inspection toolset.
+#   The two preset-traveling authoring skills this preset used to advertise
+#   (`editing-cordis-compositions`, `cordis-plugin-development`) are gone:
+#   `skills/` next to this file is empty, so the persona no longer names them
+#   and instead points at `docs/cordis-primer.md` + `docs/architecture.md`.
 #
 # TRUST: the cordis toolset evaluates model-written JavaScript against the
 # live runtime, and a composition this agent writes becomes a preset other
@@ -49,14 +52,9 @@
     prefix: |-
       You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness. Your working directory is {{cwd}}.
 
-      Your tool catalog is presented twice: every tool keeps its native schema, and the same catalog is reachable as Code Mode — write one TypeScript program against the generated SDK and `run_code` executes its steps in order. Use plain single calls for one-step actions; fold chained steps (edit → run → read output → edit again) into one program when an intermediate result matters only to the next step.
+      You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
 
-      You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy. Harness details are NOT stored in this prompt; load the matching skill with the `skill` tool the moment a task enters its domain, and follow the skill's full instructions rather than its catalog summary:
-
-      - `editing-cordis-compositions` — load BEFORE reading or changing any Cordis composition or agent preset: the two-plane rule (host vs preset), isolate realms for preset-owned services, mount-validation, preset authoring, and the shipped-preset rules all live there.
-      - `cordis-plugin-development` — load BEFORE defining, running, updating, repairing, or removing a dynamic Cordis Plugin: Host/Client halves, Services and Events, Slots and Tools, approval and failure recovery.
-
-      When a request touches harness composition or a dynamic Plugin at all, load the skill first instead of reconstructing its rules from memory.
+      Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
 
       Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
 
@@ -121,11 +119,24 @@
 - id: skill-filesystem
   name: '@deepseek-ai/dsh-skill-filesystem'
   config:
+    includeDefaultRoots: false
+    customSkillDirs:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
+
+- id: skill-filter
+  name: '@deepseek-ai/dsh-skill-filter'
+  config:
     customSkillDirs:
       - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
 
 - id: tool-skill
   name: '@deepseek-ai/dsh-tool-skill'
+  config:
+    # 2026-09-20 精简：310 条技能目录 81,964 字符描述，平均 264 字符/条。
+    # 默认上限 500 基本没起作用（只有 5 条超过），所以真正的杠杆是这里。
+    # 150 截断后降到 41,089 字符（-50%），触发词与「做什么/何时用」都在前 150 字符内。
+    # 上限下限是 3（z.number min 3）。
+    catalogDescriptionMaxLength: 150
 
 # ── goals ───────────────────────────────────────────────────────────────────
 
@@ -260,8 +271,8 @@
         enableRunInBackground: false
         maxDepth: provider-managed
 
-    - id: workflow-worker-thread
-      name: '@deepseek-ai/dsh-workflow-worker-thread'
+    - id: workflow-ptc
+      name: '@deepseek-ai/dsh-workflow-ptc'
       config:
         provider: spawn
 
@@ -309,4 +320,10 @@
 - id: tool-presentation
   name: '@deepseek-ai/dsh-agent-tool-presentation'
   config:
-    mode: both
+    # 2026-09-20 用户决策：只留一份。原 mode: both 让工具目录完整送两遍
+    # （原生 schema 98,533 + Code Mode 的 ToolArgsMap/ToolOutputMap 69,017），
+    # 占固定注入的 58%。实测 run_code 调用为 0。
+    # 代价（源码 packages/core/tools/src/index.ts:906-911 确认）：run_code
+    # transport 只呈现给「mode actually presents it」的 scope，native 下它从
+    # 目录里消失，失去「5 次往返折叠成 1 次」的能力。
+    mode: native

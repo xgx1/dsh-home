@@ -50,3 +50,6 @@ remote-web-ui-devices.json
 *.tmp
 *.swp
 .DS_Store
+
+# 技能过滤：上一次有效配置的回落缓存（本机运行时数据）
+.skill-filter-cache.json
