@@ -17,6 +17,9 @@ importers:
       '@graysilver/dsh-evolve-modes':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
+      dsh-llm-retry-schedule:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
       dsh-sidebar-taskbar:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar

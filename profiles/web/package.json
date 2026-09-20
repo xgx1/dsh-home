@@ -5,6 +5,7 @@
     "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui",
     "@deepseek-ai/dsh-toolkit": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-toolkit",
     "@graysilver/dsh-evolve-modes": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes",
+    "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager",
     "web-dsh-web-extension": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension"
@@ -19,7 +20,10 @@
         "@deepseek-ai/dsh-toolkit",
         "dsh-task-manager",
         "dsh-sidebar-taskbar",
-        "@graysilver/dsh-evolve-modes"
+        "@graysilver/dsh-evolve-modes",
+        "@deepseek-ai/dsh-experimental-agent-team-web-profile",
+        "@deepseek-ai/dsh-experimental-agent-team-profile",
+        "dsh-llm-retry-schedule"
       ]
     }
   }
