@@ -1,6 +1,2 @@
-# Personal skill filter config (~/.dsh/skill-filter.yaml)
-# Default: all skills allowed. Projects override with their own config.
-# See docs/adr/0001 (whitelist model) and docs/adr/0002 (frontmatter merge).
-
 allow:
   - "*"
