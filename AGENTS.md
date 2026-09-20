@@ -32,3 +32,10 @@
 ## 代码检索
 
 omni preset 的 persona 已写完整检索优先级，这里只留判据：图查不到 ≠ 代码不存在——先 `check_index_coverage` / `query_graph(graph="missed")` 核覆盖，再回退文本搜索并标注「图未覆盖」；未索引的仓库先 `index_repository` 再查图。详见技能 `cbm-graph-first`。
+
+## 模型目录
+
+- **所有模型（任何项目/工具加载的）一律存放在 `~/.model/`**，按工具或项目分子目录；项目或工具原本的模型位置**只保留软链接**指回 `~/.model`，模型实体不随项目目录移动、不入库、不重复拷贝。
+- 约定：`~/.model/<工具或项目名>/<模型文件>`；原位置用 `ln -s ~/.model/... <原路径>` 恢复引用。
+- 同一模型的不同量化/版本视为重复，只保留**实际在用**的一份；判断"在用"以运行进程与配置文件的**实际引用**为准（`ps` 命令行、`/proc/<pid>/cwd`、配置文件里的 `model` 字段），不靠猜。
+- 2026-09-20 已迁移：Bonsai2-27B（PQ2_0 + mmproj）、fcitx vinput 的 sherpa-onnx ASR、zvec-grep 嵌入模型，并删除未引用的死重（Bonsai PTQ1_0、vinput qwen3-asr-1.7b、960ms 流式）。
