@@ -140,15 +140,24 @@
 
 # ── goals ───────────────────────────────────────────────────────────────────
 
-# Only the model-facing tool. The goal SERVICE, its session driver, and the
-# `/goal` command stay on the host plane: the Gateway serves the goal domain as
-# Remote endpoints whose receiver comes from a generated descriptor, so it
-# resolves `goals` on the host and an entry-local realm here would hide it. The
-# registry is keyed by session anyway, so one host instance serves every
-# session. What a preset chooses is whether its agent can call the goal tool.
+# 2026-09-25 用户要求：goal 相关插件全部启用。分工对齐 dsh-web-app bundle 的
+# 注释——服务与 session driver 留 host plane，人类命令与模型工具归 preset：
+#   host plane（profiles/web/cordis.patch.yml）：goal、goal-round-driver、ui-goal
+#   本 preset：/goal 人类命令 + 模型工具
+# 命令也挂在这一层的理由：host plane 的 command-goal 被 dsh-web-app 层禁用，
+# preset 不挂就没有任何一层注册 /goal；shipped 的 standard/ptc/cordis 预设
+# 同样在 preset 层注册它。
+- id: command-goal
+  name: '@deepseek-ai/dsh-command-goal'
+
+# The goal SERVICE and its session driver stay on the host plane: the Gateway
+# serves the goal domain as Remote endpoints whose receiver comes from a
+# generated descriptor, so it resolves `goals` on the host and an entry-local
+# realm here would hide it. The registry is keyed by session anyway, so one host
+# instance serves every session. What a preset chooses is whether its agent can
+# call the goal tool.
 - id: tool-goal
   name: '@deepseek-ai/dsh-tool-goal'
-  disabled: true
 
 # ── plan mode ───────────────────────────────────────────────────────────────
 

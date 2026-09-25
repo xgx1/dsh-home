@@ -258,9 +258,8 @@
   disabled: true
 
 # ── 用户要求关闭（2026-08-23）：精简能力面 ─────────────────────────────
-# 关闭：会话日志导出 / Ralph 循环 / 目标系统全套(goal·goal-round-driver·
-# command-goal·tool-goal) / 审批 seam / read-before-edit 强制策略 /
-# GUI 目标栏与 plan 模式。
+# 关闭：会话日志导出 / Ralph 循环 / 审批 seam / read-before-edit 强制策略 /
+# GUI plan 模式。（目标系统全套与 GUI 目标栏已于 2026-09-25 恢复，见下。）
 # ── 用户恢复（2026-08-28）：重新启用 DeepSeek 搜索 provider ──────────
 # web-search-deepseek disabled:false，凭据已在 ~/.dsh/.credentials.yaml
 # （DEEPSEEK_API_KEY），无需环境变量；改后需重启 dsh web 生效。
@@ -270,11 +269,20 @@
 - id: tool-ralph
   disabled: true
 
+# ── 用户要求（2026-09-25）：goal 相关插件全部启用 ────────────────────────
+# 目标系统留在 host plane 的三项：服务（ctx.goals）、自动续跑 driver、
+# GUI 目标栏（ui-goal，另见下方条目）。
+# goal-round-driver 只在会话空闲、goal 为 active 且续跑已 arm 时追加轮次；
+# 轮数上限由 goal 自身的 maxGoalRounds（默认 256）约束，没有 goal 时它不做事。
+# 另两项（人类命令 command-goal / 模型工具 tool-goal）归 preset plane，
+# 由 .agent-presets/omni|manager 注册——两层同时注册同一工具 id 会 fail loud
+# （见 dsh-web-app bundle 与 shipped cordis preset 的同一条注释），故此处保持
+# disabled:true，不是漏开。
 - id: goal
-  disabled: true
+  disabled: false
 
 - id: goal-round-driver
-  disabled: true
+  disabled: false
 
 - id: command-goal
   disabled: true
@@ -306,8 +314,10 @@
 - id: fs-observation-policy
   disabled: true
 
+# GUI 目标栏（composer-context 栈第二条卡片，有 goal 时才渲染）：
+# 2026-09-25 随目标系统一起恢复
 - id: ui-goal
-  disabled: true
+  disabled: false
 
 - id: ui-plan
   disabled: true
