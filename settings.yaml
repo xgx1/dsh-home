@@ -1,9 +1,9 @@
 ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
 agent-default-model:
-  provider: sensenova
-  model: deepseek-v4-flash
-  reasoningEffort: xhigh
+  provider: deepseek-official
+  model: deepseek-flash
+  reasoningEffort: max
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -30,7 +30,7 @@ llm-deepseek:
       imageMaxBytes: 1048576
       systemPromptUpdate: in-history
 shell:
-  timeoutMs: 1800000
+  timeoutMs: 60000
 locale:
   preference: zh
 llm-pi-ai:
@@ -160,3 +160,9 @@ subagent-model-selection:
 subagent:
   maxDepth: 10
   maxActiveSubagents: 20
+context-compression:
+  profile: savings
+  autoCompact:
+    thresholdPercent: 70
+ui-chat:
+  transcriptView: normal
