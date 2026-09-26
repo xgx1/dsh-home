@@ -30,7 +30,7 @@ llm-deepseek:
       imageMaxBytes: 1048576
       systemPromptUpdate: in-history
 shell:
-  timeoutMs: 60000
+  timeoutMs: 1800000
 locale:
   preference: zh
 llm-pi-ai:
