@@ -1,0 +1,26 @@
+# laya-sidecar.service —— Laya System One 决策模型侧车（laya-mcp serve）
+#
+# 给 DSH 的 dsh-laya 插件提供本地决策能力：state + noul/choice/score 问题 → 校准概率。
+# 模型 convaiinnovations/laya（421M，Apache-2.0），跑在 RX 7900 GRE 上（PyTorch ROCm）。
+# 权重缓存在 ~/.model/laya/hf（HF_HOME 由 run-sidecar.sh 设定）。
+#
+# 显存：常驻约 4.4 GB。要与本地 llama-server（Bonsai 2 27B，100K 上下文峰值 12.3 GB）同时跑
+# 会超 16 GB，二者按需二选一：systemctl --user stop laya-sidecar。
+#
+# 排查：~/.local/share/laya/venv/bin/laya-mcp doctor   （真的在 GPU 上跑一个算子再下结论）
+[Unit]
+Description=Laya System One decision sidecar (laya-mcp serve, ROCm GPU, :8083)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/laya
+ExecStart=%h/.local/share/laya/run-sidecar.sh
+Restart=always
+RestartSec=5
+# 冷启动要下/构建检查点：实测 82s（缓存已有时更快），给足启动窗口
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
