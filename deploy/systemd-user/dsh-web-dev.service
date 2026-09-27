@@ -1,0 +1,28 @@
+# dsh-web-dev.service —— DSH 开发实例（git worktree: ~/projects/MyAI/deepseek-harness-dev）
+#
+# 与 dsh-web.service（生产）的分工：
+#   生产 = ~/projects/MyAI/deepseek-harness     （分支 master），DSH_HOME=~/.dsh     → :3080
+#   开发 = ~/projects/MyAI/deepseek-harness-dev （分支 dev）   ，DSH_HOME=~/.dsh-dev → :3081
+# 两者端口与 DSH_HOME 都不同，sessions/storages 互不可见。
+#
+# 开发循环：改 worktree 代码 → 在 worktree 里 `pnpm run build` → `systemctl --user restart dsh-web-dev.service`。
+# 重启这个 unit 不影响正在跑的 3080 生产会话。
+#
+# 退出策略与生产一致：dsh 正常退出时 status=0，Restart=on-failure 不会拉起，服务会静默趴窝
+# （dev 单元 2026-09-12 就这样死了 47 分钟），所以用 always + 关掉启动限流。
+[Unit]
+Description=DeepSeek Harness (dsh) Web UI — dev worktree instance (:3081)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/MyAI/deepseek-harness-dev
+Environment=DSH_HOME=%h/.dsh-dev
+ExecStart=%h/.dsh-dev/dsh-web-dev-launch.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
