@@ -11,12 +11,6 @@ importers:
       '@changfenhuang/dsh-genui':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-genui
-      '@deepseek-ai/dsh-toolkit':
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-toolkit
-        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-toolkit
-      '@graysilver/dsh-evolve-modes':
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
-        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-evolve-modes
       billion-context:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
         version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
@@ -29,6 +23,3 @@ importers:
       dsh-task-manager:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
-      web-dsh-web-extension:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension
-        version: link:../../../projects/MyAI/dsh-extensions/plugins/web-dsh-web-extension

@@ -208,31 +208,13 @@
       provider: deepseek-official
       model: deepseek-v4.1-flash-expires-on-0910
 
-# ── 临时禁用（2026-09-20，DSH 0.1.6 升级）：dsh-evolve-modes ────────────
-# dsh-web 升到 0.1.6-alpha.2 后，该 vendor 插件（v0.4.0，仅适配 0.1.5-rc.2）
-# 被 0.1.6 的 typert-loader 拒绝激活，启动报：
-#   typert-loader: @graysilver/dsh-evolve-modes invocation
-#   "@graysilver/dsh-evolve-modes#evolveModes/dashboard" parameter codec has
-#   no create() factory
-# 根因：0.1.5→0.1.6 的 strict codec 契约从 { mode, typeSymbol, schema } 改成
-# { mode, typeSymbol, create: () => TypertSchema }（见
-# packages/typert/protocol/src/types.ts 的 TypertCodec、typert/registry/src/
-# service.ts:643 的 materializeSchema）。上游 v0.4.1 只回补了 0.1.2 兼容，
-# 没有 0.1.6 适配版。
-# 完整迁移量（不止 codec）：src/evolution/wire.ts 2 处 codec；
-# src/client/index.tsx 12 个类型错误，涉及 4 个 API 面
-#   ① ctx.remote.commands.execute（ClientRemote 结构变更）
-#   ② ctx.slots.register 的 select/inject 选项（slots 注册 API 变更）
-#   ③ scope.remote.evolveModes（注入的 remote 访问方式变更）
-#   ④ ContextMessageNode 新增必填 producer
-# 外加 45 个 @deepseek-ai/dsh-* 包的 peer 版本碎片（0.1.5-rc.2 / 0.1.6-alpha.2
-# 双份并存），需要 pnpm.overrides 统一。
-# 恢复：改好上游 → pnpm run build → 删除下面 2 行 + 重启 dsh-web。
-# 注意：依赖 @graysilver/dsh-evolve-modes 仍留在 package.json 的 dependencies
-# 与 dsh.profile.bundles 里（bundle 层保留，仅关掉这一个 entry），这样
-# 恢复时不用重新接线。
-- id: dsh-evolve-modes
-  disabled: true
+# ── 用户要求（2026-09-30）：dsh-evolve-modes / @deepseek-ai/dsh-toolkit 卸载 ──
+# 两个第三方插件连同 dsh-extensions/vendor 下的 submodule 源码一并移除：
+# 依赖、bundles、本 patch 的 entry、profiles/node_modules 链接全部清掉。
+# dsh-evolve-modes 此前已因 0.1.6 strict codec 不兼容处于 disabled:true，
+# 它本是这次删除的直接原因；dsh-toolkit 按用户要求一并移除。
+# 另有自研包 web-dsh-web-extension（本就是无行为占位包）同批删除。
+# 备份：~/backup/dsh-plugin-removal-20260930-182449/
 
 # ── 用户要求关闭（2026-08-23）：精简能力面 ─────────────────────────────
 # 关闭：会话日志导出 / Ralph 循环 / 审批 seam / read-before-edit 强制策略 /
