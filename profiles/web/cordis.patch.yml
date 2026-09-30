@@ -16,48 +16,25 @@
       config:
         serverName: ue
         transport: streamable-http
+        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。默认 reconnect
+        # maxAttempts=10、退避封顶 30s，约 1 分钟就"永久放弃"，之后只能靠 HMR
+        # 或重启 Host 才回来（实测 2026-09-26：编辑器起来后仍报 server is
+        # disconnected）。放宽到 ~1.5h 窗口，让编辑器重启后自愈。
+        reconnect:
+          maxAttempts: 215
         url: http://127.0.0.1:8000/mcp
         failOnStartupError: false
 
-# ── 用户调整（2026-09-10）：headroom MCP 从死配置改为 stdio 直连 ─────────
-# headroom 自带 MCP：`headroom mcp serve`（serverName=headroom，v1.29.1），
-# 暴露 headroom_compress / headroom_retrieve / headroom_stats 三个工具，
-# 数据取自常驻代理 headroom-deepseek.service（127.0.0.1:8787，实测在跑）。
-# 旧配置写的是 streamable-http://127.0.0.1:8791/mcp —— 本机从来没有 8791 服务
-# （仅从旧客户端 mcp.json 迁移过来的条目），又带 failOnStartupError:false，
-# DSH 静默跳过，导致会话里一直没有 mcp__headroom__* 工具。
-# 改 stdio 后由 dsh-web 自己拉起，与 cbm / playwright 同一机制，
-# 不再依赖外部守护进程，也不会再有"服务没起就静默消失"的失败模式。
-# 实测：初始化握手 639ms，环境 PATH 含 ~/.local/bin，headroom 可解析。
-# 又实测：DSH 会热加载本 patch —— 改完立刻重拉 MCP 子进程，无需重启 dsh-web。
-# 必须清代理：dsh-web 继承 ~/.config/environment.d/99-proxy.conf 的
-# all_proxy=socks5://127.0.0.1:7897，MCP 子进程拿 httpx 走它去连本地 8787，
-# 报 "Using SOCKS proxy, but the 'socksio' package is not installed" → stats 里
-# proxy 显示 unreachable（no_proxy 对 all_proxy 的 all:// 挂载不生效）。
-# 这与 headroom-*.service 里 Environment=ALL_PROXY= 的既有做法一致：
-# MCP 只连本机 8787，代理必须清空；no_proxy 一并显式给上以兼顾其他库。
-# 若日后要改回共享服务，用 headroom mcp serve --transport http --port 8791
-# （实测 HTTP 通道握手正常），补个 systemd 用户单元再换回 streamable-http 即可。
-- insert:
-    - id: mcp-headroom
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: headroom
-        transport: stdio
-        command: headroom
-        args:
-          - mcp
-          - serve
-        env:
-          all_proxy: ''
-          ALL_PROXY: ''
-          http_proxy: ''
-          HTTP_PROXY: ''
-          https_proxy: ''
-          HTTPS_PROXY: ''
-          no_proxy: 'localhost,127.0.0.1,::1'
-          NO_PROXY: 'localhost,127.0.0.1,::1'
-        failOnStartupError: false
+# ── 用户调整（2026-09-30）：headroom 层整体拆除 ────────────────────────────
+# 三个 headroom unit（:8787/:8788/:8789）、uv tool 与 ~/.headroom 已删除，
+# 这里的 mcp-headroom 条目（headroom_compress / headroom_retrieve /
+# headroom_stats 三个工具）随之移除。压缩权交给 billion-context：它的
+# bundle patch 插入 bili-native（宿主平面 cordis 插件，进程内 fetch 拦截 +
+# 原生 compress/decompress/search_context/acp_status/acp_cache 工具与
+# /acp、/acp-cache 命令），配置在 ~/.config/billion-context/billion-context.json。
+# 注意它自带的 `compaction-basic: auto:false` 打在宿主树那条 web-app 已
+# disabled 的行上，是静默 no-op；真正生效的预设行在
+# ~/.dsh/.agent-presets/{omni,manager}/agent.cordis.yml 里改。详见 ADR-0009。
 
 # ── 用户调整（2026-09-20）：浏览器控制迁到 DSH 0.1.6 的 browser-use provider ─
 # 旧接线：dsh-mcp-client 直挂全局裸 @playwright/mcp（`mcp__playwright__*`），

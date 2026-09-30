@@ -203,8 +203,14 @@
     compaction: true
     toolResultPruner: true
   config:
+    # 压缩权归 billion-context（bili-native 的进程内 fetch 车道）：这里只关自动
+    # 压缩，手动 /compact 与 ctx.compaction 服务保持可用（dev 的 laya-router 会调
+    # ctx.compaction.compactIfNeeded）。必须写在预设里——profile 补丁打不到预设树，
+    # billion-context 自带的 dsh.bundle.patch.yml 正是这样静默失效的。
     - id: compaction-basic
       name: '@deepseek-ai/dsh-compaction-basic'
+      config:
+        auto: false
 
     - id: command-compact
       name: '@deepseek-ai/dsh-command-compact'

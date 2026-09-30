@@ -1,12 +1,15 @@
 {
   "name": "dsh-profile-headless",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context"
+  },
   "dsh": {
     "profile": {
       "bundles": [
         "@deepseek-ai/dsh-base",
-        "@deepseek-ai/dsh-headless"
+        "@deepseek-ai/dsh-headless",
+        "billion-context"
       ],
       "patchReload": "startup"
     }
