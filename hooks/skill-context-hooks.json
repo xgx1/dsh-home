@@ -1,0 +1,41 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PONYTAIL_DEFAULT_MODE=ultra PLUGIN_DATA=/tmp/ponytail-state node /home/sx/projects/MyAI/dsh-extensions/skills/dietrichgebert-ponytail/hooks/ponytail-activate.js",
+            "timeout": 10,
+            "statusMessage": "Loading ponytail (ultra)..."
+          },
+          {
+            "type": "command",
+            "command": "CAVEMAN_DEFAULT_MODE=wenyan-ultra node /home/sx/.dsh/hooks/caveman-session-context.js /home/sx/projects/MyAI/dsh-extensions/skills/caveman",
+            "timeout": 30,
+            "statusMessage": "Loading caveman (wenyan-ultra)..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PONYTAIL_DEFAULT_MODE=ultra PLUGIN_DATA=/tmp/ponytail-state node /home/sx/projects/MyAI/dsh-extensions/skills/dietrichgebert-ponytail/hooks/ponytail-mode-tracker.js",
+            "timeout": 10,
+            "statusMessage": "Tracking ponytail mode..."
+          },
+          {
+            "type": "command",
+            "command": "CAVEMAN_DEFAULT_MODE=wenyan-ultra CLAUDE_PLUGIN_ROOT=/home/sx/projects/MyAI/dsh-extensions/skills/caveman node /home/sx/projects/MyAI/dsh-extensions/skills/caveman/src/hooks/caveman-mode-tracker.js",
+            "timeout": 30,
+            "statusMessage": "Tracking caveman mode..."
+          }
+        ]
+      }
+    ]
+  }
+}

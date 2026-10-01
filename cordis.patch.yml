@@ -1,0 +1,37 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  ~/.dsh/cordis.patch.yml — home 级 user patch 层（对所有 profile 生效）
+#  与 profiles/<名>/cordis.patch.yml 一样属于 user patch 层：热重载，改完即生效。
+# ══════════════════════════════════════════════════════════════════════════
+
+# ── 用户要求（2026-10-01）：ponytail + caveman 常驻 ────────────────────────
+# 目标：两个技能默认启用、以最高等级运行，不必等模型自己想起来调用技能。
+# 手段：挂 DSH 自带的 Claude Code hooks 桥，在会话开头把规则集作为上下文注入：
+#   SessionStart     → ponytail-activate.js / caveman-session-context.js
+#   UserPromptSubmit → 两边的 mode tracker（让 /ponytail lite、/caveman ultra 生效）
+# 钩子清单在 ~/.dsh/hooks/skill-context-hooks.json（属于本仓，随仓库跨设备走）。
+#
+# 为什么命令串里内联 env，而不是配置字段：
+#   · PLUGIN_DATA —— ponytail 的方言开关。只有它存在时 ponytail 才输出
+#     {"hookSpecificOutput":{"additionalContext":…}} 这种 JSON；否则走原生 Claude
+#     分支写纯 stdout，而 DSH 桥的 codec（hook-protocol/src/codec.ts:59
+#     parseHookOutput）只认 exit 0 且首字符为 { 的 JSON，纯 stdout 一律忽略。
+#   · PONYTAIL_DEFAULT_MODE=ultra / CAVEMAN_DEFAULT_MODE=wenyan-ultra —— 固定最高等级。
+#     （等级状态文件写在沙箱外会被静默拒绝，所以默认值必须从 env 给，不能靠落盘。）
+#   · 桥没有「传任意 env」的配置字段，只能在命令串里内联。
+# caveman 的 SessionStart 另需一层 shim（~/.dsh/hooks/caveman-session-context.js，
+# 12 行 node）：它的 activate 也只写纯 stdout，且会在尾部追加 statusline 提示——
+# 那在 DSH 里没有意义，shim 负责剥掉并套上 JSON 信封。UserPromptSubmit 侧
+# caveman 的 tracker 本来就写 JSON，直接用。
+#
+# 前置条件（换设备重建时）：
+#   1. dsh-extensions 里两个技能分组仓已 checkout（submodule）：
+#      skills/dietrichgebert-ponytail、skills/caveman
+#   2. 技能软链已建：cd dsh-extensions && ./install-skill.sh
+#   3. node 在 dsh-web 的 PATH 上（桥用 bash -c 起钩子）
+# 依赖解析：@deepseek-ai/dsh-hooks-claude-code 由启动器 app 声明
+# （apps/cli/package.json），从 apps/cli 的解析链加载，不用装进 profile。
+- insert:
+    - id: hooks-claude-code
+      name: '@deepseek-ai/dsh-hooks-claude-code'
+      config:
+        configPath: /home/sx/.dsh/hooks/skill-context-hooks.json
