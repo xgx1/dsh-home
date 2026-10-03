@@ -3,8 +3,7 @@ ui-onboarding:
 agent-default-model:
   provider: deepseek-official
   model: deepseek-flash
-  # 2026-09-30 用户指示：默认模型仍是 deepseek-official 的 flash，档位从 max 收到 low
-  reasoningEffort: low
+  reasoningEffort: max
 permission:
   defaultPreset: workspace-write
 agent-loop:
@@ -13,25 +12,36 @@ agent-presets:
   default: omni
 llm-deepseek:
   apiKeyEnv: DEEPSEEK_API_KEY
-  # 直连 DeepSeek 官方：原经 headroom :8787 中转，该层已拆除；去掉 baseURL 覆盖
-  # 即回落插件默认 https://api.deepseek.com。
-  # protocol 保持 chat-completions —— 这行当年是为绕 headroom 只放行
-  # /v1/chat/completions（messages 会 403，被 DSH 归类成 AUTH、UI 显示“API 密钥
-  # 无效”，并非 key 问题）才写的；直连后换插件默认的 messages 属未经实测的变量，
-  # 要试另起一次。
-  protocol: chat-completions
+  # 直连官方（headroom 中转层 2026-10-03 拆除，不再覆盖 baseURL）。
+  # protocol=messages → https://api.deepseek.com/anthropic/v1/messages：
+  # 原生 thinking 块带 signature，可跨轮回放；chat-completions 只有 reasoning_content、
+  # 无 signature，且插件在该协议下没有图片链路。旧值 chat-completions 是当年绕 headroom
+  # 的补丁（headroom 只放行 /v1/chat/completions，走 messages 会 403，被 DSH 归成 AUTH、
+  # UI 显示「API 密钥无效」）。要回滚就把下面这行改回 chat-completions。
+  protocol: messages
   thinking: enabled
+  # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
   reasoningEffort: low
+  # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
+  # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
   models:
     - id: deepseek-flash
-      name: DeepSeek-V41-Flash
-      contextWindow: 1000000
+      name: DeepSeek-V4.1-Flash
+      contextWindow: 1048576
+      maxTokens: 393216
       inputModalities:
         - text
         - image
       imagePixelBudget: 640000
       imageMaxBytes: 1048576
       systemPromptUpdate: in-history
+    - id: deepseek-v4-pro
+      name: DeepSeek-V4-Pro
+      description: 更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。
+      contextWindow: 1048576
+      maxTokens: 393216
+      inputModalities:
+        - text
 shell:
   timeoutMs: 1800000
 locale:
@@ -75,10 +85,10 @@ llm-pi-ai:
       sensenova:
         {
           # OpenAI Responses 全兼容端点（原经 headroom :8788 走 chat/completions）。
-          # 2026-09-30 实测：developer 角色、none/low/medium/high/xhigh 五档 effort、
-          # strict 工具、SSE 流（response.* 事件）全部 200。
-          # 注意：该网关是严格 schema，拒 pi-ai 必发的 reasoning.summary；由
-          # billion-context 的 compat.dropFields 在转发边界删除（见 ADR-0009）。
+        # 2026-09-30 实测：developer 角色、none/low/medium/high/xhigh 五档 effort、
+        # strict 工具、SSE 流（response.* 事件）全部 200。
+        # 注意：该网关是严格 schema，拒 pi-ai 必发的 reasoning.summary；由
+        # billion-context 的 compat.dropFields 在转发边界删除（见 ADR-0009）。
           displayName: "SenseNova token plan (Responses API)",
           apiKeyEnv: SENSENOVA_API_KEY,
           api: openai-responses,
@@ -93,13 +103,10 @@ llm-pi-ai:
           models:
             [
               {
-                  # 官方映射表：DeepSeek V4.1 Flash 的 model id 就是 deepseek-flash
-                  # （写成 deepseek-v4.1-flash 会 403「not available in the current
-                  # token plan」——那个 id 不在套餐里）。
                   id: deepseek-flash,
                   name: DeepSeek V4.1 Flash,
                   contextWindow: 1000000,
-                  maxTokens: 65536,
+                  maxTokens: 256000,
                   input: [ text, image ],
                   reasoningEfforts: { off: none, low: low, medium: medium, high: high, xhigh: xhigh }
                 },
@@ -107,7 +114,7 @@ llm-pi-ai:
                   id: sensenova-6.8-flash-lite,
                   name: sensenova-6.8-flash-lite,
                   contextWindow: 262144,
-                  maxTokens: 65536,
+                  maxTokens: 256000,
                   input: [ text, image ],
                   reasoningEfforts: { off: none, low: low, medium: medium, high: high, xhigh: xhigh }
                 }
@@ -162,8 +169,6 @@ subagent-model-selection:
   allowedModels:
     - provider: md
       model: deepseek-ai/DeepSeek-V4.1-Flash
-    - provider: local-bonsai
-      model: bonsai2-27b
     - provider: sensenova
       model: sensenova-6.8-flash-lite
     - provider: sensenova
