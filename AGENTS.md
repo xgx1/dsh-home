@@ -5,6 +5,7 @@
 
 ## 修改位置
 
+- **DSH 本体的生产检出默认只读**：`~/projects/MyAI/deepseek-harness`（分支 `master`，`dsh-web.service` 的 3080 就跑在它上）。DSH 的功能开发只改同层级的 worktree `~/projects/MyAI/deepseek-harness-dev`（分支 `dev`，dev 实例 `dsh-web-dev.service` → `:3081`，`DSH_HOME=~/.dsh-dev`）；**除非用户在当次需求里主动点名要改生产检出**。细节与禁止清单见 `~/projects/MyAI/AGENTS.md`「DSH 改动落点」。
 - 需要重启 `dsh-web.service`（会中断当前对话）或可能影响其他会话的改动，动手前先确认；纯代码/文档提交可直接做。
 - 改任何 git submodule 要在**各自目录里**提交、推送，再回上层仓库更新指针；上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——改完要提交并推送，新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
@@ -34,9 +35,7 @@
 
 ## GUI 窗口
 
-- 助手拉起的图形程序一律自动落到 **AI 工作区（Hyprland workspace 10）**，不抢焦点、不切用户工作区，用户 `Super+0` 随时可看。判据是窗口进程的 cgroup 落在 `dsh-*`（`dsh-web.service` / `dsh-subprocess-*.scope`；setsid / nohup / reparent 都改不掉），实现在 `~/.config/hypr/hyprland.lua` 的「AI 窗口隔离」段；用户自己起的程序（`session-N.scope`）不受影响。
-- **启动 GUI 程序用 `aiw <命令>`**（`~/.local/bin/aiw`）：由 Hyprland 执行器起，带 `workspace 10 silent` 直接落位，且**进程不会随命令结束被回收**——在 DSH 的 bash 里直接 `setsid nohup` 起的图形进程会在命令 scope 拆除时一起被杀。
-- 要主动打开给用户看：`aiw --here <命令>`；跳过兜底规则用 `AIW_SHOW=1`；换目标工作区用 `AIW_WS=7 aiw …`。
+- 助手拉起的 GUI 进程**会在 DSH 命令 scope 拆除时被回收**——要长驻就自己 `setsid` / systemd 管，别指望命令返回后窗口还在。（2026-10-05 已拆「AI 窗口隔离」：不再自动搬 workspace 10，`aiw` / `AIW_SHOW` / `AIW_WS` 全部废止。）
 - 本机 Hyprland 0.56 的派发一律是 Lua：`hyprctl dispatch 'hl.dsp.…'`（旧写法 `hyprctl dispatch fullscreen 0` 会被当 Lua 求值报错），另有 `hyprctl eval` / `hyprctl repl` 可现场读写状态。
 
 ## 代码检索
@@ -49,3 +48,4 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - 约定：`~/.model/<工具或项目名>/<模型文件>`；原位置用 `ln -s ~/.model/... <原路径>` 恢复引用。
 - 同一模型的不同量化/版本视为重复，只保留**实际在用**的一份；判断"在用"以运行进程与配置文件的**实际引用**为准（`ps` 命令行、`/proc/<pid>/cwd`、配置文件里的 `model` 字段），不靠猜。
 - 2026-09-20 已迁移：Bonsai2-27B（PQ2_0 + mmproj）、fcitx vinput 的 sherpa-onnx ASR、zvec-grep 嵌入模型，并删除未引用的死重（Bonsai PTQ1_0、vinput qwen3-asr-1.7b、960ms 流式）。
+- 2026-09-27 新增：Laya 决策模型（`~/.model/laya/hf`，用 `HF_HOME` 指过去）；推理环境在 `~/.local/share/laya/venv`（torch ROCm / gfx1100），由用户级 `laya-sidecar.service` 在 `:8083` 常驻服务（约 5.5 GB 显存，与 Bonsai 二选一）。
