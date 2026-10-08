@@ -5,7 +5,7 @@
 #
 # 配置：~/.openviking/ov.conf（storage / embedding / vlm），改动要重启本服务。
 #   embedding = 内置本地 GGUF（bge-small-zh-v1.5-f16，512 维，无需 key）
-#   vlm       = modelscope OpenAI 兼容端点（文本模型；图片解析需换真 VLM）
+#   vlm       = modelscope deepseek-ai/DeepSeek-V4.1-Flash（多模态，实测可读图）
 # 密钥：~/.openviking/env（600），由 EnvironmentFile 注入；ov.conf 里只写 ${MD_API_KEY}。
 #
 # 排查：openviking-server doctor（在 ~/.openviking 下带 env 跑）；curl 127.0.0.1:1933/health
