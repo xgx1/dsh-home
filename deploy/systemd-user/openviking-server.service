@@ -1,0 +1,29 @@
+# openviking-server.service —— OpenViking 上下文数据库（DSH 长期记忆后端）
+#
+# DSH 侧插件 @openviking/dsh-memory-plugin（dev home → "web" profile，link: 源码安装）
+# 默认连本机 http://127.0.0.1:1933，无鉴权（本机部署）。
+#
+# 配置：~/.openviking/ov.conf（storage / embedding / vlm），改动要重启本服务。
+#   embedding = 内置本地 GGUF（bge-small-zh-v1.5-f16，512 维，无需 key）
+#   vlm       = modelscope OpenAI 兼容端点（文本模型；图片解析需换真 VLM）
+# 密钥：~/.openviking/env（600），由 EnvironmentFile 注入；ov.conf 里只写 ${MD_API_KEY}。
+#
+# 排查：openviking-server doctor（在 ~/.openviking 下带 env 跑）；curl 127.0.0.1:1933/health
+[Unit]
+Description=OpenViking context database (DSH memory backend, :1933)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.openviking
+EnvironmentFile=%h/.openviking/env
+# all_proxy=socks5:// 会让 httpx 直接报 socksio 缺失（同 laya-sidecar 的坑）：只留 http(s)_proxy
+UnsetEnvironment=all_proxy ALL_PROXY
+ExecStart=%h/.local/bin/openviking-server --host 127.0.0.1 --port 1933
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target
