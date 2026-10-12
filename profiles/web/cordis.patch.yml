@@ -186,27 +186,17 @@
     - id: fs-local
       name: '@deepseek-ai/dsh-fs-local'
 
-# ── 模型路由：子 agent 固定走 DeepSeek 官方 headroom（deepseek-v4.1-flash-expires-on-0910）──
-# 主 agent 默认模型同为 deepseek-official / deepseek-v4.1-flash-expires-on-0910。
-# 此 patch 在 dsh-web 重启后生效。
-# 整行替换 config（patch 不合并）。
-- id: tool-subagent
-  config:
-    provider: spawn
-    toolName: subagent
-    backgroundMode: continuable
-    agentOptions:
-      provider: deepseek-official
-      model: deepseek-v4.1-flash-expires-on-0910
-
+# ── 子 agent 背景模式：fork 用 one-shot（preset 默认 continuable）──
+# 2026-10-05 删两条 agentOptions：原指向 provider `deepseek-official` 与 model
+# `deepseek-v4.1-flash-expires-on-0910`，两者均不在 settings.yaml 的模型目录里，
+# 属失效引用；子 agent 的模型选择由 subagent-model-selection 的 allowedModels 控。
+# tool-subagent 段整段删除：其 config 与 preset 值逐键相同（除 agentOptions），
+# 删后回落 preset，行为不变。patch 是整行替换 config，不合并。
 - id: tool-subagent-fork
   config:
     provider: fork
     toolName: subagent_fork
     backgroundMode: one-shot
-    agentOptions:
-      provider: deepseek-official
-      model: deepseek-v4.1-flash-expires-on-0910
 
 # ── 用户要求（2026-09-30）：dsh-evolve-modes / @deepseek-ai/dsh-toolkit 卸载 ──
 # 两个第三方插件连同 dsh-extensions/vendor 下的 submodule 源码一并移除：

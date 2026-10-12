@@ -1,4 +1,4 @@
-# The `omni` agent preset (全能模式): 标准模式 + PTC 模式 + 创造模式 combined
+# The `manager` agent preset: 标准模式 + PTC 模式 + 创造模式 combined
 # into one composition. Everything in `standard` is here unchanged; on top of
 # it this preset adds exactly what each other shipped mode contributes, and
 # nothing else:
@@ -8,9 +8,7 @@
 #   schema AND `run_code` with the generated SDK, instead of trading one form
 #   away for the other.
 # - From `cordis` (创造模式): the persona paragraphs that teach the two-plane
-#   rule, the `tool-cordis` runtime-inspection toolset, and the two
-#   preset-traveling authoring skills (`editing-cordis-compositions`,
-#   `cordis-plugin-development`) via `skill-filesystem.customSkillDirs`.
+#   rule, and the `tool-cordis` runtime-inspection toolset.
 #
 # TRUST: the cordis toolset evaluates model-written JavaScript against the
 # live runtime, and a composition this agent writes becomes a preset other
@@ -263,27 +261,6 @@
         provider: fork
         toolName: subagent_fork
         backgroundMode: continuable
-
-    # Product providers are host-plane singletons. Copy this preset, then
-    # remove `disabled` from either ordinary tool row to expose that product
-    # only to agents composed from the copy.
-    - id: tool-subagent-codex
-      name: '@deepseek-ai/dsh-tool-subagent'
-      disabled: true
-      config:
-        provider: codex
-        toolName: subagent_codex
-        enableRunInBackground: false
-        maxDepth: provider-managed
-
-    - id: tool-subagent-claude-code
-      name: '@deepseek-ai/dsh-tool-subagent'
-      disabled: true
-      config:
-        provider: claude-code
-        toolName: subagent_claude_code
-        enableRunInBackground: false
-        maxDepth: provider-managed
 
     - id: workflow-ptc
       name: '@deepseek-ai/dsh-workflow-ptc'
