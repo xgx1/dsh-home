@@ -1,8 +1,9 @@
 # DSH 技能过滤（model catalog）
 # deny 非破坏性：被禁技能不出现在模型 catalog，但 /name 仍可手动调用。
 # 生成依据：软链源仓分组（本机为 DSH 开发机）。
-# 禁 88 / 留 249 / 共 337
+# 禁 88 / 留 251 / 共 339
 # 2026-10-10：放行 dotnet-skills / caveman / rider-skills / dietrichgebert-ponytail / self-ops / self-dsh / mattpocock-skills；UE 上游分组仍禁。
+# 2026-10-12：install-skill.sh 源③改递归后发现两个漏装技能（win-im-guest、dsh-plugin-development），两者默认放行；总数随源仓变化，改前先 `ls ~/.dsh/skills | wc -l` 核数，别照抄本行。
 
 allow:
   - "*"

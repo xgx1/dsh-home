@@ -24,7 +24,7 @@
 | `.env` / `**/.env` | 本机环境层，本身就构成一份凭据 |
 | `sessions/` `attachments/` `cache/` | 纯本机运行时数据（~190MB）。`sessions/` 目录名按项目路径编码，换设备即失效 |
 | `storages/` `task-manager/` | 全是本机绝对路径的本机状态，跨设备会互相覆盖 |
-| `skills/` | 根目录下的 301 条**全是软链**，由 `dsh-extensions/install-skill.sh` 从仓库外部生成。注意 `.gitignore` 里写的是 `/skills/`（锚定根目录）——`.agent-presets/*/skills/` 是 preset 自带的技能，属于要跟踪的内容，别把它一起吞掉 |
+| `skills/` | 根目录下的 337 条**全是软链**（数量随源仓变化，别当常数），由 `dsh-extensions/install-skill.sh` 从仓库外部生成。注意 `.gitignore` 里写的是 `/skills/`（锚定根目录）——`.agent-presets/*/skills/` 是 preset 自带的技能，属于要跟踪的内容，别把它一起吞掉 |
 | `bin/` `evolve/` | 本机专属（`bin/hypr-place` 依赖 Hyprland；`evolve/` 含 `rubric.key`） |
 | `profiles/*/node_modules/` | 依赖产物，靠 `pnpm install` 重建 |
 
@@ -32,7 +32,7 @@
 
 ## 依赖：`~/.dsh` 恢复不了的东西
 
-`profiles/web/package.json` 里 6 个依赖全是 `link:` 绝对路径，全部指向 `~/projects/MyAI/dsh-extensions/`：
+`profiles/web/package.json` 里 7 个依赖全是 `link:` 绝对路径，全部指向 `~/projects/MyAI/dsh-extensions/`（含 `dsh-dracula-theme`；`node_modules/` 里另有 `dsh-onedark-theme` 是旧残留，不在依赖表内）：
 
 ```json
 "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui"
@@ -58,7 +58,7 @@ git fetch origin && git checkout -f main
 cd ~/.dsh/profiles/web && pnpm install
 mkdir -p patches        # 空目录不进 git，但组成需要它存在
 
-# 4. 重建技能软链（301 条，指向 dsh-extensions/skills/）
+# 4. 重建技能软链（当前 337 条，指向 dsh-extensions/skills/）
 ~/projects/MyAI/dsh-extensions/install-skill.sh
 
 # 5. 重建凭据（三选一，优先级从高到低）
