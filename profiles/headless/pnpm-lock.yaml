@@ -1,0 +1,13 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      billion-context:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
