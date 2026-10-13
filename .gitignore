@@ -53,3 +53,8 @@ remote-web-ui-devices.json
 
 # 技能过滤：上一次有效配置的回落缓存（本机运行时数据）
 .skill-filter-cache.json
+
+# settings.yaml 迁移（0.2.1）：运行时改名残留与手工备份不入库
+settings.yaml
+settings.yaml.imported
+settings.yaml.bak-*

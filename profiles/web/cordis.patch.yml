@@ -68,7 +68,6 @@
         mode: attach
         endpoint: 'http://127.0.0.1:9222'
         exclusive: false
-
     # 备选 1：Chrome DevTools MCP（与 Playwright 同构配置）
     #   工具命名空间 `mcp__chrome-devtools-mcp__*`（与 playwright-mcp 不同，
     #   是 CDP 直接驱动，工具集偏 inspection/控制）。
@@ -96,21 +95,21 @@
     #       modelName: openai/gpt-5.4-mini
     #       apiKey: !!js process.env.OPENAI_API_KEY
 
-# ── 用户调整（2026-09-20）：桌面控制挂 Cua Driver native（0.1.6 新能力，实验性）─
-# dsh-computer-use 同样是**互斥单注册**（"A deployment can enable one
-# computer-use provider at a time"），Cua 的两个实现只能挂一个。
-# 选 native 而不是 MCP 版的原因：MCP 版要 PATH 上有独立的 `cua-driver` 可执行
-# （trycua/cua 那个 Rust 应用，还得给 OS 授桌面权限），本机没装；native 版直接用
-# 已装的 @trycua/cua-driver@0.28.0（linux-x64-gnu 二进制已在 node_modules），零配置。
-# 代价：native 运行时与 dsh-web **同进程**，native 崩溃会带走 dsh-web。装上独立
-# Cua 应用后换成下面这段（独立进程，崩了不带走 dsh-web）：
-#   - id: computer-use-cua-mcp
-#     name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp'
-#     config:
-#       command: cua-driver
-#       args: [mcp]
-# 截图要生效还需 attachment store + 声明 image 输入的模型路由。
-# 工具命名空间：native 版 `cua_driver_native__*`（无 mcp__ 前缀）；MCP 版 `mcp__cua-driver-mcp__*`。
+    # ── 用户调整（2026-09-20）：桌面控制挂 Cua Driver native（0.1.6 新能力，实验性）─
+    # dsh-computer-use 同样是**互斥单注册**（"A deployment can enable one
+    # computer-use provider at a time"），Cua 的两个实现只能挂一个。
+    # 选 native 而不是 MCP 版的原因：MCP 版要 PATH 上有独立的 `cua-driver` 可执行
+    # （trycua/cua 那个 Rust 应用，还得给 OS 授桌面权限），本机没装；native 版直接用
+    # 已装的 @trycua/cua-driver@0.28.0（linux-x64-gnu 二进制已在 node_modules），零配置。
+    # 代价：native 运行时与 dsh-web **同进程**，native 崩溃会带走 dsh-web。装上独立
+    # Cua 应用后换成下面这段（独立进程，崩了不带走 dsh-web）：
+    #   - id: computer-use-cua-mcp
+    #     name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp'
+    #     config:
+    #       command: cua-driver
+    #       args: [mcp]
+    # 截图要生效还需 attachment store + 声明 image 输入的模型路由。
+    # 工具命名空间：native 版 `cua_driver_native__*`（无 mcp__ 前缀）；MCP 版 `mcp__cua-driver-mcp__*`。
 - insert:
     - id: computer-use
       name: '@deepseek-ai/dsh-computer-use'
@@ -215,8 +214,8 @@
 - id: session-log-download
   disabled: true
 
-- id: tool-ralph
-  disabled: true
+# tool-ralph 已于 0.2.1 移除，此前的 disabled:true 变成失效引用（启动时报
+# patch: entry "tool-ralph" not found），2026-10-14 删掉这行。
 
 # ── 用户要求（2026-09-25）：goal 相关插件全部启用 ────────────────────────
 # 目标系统留在 host plane 的三项：服务（ctx.goals）、自动续跑 driver、
@@ -333,5 +332,193 @@
           - '--stdio'
           - '--mcp-toolset'
           - full
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: deepseek-official
+    model: deepseek-flash
+    reasoningEffort: max
+- id: agent-loop
+  name: "@deepseek-ai/dsh-agent-loop"
+  config:
+    agents: []
+    maxParallelToolCalls: 10
+- id: locale
+  name: "@deepseek-ai/dsh-client-locale"
+  config:
+    preference: zh
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      md:
+        apiKeyEnv: MD_API_KEY
+        api: openai-completions
+        baseURL: https://api-inference.modelscope.cn/v1
+        models:
+          - id: deepseek-ai/DeepSeek-V4.1-Flash
+            name: deepseek-ai/DeepSeek-V4.1-Flash
+            contextWindow: 1000000
+            maxTokens: 256000
+      local-bonsai:
+        displayName: Bonsai 2 27B (local)
+        api: openai-completions
+        baseURL: http://127.0.0.1:8081/v1
+        headers:
+          Authorization: Bearer local-no-auth
+        reasoning: medium
+        models:
+          - id: bonsai2-27b
+            name: Bonsai 2 27B (local AMD)
+            contextWindow: 102400
+            maxTokens: 32768
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              xhigh: xhigh
+      sensenova:
+        displayName: SenseNova token plan (Responses API)
+        apiKeyEnv: SENSENOVA_API_KEY
+        api: openai-responses
+        baseURL: https://token.sensenova.cn/v1
+        reasoning: xhigh
+        compat:
+          supportsDeveloperRole: true
+          supportsMaxOutputTokens: true
+          supportsStrictMode: true
+        models:
+          - id: deepseek-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 1000000
+            maxTokens: 256000
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+          - id: sensenova-6.8-flash-lite
+            name: sensenova-6.8-flash-lite
+            contextWindow: 262144
+            maxTokens: 256000
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+      step:
+        displayName: StepFun Step Plan
+        apiKeyEnv: STEP_API_KEY
+        api: openai-completions
+        baseURL: https://api.stepfun.com/step_plan/v1
+        reasoning: medium
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: step-5-preview
+            name: step-5-preview
+            contextWindow: 1000000
+            maxTokens: 131072
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+- id: ui-theme
+  name: "@deepseek-ai/dsh-client-ui-theme"
+  config:
+    fontSize: 17
+- id: ui-conversation
+  name: "@deepseek-ai/dsh-client-ui-conversation"
+  config:
+    busyEnter: steer
+- id: subagent
+  name: "@deepseek-ai/dsh-subagent"
+  config:
+    maxDepth: 10
+    maxActiveSubagents: 20
+- id: ui-chat
+  name: "@deepseek-ai/dsh-client-ui-chat"
+  config:
+    transcriptView: normal
 
+# ── 0.2.1 settings.yaml 迁移补遗（2026-10-14）──────────────────────────────
+# 0.2.1 启动时把 $DSH_HOME/settings.yaml 改名成 settings.yaml.imported，并把可写字段
+# 导入 profile patch。五节没导进来，原因逐条写明；下面按 0.2.1 的条目 id 补回，值与原
+# settings.yaml 一致（.imported 里仍留原件备查）：
+#   · llm-deepseek             原节含 0.2.1 已删除的 protocol 字段，校验不过
+#   · shell                    LEGACY 映射到 bash-sandbox，而该条目被本 patch disabled，
+#                              用户实际执行器是 bash-local
+#   · subagent-model-selection  条目 id 改为 subagent-model-selection-settings
+#   · agent-presets             条目 id 改为 agent-preset-registry
+#   · permission                permission 条目被本 patch disabled（无限制执行器），
+#                              这节的 defaultPreset 属预期丢弃
+# patch 的 config 是整条目替换，不合并，故每节都写全。
+- id: llm-deepseek
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+    # 0.2.1 的 llm-deepseek（api-key provider）本身就是 Messages 协议
+    # （PUBLIC_BASE_URL = https://api.deepseek.com/anthropic），原 protocol 字段已删。
+    thinking: enabled
+    # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
+    reasoningEffort: low
+    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
+    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
+    models:
+      - id: deepseek-flash
+        name: DeepSeek-V4.1-Flash
+        contextWindow: 1048576
+        maxTokens: 393216
+        inputModalities:
+          - text
+          - image
+        imagePixelBudget: 640000
+        imageMaxBytes: 1048576
+        systemPromptUpdate: in-history
+      - id: deepseek-v4-pro
+        name: DeepSeek-V4-Pro
+        description: 更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。
+        contextWindow: 1048576
+        maxTokens: 393216
+        inputModalities:
+          - text
 
+# 原 settings.yaml 的 shell.timeoutMs = 1800000（30 分钟）。落到实际执行器 bash-local 上，
+# 并同步抬高 maxTimeoutMs——默认上限 600000 会把请求钳回去。
+- id: bash-local
+  config:
+    timeoutMs: 1800000
+    maxTimeoutMs: 1800000
+
+- id: subagent-model-selection-settings
+  config:
+    enabled: true
+    allowedModels:
+      - provider: md
+        model: deepseek-ai/DeepSeek-V4.1-Flash
+      - provider: sensenova
+        model: sensenova-6.8-flash-lite
+      - provider: sensenova
+        model: deepseek-flash
+
+# 原 settings.yaml 的 agent-presets.default = omni。0.2.1 的注册表条目是
+# agent-preset-registry；omni 本体由 dsh-agent-presets 插件声明（已挂进 bundles）。
+- id: agent-preset-registry
+  config:
+    default: omni

@@ -5,6 +5,7 @@
     "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
+    "dsh-agent-presets": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-agent-presets",
     "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
@@ -18,12 +19,12 @@
         "@changfenhuang/dsh-genui",
         "dsh-task-manager",
         "dsh-sidebar-taskbar",
-        "@deepseek-ai/dsh-experimental-agent-team-web-profile",
         "@deepseek-ai/dsh-experimental-agent-team-profile",
         "dsh-llm-retry-schedule",
         "billion-context",
         "dsh-dracula-theme",
-        "@openviking/dsh-memory-plugin"
+        "@openviking/dsh-memory-plugin",
+        "dsh-agent-presets"
       ]
     }
   }

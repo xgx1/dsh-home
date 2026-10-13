@@ -17,6 +17,9 @@ importers:
       billion-context:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
         version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
+      dsh-agent-presets:
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-agent-presets
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-agent-presets
       dsh-dracula-theme:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
