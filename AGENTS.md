@@ -42,6 +42,16 @@
 
 omni preset 的 persona 已写完整检索优先级，这里只留判据：图查不到 ≠ 代码不存在——先 `check_index_coverage` / `query_graph(graph="missed")` 核覆盖，再回退文本搜索并标注「图未覆盖」；未索引的仓库先 `index_repository` 再查图。详见技能 `cbm-graph-first`。
 
+## 逆向证据层（REA）
+
+看闭源产物（二进制 / APK / Electron-JS / ELF / 固件 / 进程行为）时先想 REA（`morluto/rea`），别手搓 `strings` / `objdump`。MCP 已注册在生产 web profile（`~/.dsh/profiles/web/cordis.patch.yml` 的 `mcp-rea`，热加载，不用重启），工具命名空间 `mcp__rea__*`（170 个）；技能 `reverse-engineer-anything` 已装，分组仓 `dsh-extensions/skills/rea`（fork `xgx1/rea`，与 CLI 同钉 tag `rea-agents-6.4.0`）。
+
+- CLI 是 `rea`（`~/.npm-global/bin/rea`，`~/.local/bin/rea` 软链指过去）：`rea doctor --json` 查引擎就绪，`rea analyze-*` / `inspect-artifact` 直接干活。
+- 已装引擎：Ghidra 12.1.2（`/opt/ghidra`）、JADX、apktool、binwalk、pwntools + pwndbg + gdb、mitmproxy、adb、完整 JDK、.NET SDK。**Hopper / IDA / JEB 是付费软件或自带服务，对应 provider 报 unavailable 属预期**，不是配置坏。
+- **Ghidra 必须显式给 `GHIDRA_INSTALL_DIR=/opt/ghidra`**（已写进 MCP 条目的 `env`）：REA 的 PATH 发现要求 `ghidra`/`ghidraRun` 的真实路径落在 Ghidra 树内，而 Arch 的 `/usr/bin/ghidra` 只是包装脚本，走 PATH 必然失败。
+- **`toolCallTimeoutMs` 别调回默认**（现为 600000）：REA 侧 Ghidra 冷启动默认允许 330 s，客户端默认 60 s 就会中途取消，首次查询白跑。
+- 升级时 CLI 与技能一起动——技能比 npm 包新会描述服务端不存在的工具。`rea doctor` 的「Installed REA skill identity is missing」只因它只认自家客户端目录（claude/codex/omp/pi），不认 `~/.dsh/skills`，可忽略。
+
 ## 模型目录
 
 - **所有模型（任何项目/工具加载的）一律存放在 `~/.model/`**，按工具或项目分子目录；项目或工具原本的模型位置**只保留软链接**指回 `~/.model`，模型实体不随项目目录移动、不入库、不重复拷贝。
