@@ -522,3 +522,14 @@
 - id: agent-preset-registry
   config:
     default: omni
+
+# ── 用户要求（2026-10-14）：禁用右侧面板（文件 / 浏览器 / 终端 / 文档预览）──────
+# ui-sidebar-right 的 panel:false 只停住「面板 + 会话头展开按钮」两处挂载；
+# ctx.sidebarRight 服务与 sidebarRightTabs 注册表照常提供，ui-chat / ui-reference /
+# ui-plan / ui-deliverables / ui-schedule 等 inject 它的插件不会卡在 pending。
+# （整行 disabled 会把这些插件一起打掉，对话区直接空白，故不能用 disabled。）
+# 文件路径点击改由系统默认程序打开：ui-chat 的 openFile 已改走 Host 桌面，
+# Sidebar 只作兜底。
+- id: ui-sidebar-right
+  config:
+    panel: false
