@@ -542,3 +542,32 @@
 # 重复注册会 fail loud，host 面挂它会让所有 preset 会话起不来。
 - id: command-goal
   disabled: false
+
+# ── 用户要求（2026-10-14）：接入 REA（morluto/rea）逆向证据层 ──────────────────
+# npm 包 rea-agents@6.4.0 已全局装（~/.npm-global/bin/rea；~/.local/bin/rea 是它的软链，
+# 与 codebase-memory-mcp 同路——dsh-web 进程的 PATH 里确实有 ~/.local/bin）。
+# 已装引擎：Ghidra 12.1.2（Arch extra 包，树在 /opt/ghidra）、JADX、binwalk、
+# pwntools + pwndbg、mitmproxy、完整 JDK（java-environment）、adb、.NET SDK。
+# Hopper / IDA / JEB 是付费软件或自带服务，本机没有；对应 provider 报 unavailable 属预期。
+#
+# 两个非默认值都有实测依据：
+#   1. GHIDRA_INSTALL_DIR：REA 只在未设该变量时才去 PATH 找 ghidra / ghidraRun，且要求
+#      解析出的真实路径属于一棵 Ghidra 树；Arch 的 /usr/bin/ghidra 是包装脚本
+#      （launch.sh bg jdk Ghidra），不是树内文件，PATH 发现必然失败
+#      （实测 doctor：ok=false, detail=GHIDRA_INSTALL_DIR is not set）。显式给 /opt/ghidra
+#      后 doctor 该 provider 全绿：12.1.2; compatible 12.1.x release。
+#   2. toolCallTimeoutMs：REA 侧 Ghidra 冷启动默认允许 330,000 ms
+#      （REA_GHIDRA_STARTUP_TIMEOUT_MS，REA 自己的下限），而 dsh-mcp-client 默认每次工具
+#      调用 60,000 ms 即取消——首次 binary_overview 很可能死在导入阶段。放大到 600,000 ms。
+- insert:
+    - id: mcp-rea
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: rea
+        transport: stdio
+        command: rea
+        args:
+          - mcp
+        env:
+          GHIDRA_INSTALL_DIR: /opt/ghidra
+        toolCallTimeoutMs: 600000
