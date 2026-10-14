@@ -533,3 +533,12 @@
 - id: ui-sidebar-right
   config:
     panel: false
+
+# ── 用户要求（2026-10-14）：/goal 不依赖 preset 面 ───────────────────────────
+# command-goal 在 web-app bundle 的 host 面被 disabled（packages/bundle/web-app/
+# cordis.patch.yml），靠 preset 面补挂；preset 面一死 /goal 就消失（08:05 实测）。
+# 命令注册表是「全局 + 会话域遮蔽」语义，两层同时注册不会 fail loud，故在 host 面
+# 直接补一行。**不要**照做 tool-goal（create_goal/get_goal/update_goal）：工具 id
+# 重复注册会 fail loud，host 面挂它会让所有 preset 会话起不来。
+- id: command-goal
+  disabled: false
