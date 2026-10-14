@@ -26,6 +26,9 @@ importers:
       dsh-llm-retry-schedule:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+      dsh-perf-mode:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
       dsh-sidebar-taskbar:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
