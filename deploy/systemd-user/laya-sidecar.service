@@ -4,8 +4,8 @@
 # 模型 convaiinnovations/laya（421M，Apache-2.0），跑在 RX 7900 GRE 上（PyTorch ROCm）。
 # 权重缓存在 ~/.model/laya/hf（HF_HOME 由 run-sidecar.sh 设定）。
 #
-# 显存：常驻约 4.4 GB。要与本地 llama-server（Bonsai 2 27B，100K 上下文峰值 12.3 GB）同时跑
-# 会超 16 GB，二者按需二选一：systemctl --user stop laya-sidecar。
+# 显存：常驻约 4.4 GB，目前独占 GPU（本机已无其他本地模型服务，Bonsai 2 27B 2026-10-15 弃用）。
+# 要再跑别的本地模型得先腾显存：systemctl --user stop laya-sidecar。
 #
 # 排查：~/.local/share/laya/venv/bin/laya-mcp doctor   （真的在 GPU 上跑一个算子再下结论）
 [Unit]

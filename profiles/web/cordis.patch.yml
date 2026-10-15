@@ -25,6 +25,35 @@
         url: http://127.0.0.1:8000/mcp
         failOnStartupError: false
 
+    # ── CoplayDev/unity-mcp（MCP for Unity）2026-10-14 接入 ──────────────
+    # 两端：Unity 侧 UPM 包 com.coplaydev.unity-mcp（git 依赖，钉 v10.3.0）；
+    # 客户端走 stdio，由 uvx 拉 Python 服务端 mcpforunityserver==10.3.0（与 UPM
+    # 包同版本），服务端再连 Unity 侧的反向桥 127.0.0.1:6400。
+    #
+    # Unity 侧起桥：默认懒得自启（HTTP 模式才是包默认），用包自带的 CI 入口显式拉起——
+    #   Unity -projectPath <proj> -executeMethod MCPForUnity.Editor.McpCiBoot.StartStdioForCi
+    # 起了会监听 6400 并写 ~/.unity-mcp/unity-mcp-status-<hash>.json（reason:"ready"）。
+    #
+    # 代理坑（2026-10-14 实测）：本机全局 all_proxy=socks5://127.0.0.1:7897，httpx
+    # 构造期就建 SOCKS 传输层，缺 socksio 直接 ImportError；且 no_proxy 里的 `[::1]`
+    # 写法让 httpx 抛 `InvalidURL: Invalid port: ':1]'`。故一律经包装脚本
+    # ~/.local/bin/uvx-no-proxy（先清代理变量、换干净的本地白名单再 exec uvx）。
+    - id: mcp-unity
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: unity
+        transport: stdio
+        command: /home/sx/.local/bin/uvx-no-proxy
+        args:
+          - '--from'
+          - 'mcpforunityserver==10.3.0'
+          - 'mcp-for-unity'
+          - '--transport'
+          - 'stdio'
+        # 编译、进播放模式这类调用超过默认 60s。
+        toolCallTimeoutMs: 180000
+        failOnStartupError: false
+
 # ── 用户调整（2026-09-30）：headroom 层整体拆除 ────────────────────────────
 # 三个 headroom unit（:8787/:8788/:8789）、uv tool 与 ~/.headroom 已删除，
 # 这里的 mcp-headroom 条目（headroom_compress / headroom_retrieve /
@@ -341,7 +370,7 @@
   config:
     provider: deepseek-official
     model: deepseek-flash
-    reasoningEffort: max
+    reasoningEffort: low
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -364,23 +393,20 @@
             name: deepseek-ai/DeepSeek-V4.1-Flash
             contextWindow: 1000000
             maxTokens: 256000
-      local-bonsai:
-        displayName: Bonsai 2 27B (local)
-        api: openai-completions
-        baseURL: http://127.0.0.1:8081/v1
-        headers:
-          Authorization: Bearer local-no-auth
-        reasoning: medium
+      # ChatGPT Plus 订阅额度（用户要求 2026-10-15）。pi-ai 自带 catalog provider，
+      # 端点是 chatgpt.com/backend-api（Codex 协议），凭据不是 apiKeyEnv 而是
+      # .credentials.yaml 的 grant 记录 llm-pi-ai/openai-codex，由
+      # ~/.local/bin/dsh-codex-cred 从 ~/.codex/auth.json 灌入；codex CLI 刷新
+      # token 后重跑该脚本。模型目录同 codex：gpt-5.6-* / gpt-6-* 可用，
+      # gpt-5.3-codex-spark 与 gpt-5.5 在 ChatGPT 账号下会被端点拒绝。
+      # models 是白名单：写进即替换 catalog 全表。gpt-5.3-codex-spark 与 gpt-5.5
+      # 被端点拒（"not supported when using Codex with a ChatGPT account"），不列。
+      openai-codex:
+        displayName: ChatGPT Plus (Codex)
         models:
-          - id: bonsai2-27b
-            name: Bonsai 2 27B (local AMD)
-            contextWindow: 102400
-            maxTokens: 32768
-            reasoningEfforts:
-              off: none
-              low: low
-              medium: medium
-              xhigh: xhigh
+          - id: gpt-6-astra
+          - id: gpt-6-luna
+          - id: gpt-6.1-sol
       sensenova:
         displayName: SenseNova token plan (Responses API)
         apiKeyEnv: SENSENOVA_API_KEY
