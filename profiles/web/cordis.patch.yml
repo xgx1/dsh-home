@@ -6,10 +6,12 @@
       config:
         serverName: cbm
         transport: stdio
+        # 2026-10-16 用户要求：UI 开关与端口是 codebase-memory-mcp 的**持久化配置**
+        # （`codebase-memory-mcp config list`：ui_enabled=true / ui_port=9749），
+        # 由 systemd 的 `codebase-memory-mcp daemon start`（codebase-memory.service）
+        # 单点持有；MCP 这行再传一次只是每次启动重写同一份配置，属冗余，故删除。
+        # 删除不改行为：缺省不传即不动配置，daemon 仍在 9749 提供 UI。
         command: codebase-memory-mcp
-        args:
-          - '--ui=true'
-          - '--port=9749'
 
     - id: mcp-ue
       name: '@deepseek-ai/dsh-mcp-client'
@@ -272,21 +274,18 @@
   config:
     apiKeyEnv: DEEPSEEK_API_KEY
 
-# ── 用户要求（2026-09-06）：搜索 provider 切到 Exa ─────────────────────
-# 现用 web-search-deepseek 每次搜索 = 一次完整辅助模型请求（烧 DeepSeek 令牌），
-# Exa 是普通 HTTP POST /search（不走模型），返回 URL+标题+高亮摘要，最省。
-# 包来源：官方 harness packages/web/web-search-exa（本仓库现成插件，未开发新代码）。
-# 接线：apps/cli/package.json 加依赖 → profiles/node_modules 建 symlink（heal 会接管）。
-# 切换步骤（key 到位后）：① EXA_API_KEY=<key> 写进 ~/.dsh/.env；② 下面 web 条目的
-# searchProvider 改成 exa；③ pm2 restart dsh-web（launch env 是启动时快照，必须重启）。
-- insert:
-    - id: web-search-exa
-      name: '@deepseek-ai/dsh-web-search-exa'
+# ── 用户要求（2026-10-16）：搜索 provider 改回 DeepSeek，Exa 整段移除 ───────
+# 2026-09-06 曾因「exa 是普通 HTTP POST、不烧 DeepSeek 令牌」切到 Exa；现按用户
+# 口径回到 web-search-deepseek（每次搜索 = 一次完整辅助模型请求，消耗 DeepSeek
+# 额度）。原 `- insert: [web-search-exa]` 段删除；包仍由 apps/cli 依赖，无需改
+# 依赖或 pnpm。EXA_API_KEY 留在 ~/.dsh/.env 不碍事，未被选中的 provider 不参与。
 
-# searchProvider 整行替换覆盖（2026-09-06 key 已入 credentials.yaml 并实测通过）：
+# searchProvider 整行替换覆盖：2026-09-06 曾切到 exa（普通 HTTP POST，不烧模型令牌）；
+# 2026-10-16 用户要求改回 DeepSeek 搜索——web-search-exa 的 insert 段已整段删除，
+# 取值回到 base 层默认 `deepseek-official`（packages/bundle/base/cordis.patch.yml:463）。
 - id: web
   config:
-    searchProvider: exa
+    searchProvider: deepseek-official
 
 - id: fs-observation-policy
   disabled: true
