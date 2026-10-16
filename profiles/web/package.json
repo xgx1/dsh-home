@@ -8,6 +8,7 @@
   "dsh-agent-presets": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-agent-presets",
   "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
   "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
+  "dsh-ops": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops",
   "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
   "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
   "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
@@ -26,7 +27,8 @@
     "dsh-dracula-theme",
     "@openviking/dsh-memory-plugin",
     "dsh-agent-presets",
-    "dsh-perf-mode"
+    "dsh-perf-mode",
+    "dsh-ops"
    ]
   }
  }

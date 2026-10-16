@@ -370,7 +370,7 @@
   config:
     provider: deepseek-official
     model: deepseek-flash
-    reasoningEffort: low
+    reasoningEffort: high
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -597,3 +597,28 @@
         env:
           GHIDRA_INSTALL_DIR: /opt/ghidra
         toolCallTimeoutMs: 600000
+
+# ── dsh-ops（2026-10-16，fork xgx1/dsh-ops 的 Linux 移植）────────────────
+# 上游 0.3.0 只有 Windows x64；fork 放开平台门并修了 Linux 上的 O_PATH 目录
+# fsync（EBADF）bug，Rust worker 由 `npm run build:ptc` 在本机构建并 stage 到
+# vendor/dsh-ops/runtime/linux-x64。只开 file + ptc：
+#  · shell：默认 deniedHostTools=['pwsh','bash','pwsh_persistent'] 会禁掉宿主
+#    bash，而 Linux 上没有可用的 bash/pwsh 载荷，开着等于让会话失去命令执行；
+#  · background：依赖 Windows FastCtx 载荷。
+# PTC 工具只在「纯 PTC 呈现」的 agent 里注册，由 preset 的 tool-presentation
+# 行决定（omni 已切 mode: ptc；manager 仍是 both，故 manager 会话里没有
+# ops_batch/ops_result）。改动细节见 vendor/dsh-ops/LOCAL-PATCHES.md。
+- id: dsh-ops-shell
+  disabled: true
+- id: dsh-ops-background
+  disabled: true
+- id: dsh-ops-file
+  config:
+    promptPolicy: true
+    enableShellTools: false
+    required: false
+    toolCallTimeoutMs: 300000
+- id: dsh-ops-ptc
+  disabled: false
+  config:
+    required: false
