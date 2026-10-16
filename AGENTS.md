@@ -58,5 +58,5 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - 约定：`~/.model/<工具或项目名>/<模型文件>`；原位置用 `ln -s ~/.model/... <原路径>` 恢复引用。
 - 同一模型的不同量化/版本视为重复，只保留**实际在用**的一份；判断"在用"以运行进程与配置文件的**实际引用**为准（`ps` 命令行、`/proc/<pid>/cwd`、配置文件里的 `model` 字段），不靠猜。
 - 2026-10-12 实况：`~/.model/` 目前**只有 `laya/`**。约定的两个例外（迁不动，别当成没做）：zvec-grep 的嵌入模型在 `~/.zvec-grep/models/`（工具自管，CPU 小模型）；fcitx vinput 的 sherpa-onnx ASR 在 `~/.local/share/vinput/models/`。
-- **Bonsai 2 27B 已彻底移除**（2026-10-15 用户确认弃用）：权重、systemd 单元、`local-bonsai` provider 条目都没了。要重新用本地模型得先重下权重并按上面约定落 `~/.model/`，再往 profile 的 `llm-pi-ai` provider 表里加条目。
+- **本机当前没有本地大模型**（2026-10-15 用户确认弃用并清空配置：权重、systemd 单元、profile 里的 provider 条目都已删）。要重新用本地模型得先重下权重并按上面约定落 `~/.model/`，再往 profile 的 `llm-pi-ai` provider 表里加条目。
 - Laya 决策模型在 `~/.model/laya/hf`（用 `HF_HOME` 指过去）；推理环境在 `~/.local/share/laya/venv`（torch ROCm / gfx1100），由用户级 `laya-sidecar.service` 在 `:8083` 常驻服务（约 5.5 GB 显存）。
