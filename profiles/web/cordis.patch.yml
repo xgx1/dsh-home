@@ -619,6 +619,14 @@
     shellPolicy: advise
     allowSystemShellFallback: false
     bashPath: /usr/bin/bash
+    # D2：文件与检索路由（file 组件已按 D1 关闭，故路由只能靠提示词兜住）。
+    # 措辞与 harness 内建文件工具的说明保持一致，不新增能力，只交代选哪一个。
+    extraGuidance: |-
+      文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
+      - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
+      - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
+      - 语义/跨文件理解类检索 → zvec_grep_search（要求该工作区已建索引；未建会报 WORKSPACE_INDEX_NOT_FOUND）。
+      - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
 - id: dsh-ops-background
   disabled: false
   config:
@@ -627,7 +635,14 @@
     required: false
     toolCallTimeoutMs: 300000
     bashPath: /usr/bin/bash
+# ── 用户要求（2026-10-16，D1）：关掉 dsh-ops 的 file 组件 ──────────────────
+# file 组件发布的 ops_inspect_local_file / ops_grep / ops_glob / ops_replace 与
+# read/edit/write 及 zvecgrep 的 zvec_grep_rg 部分重叠。取舍：省 4 个工具，
+# 代价是丢 ops_replace（带 glob 的跨文件字面批量替换）与 ops_inspect_local_file
+# （hex / 编码 / PDF / 多区间读取）；需要时把本行改回 disabled: false 即恢复。
+# 同一 worker 的 PTC 组件（dsh-ops-ptc）不在本行开关内，仍启用。
 - id: dsh-ops-file
+  disabled: true
   config:
     promptPolicy: true
     enableShellTools: false
