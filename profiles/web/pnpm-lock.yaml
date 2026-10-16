@@ -11,6 +11,9 @@ importers:
       '@changfenhuang/dsh-genui':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-genui
+      '@dsh-external/dsh-blender-plugin':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
       '@openviking/dsh-memory-plugin':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
         version: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
