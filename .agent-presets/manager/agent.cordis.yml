@@ -311,7 +311,11 @@
 - id: tool-presentation
   name: '@deepseek-ai/dsh-agent-tool-presentation'
   config:
-    mode: both
+    # 2026-10-16 用户决策：与 omni 一致切纯 PTC。dsh-ops 的 ops_batch /
+    # ops_result 只在纯 PTC 呈现的 scope 注册（lib/ptc/index.js 的
+    # ptcOnly()），mode: both 下 tools 多于一个，工具不会出现。
+    # 回退：改回 mode: both 或 native，重开会话（预设按 agent 生效）。
+    mode: ptc
 
 # ── manager orchestration tools（M3，t13/t14 落地）──────────────────────────
 # The seven dsh-task-manager model tools (management ×5: task_assign/

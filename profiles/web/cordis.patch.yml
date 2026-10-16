@@ -600,18 +600,34 @@
 
 # ── dsh-ops（2026-10-16，fork xgx1/dsh-ops 的 Linux 移植）────────────────
 # 上游 0.3.0 只有 Windows x64；fork 放开平台门并修了 Linux 上的 O_PATH 目录
-# fsync（EBADF）bug，Rust worker 由 `npm run build:ptc` 在本机构建并 stage 到
-# vendor/dsh-ops/runtime/linux-x64。只开 file + ptc：
-#  · shell：默认 deniedHostTools=['pwsh','bash','pwsh_persistent'] 会禁掉宿主
-#    bash，而 Linux 上没有可用的 bash/pwsh 载荷，开着等于让会话失去命令执行；
-#  · background：依赖 Windows FastCtx 载荷。
+# fsync（EBADF）bug。四个组件都开：
+#  · shell：宿主 bash（bashPath=/usr/bin/bash）。Linux 没有随包 bash/pwsh
+#    载荷，allowSystemShellFallback 又被 config update 1 强制改回 false，
+#    所以 bashPath 是唯一开关。实测 ops_bash exit 0。
+#  · background：同一份 bashPath 必须也写在**本行**——每行各自解析 shell，
+#    缺它本行发布不出 command/job 工具；command 工具另需 worker 处于
+#    danger-full-access（本 profile 正是）。FastCtx 由
+#    `node bin/dsh-ops.mjs build --force` 在 vendor/fastctx 就地构建。
+#  · file/ptc：本地 Rust worker（`npm run build:ptc` → runtime/linux-x64）。
 # PTC 工具只在「纯 PTC 呈现」的 agent 里注册，由 preset 的 tool-presentation
-# 行决定（omni 已切 mode: ptc；manager 仍是 both，故 manager 会话里没有
-# ops_batch/ops_result）。改动细节见 vendor/dsh-ops/LOCAL-PATCHES.md。
+# 行决定（omni 与 manager 都已切 mode: ptc）。改动细节与构建命令见
+# vendor/dsh-ops/LOCAL-PATCHES.md。
 - id: dsh-ops-shell
-  disabled: true
+  disabled: false
+  config:
+    promptPolicy: true
+    publishBashTool: true
+    shellPolicy: advise
+    allowSystemShellFallback: false
+    bashPath: /usr/bin/bash
 - id: dsh-ops-background
-  disabled: true
+  disabled: false
+  config:
+    promptPolicy: true
+    enableShellTools: true
+    required: false
+    toolCallTimeoutMs: 300000
+    bashPath: /usr/bin/bash
 - id: dsh-ops-file
   config:
     promptPolicy: true
