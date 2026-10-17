@@ -1,0 +1,85 @@
+# 类型预设清单 — 生成器的唯一输入。
+# 改这里，然后跑 ~/.dsh/bin/gen-project-presets.py，它会重写
+# ~/.dsh/profiles/web/cordis.patch.yml 里的 generated 区块。
+#
+# mcps: 可挂的 MCP 定义（值原样写进 @deepseek-ai/dsh-mcp-client 的 config）
+# plugins: 可挂的插件定义（name + config，值原样写进该预设的 plugins 行）
+# types: 每种项目类型一个预设；mcp / plugins 列出该类型要的 key
+# order: 类型预设从 20 起
+
+# 宿主层统一关掉的行：改为按类型预设挂载，避免所有会话都吃它们的成本
+disable_host:
+  - mcp-unity
+  - mcp-ue
+  - computer-use-cua-native
+  - dsh-blender-plugin
+
+mcps:
+  unity:
+    serverName: unity
+    transport: stdio
+    command: /home/sx/.local/bin/uvx-no-proxy
+    args:
+      - '--from'
+      - 'mcpforunityserver==10.3.0'
+      - 'mcp-for-unity'
+      - '--transport'
+      - 'stdio'
+    toolCallTimeoutMs: 180000
+    failOnStartupError: false
+  ue:
+    serverName: ue
+    transport: streamable-http
+    url: http://127.0.0.1:8000/mcp
+    reconnect:
+      maxAttempts: 215
+    failOnStartupError: false
+  rea:
+    serverName: rea
+    transport: stdio
+    command: rea
+    args:
+      - mcp
+    env:
+      GHIDRA_INSTALL_DIR: /opt/ghidra
+    toolCallTimeoutMs: 600000
+
+plugins:
+  cua:
+    name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'
+    config: {}
+  blender:
+    name: '@dsh-external/dsh-blender-plugin'
+    config: {}
+
+types:
+  - id: js
+    name: JS 项目
+    order: 20
+    mcp: []
+  - id: unreal
+    name: Unreal 项目
+    order: 21
+    mcp: [ue]
+  - id: unreal-dotnet
+    name: Unreal + dotnet 项目
+    order: 22
+    mcp: [ue]
+  - id: unity
+    name: Unity 项目
+    order: 23
+    mcp: [unity]
+  - id: unity-dotnet
+    name: Unity + dotnet 项目
+    order: 24
+    mcp: [unity]
+  - id: modeling
+    name: 建模项目
+    order: 25
+    mcp: []
+    plugins: [blender]
+  - id: ops
+    name: 电脑与网页操作
+    order: 26
+    mcp: []
+    plugins: [cua]
