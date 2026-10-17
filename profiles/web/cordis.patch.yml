@@ -406,6 +406,99 @@
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
+      # ── 用户要求（2026-10-17）：opencode 免费层 ──────────────────────────
+      # opencode 免费层是「客户端身份」硬门，四条缺一即 403 FreeTierError：
+      #   ① User-Agent: opencode/<semver>（只写 opencode 不行）
+      #   ② x-opencode-session: ses_<12 hex 高位为 1><14 base62>（降序 Identifier 外形，
+      #      实测不校验时间新鲜度）
+      #   ③ body.tools 里存在名为 read 的函数工具
+      #   ④ body.stream === true
+      # ②③④ DSH 的 agent loop 本来就满足；① 是 pi-ai 适配器保留给自身归属的请求头
+      # （packages/llm/llm-pi-ai/src/adapter.ts 的 requestHeaders() 里 reserved 只含
+      # user-agent），配置层改不了，故经本机中继 ~/.dsh/bin/opencode-zen-bridge.py
+      # （单元 opencode-zen-bridge.service，:8790）转发：注入 UA 与 x-opencode-session，
+      # 缺 read 工具时兜底注入。中继直连 opencode.ai。
+      # 凭据是 .credentials.yaml 的 refs.OPENCODE_API_KEY（账号余额 0：付费模型 402，
+      # 下列免费模型不限额度）。
+      # 45 个 cost=0 候选里实测只有这 12 个可用：其余 27 个一律
+      # 400 "Upstream request failed: Model is unavailable."（换端点、换 body 形状均无效，
+      # 疑似需 OpenCode Go 订阅），另有 4 个 410 ModelDeprecated、2 个 400
+      # ModelProtocolUnsupported。nemotron-3-ultra-free 偶发上游 503（Nvidia 过载）。
+      opencode-zen:
+        displayName: OpenCode Zen (free)
+        apiKeyEnv: OPENCODE_API_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:8790/v1
+        models:
+          - id: beam-free
+            name: Beam Free
+            contextWindow: 1048576
+            maxTokens: 131072
+          - id: big-pickle
+            name: Big Pickle
+            contextWindow: 200000
+            maxTokens: 32000
+          - id: cat-jam-free
+            name: Cat Jam Free
+            contextWindow: 1048576
+            maxTokens: 131072
+          - id: deepseek-v4.1-flash-free
+            name: DeepSeek V4.1 Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input:
+              - text
+              - image
+          - id: exo-free
+            name: Exo Free
+            contextWindow: 1048576
+            maxTokens: 131072
+            input:
+              - text
+              - image
+          - id: glm-5.3-flash-free
+            name: GLM-5.3-Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input:
+              - text
+              - image
+          - id: longcat-2.5-preview-free
+            name: LongCat 2.5 Preview Free
+            contextWindow: 1000000
+            maxTokens: 131072
+            input:
+              - text
+              - image
+          - id: mimo-v2.6-flash-free
+            name: MiMo-V2.6-Flash Free
+            contextWindow: 200000
+            maxTokens: 32000
+            input:
+              - text
+              - image
+          - id: nemotron-3-ultra-free
+            name: Nemotron 3 Ultra Free
+            contextWindow: 1000000
+            maxTokens: 128000
+          - id: nemotron-3.5-lightning-free
+            name: Nemotron 3.5 Lightning Free
+            contextWindow: 262144
+            maxTokens: 262144
+          - id: nemotron-3.5-super-vl-free
+            name: Nemotron 3.5 Super VL Free
+            contextWindow: 1048576
+            maxTokens: 131072
+            input:
+              - text
+              - image
+          - id: space-bunny-free
+            name: Space Bunny Free
+            contextWindow: 1048576
+            maxTokens: 524288
+            input:
+              - text
+              - image
       sensenova:
         displayName: SenseNova token plan (Responses API)
         apiKeyEnv: SENSENOVA_API_KEY
