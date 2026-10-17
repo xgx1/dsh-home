@@ -43,6 +43,8 @@ patches/
 *.log
 
 # ── 运行时噪音 ────────────────────────────────────────────────────────────
+# 启动/重载日志与探活脚本（startup-*.log、last-restart.txt、dsh-web-reload-verify.*）
+logs/
 # install-skill.sh --force 前的真实目录备份，本机专属
 skill-backups/
 .anonymous-user-id

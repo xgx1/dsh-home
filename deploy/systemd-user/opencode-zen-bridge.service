@@ -1,0 +1,21 @@
+[Unit]
+Description=OpenCode Zen free-tier bridge (local OpenAI-compatible endpoint on :8790)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 直连 opencode.ai 实测可达（无需 clash 代理）；清掉全局代理变量以免代理停摆时连带失败。
+Environment=ALL_PROXY=
+Environment=all_proxy=
+Environment=HTTP_PROXY=
+Environment=http_proxy=
+Environment=HTTPS_PROXY=
+Environment=https_proxy=
+WorkingDirectory=%h
+ExecStart=/usr/bin/python3 %h/.dsh/bin/opencode-zen-bridge.py --host 127.0.0.1 --port 8790
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
