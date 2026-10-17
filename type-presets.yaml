@@ -13,6 +13,7 @@ disable_host:
   - mcp-ue
   - computer-use-cua-native
   - dsh-blender-plugin
+  - browser-use-playwright
 
 mcps:
   unity:
@@ -51,6 +52,12 @@ plugins:
   blender:
     name: '@dsh-external/dsh-blender-plugin'
     config: {}
+  playwright:
+    name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+    config:
+      mode: attach
+      endpoint: http://127.0.0.1:9222
+      exclusive: false
 
 types:
   - id: js
@@ -82,4 +89,4 @@ types:
     name: 电脑与网页操作
     order: 26
     mcp: []
-    plugins: [cua]
+    plugins: [cua, playwright]
