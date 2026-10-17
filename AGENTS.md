@@ -7,6 +7,7 @@
 
 - **DSH 本体的生产检出默认只读**：`~/projects/MyAI/deepseek-harness`（分支 `master`，`dsh-web.service` 的 3080 就跑在它上）。DSH 的功能开发只改同层级的 worktree `~/projects/MyAI/deepseek-harness-dev`（分支 `dev`，dev 实例 `dsh-web-dev.service` → `:3081`，`DSH_HOME=~/.dsh-dev`）；**除非用户在当次需求里主动点名要改生产检出**。细节与禁止清单见 `~/projects/MyAI/AGENTS.md`「DSH 改动落点」。
 - 需要重启 `dsh-web.service`（会中断当前对话）或可能影响其他会话的改动，动手前先确认；纯代码/文档提交可直接做。
+- **改动默认提交并推送**：`~/.dsh`、`dsh-extensions` 与其 submodule 提交后直接推 origin（submodule 先推，再推上级），不必每次再问。（2026-10-17 用户指示）
 - 改任何 git submodule 要在**各自目录里**提交、推送，再回上层仓库更新指针；上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——改完要提交并推送，新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
 
