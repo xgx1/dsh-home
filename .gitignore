@@ -33,7 +33,9 @@ llm-deepseek/
 
 # ── 本机专属脚本与状态 ────────────────────────────────────────────────────
 # bin/hypr-place 依赖本机 Hyprland；evolve/ 含 rubric.key 与运行时日志
-bin/
+bin/*
+!bin/gen-project-presets.py
+!bin/opencode-zen-bridge.py
 evolve/
 
 # ── 依赖与构建产物 ────────────────────────────────────────────────────────

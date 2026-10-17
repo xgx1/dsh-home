@@ -14,6 +14,8 @@
 | `.agent-presets/` | 自建 agent preset（`omni` / `manager` / `simple`）及其携带的技能 |
 | `profiles/{web,tui,headless}/` | 各 profile 的 composition：`cordis.yml` + `cordis.patch.yml` + `pnpm-workspace.yaml` + `package.json` + lock |
 | `dsh-env.sh` / `dsh-web-launch.sh` | 启动脚本，被 `dsh-web.service` 调用 |
+| `bin/opencode-zen-bridge.py` | `:8790` 本地 OpenAI 兼容桥（opencode-zen provider 的前置，被 `opencode-zen-bridge.service` 拉起） |
+| `bin/gen-project-presets.py` | 用 `preset-base.yml` + `type-presets.yaml` 重写 `profiles/web/cordis.patch.yml` 的 generated 区块 |
 | `keys.example.yaml` | 凭据模板（**只有键名与格式说明，没有值**） |
 
 不跟踪、且**永远不该**进仓库的：
@@ -25,7 +27,7 @@
 | `sessions/` `attachments/` `cache/` | 纯本机运行时数据（~190MB）。`sessions/` 目录名按项目路径编码，换设备即失效 |
 | `storages/` `task-manager/` | 全是本机绝对路径的本机状态，跨设备会互相覆盖 |
 | `skills/` | 根目录下的 337 条**全是软链**（数量随源仓变化，别当常数），由 `dsh-extensions/install-skill.sh` 从仓库外部生成。注意 `.gitignore` 里写的是 `/skills/`（锚定根目录）——`.agent-presets/*/skills/` 是 preset 自带的技能，属于要跟踪的内容，别把它一起吞掉 |
-| `bin/` `evolve/` | 本机专属（`bin/hypr-place` 依赖 Hyprland；`evolve/` 含 `rubric.key`） |
+| `bin/hypr-place` `evolve/` | 本机专属（前者依赖 Hyprland；后者含 `rubric.key`）。`bin/` 已按 `bin/*` 整体忽略，只反选上面两个可移植脚本 |
 | `profiles/*/node_modules/` | 依赖产物，靠 `pnpm install` 重建 |
 
 判断标准只有一条：**这台设备独有的状态，不属于这个仓库。**
@@ -85,6 +87,7 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 | `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
 | `headroom-deepseek.service` | `:8787` 代理 → `api.deepseek.com`；`mcp-headroom` 连的就是它，也是 `settings.yaml` 里 `llm-deepseek` 的 `baseURL` 目标 |
 | `headroom-sensenova.service` | `:8788` 代理 → `token.sensenova.cn`；对应 `settings.yaml` 里 `llm-pi-ai.providers.sensenova` 路由 |
+| `opencode-zen-bridge.service` | `:8790` 本地 OpenAI 兼容端点（`bin/opencode-zen-bridge.py`），对应 `agent-default-model` 的 `opencode-zen` provider |
 
 unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
 的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
