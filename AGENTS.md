@@ -61,3 +61,7 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - 2026-10-12 实况：`~/.model/` 目前**只有 `laya/`**。约定的两个例外（迁不动，别当成没做）：zvec-grep 的嵌入模型在 `~/.zvec-grep/models/`（工具自管，CPU 小模型）；fcitx vinput 的 sherpa-onnx ASR 在 `~/.local/share/vinput/models/`。
 - **本机当前没有本地大模型**（2026-10-15 用户确认弃用并清空配置：权重、systemd 单元、profile 里的 provider 条目都已删）。要重新用本地模型得先重下权重并按上面约定落 `~/.model/`，再往 profile 的 `llm-pi-ai` provider 表里加条目。
 - Laya 决策模型在 `~/.model/laya/hf`（用 `HF_HOME` 指过去）；推理环境在 `~/.local/share/laya/venv`（torch ROCm / gfx1100），由用户级 `laya-sidecar.service` 在 `:8083` 常驻服务（约 5.5 GB 显存）。
+
+## 浏览器
+
+- **访问网页优先用 ego**：能开页面就先用 `ego_*` 工具（`ego_navigate` → `ego_snapshot` → `ego_click`/`ego_fill`）在 ego 浏览器里真开一次，登录态、Cookie、人机验证都在用户自己的窗口里。`web_search` 只做找线索与摘要；`curl`/`webshare` 抓页面、Playwright/CUA 驱浏览器都退居备选——只有 ego 起不来（`ego_doctor` 报错）或任务本就不需要浏览器时才换。
