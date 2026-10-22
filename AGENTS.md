@@ -64,4 +64,5 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 
 ## 浏览器
 
+- **ego 跑共享 profile 模式**：ego 不另起浏览器，而是挂到用户日常 Helium 的同一个进程（`--remote-debugging-port=9222`，来自 `~/.config/helium-browser-flags.conf`，故 Helium 必须经桌面图标 / `helium-browser` 启动才带该 flag）。`egoBin` = `~/.local/share/ego-lite-runtime/bin/ego-shared.mjs`，profile 直接用 `~/.config/net.imput.helium`。**不要**跑 `ego-browser --stop`、也不要把插件的 `idleTimeoutMin` 打开——共享模式下这两者都会关掉用户自己的浏览器。
 - **访问网页优先用 ego**：能开页面就先用 `ego_*` 工具（`ego_navigate` → `ego_snapshot` → `ego_click`/`ego_fill`）在 ego 浏览器里真开一次，登录态、Cookie、人机验证都在用户自己的窗口里。`web_search` 只做找线索与摘要；`curl`/`webshare` 抓页面、Playwright/CUA 驱浏览器都退居备选——只有 ego 起不来（`ego_doctor` 报错）或任务本就不需要浏览器时才换。
