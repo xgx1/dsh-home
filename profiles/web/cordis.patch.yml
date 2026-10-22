@@ -1957,12 +1957,20 @@
 # <<< END generated type presets >>>
 
 # ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
-# 背靠浏览器用 Helium（Chromium 155）而不是 google-chrome-stable：Chrome 137+ 忽略
-# --load-extension，德古拉主题（本地 unpacked 主题）只能由 Helium 加载；两个二进制同
-# 版本，profile 互通。profile 在 ~/.local/share/ego-lite-linux/profile（已从 Helium
-# 快照种子：历史/cookie/密码/书签，书签含「旧 Floorp 书签」4057 节点）。
+# 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
+# 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
+#  · 前置：~/.config/helium-browser-flags.conf 里的 --remote-debugging-port=9222
+#    （Helium 必须由 helium-wrapper/桌面图标启动才读这份 flags）。
+#  · egoBin 指向本地 JS 包装：先探 9222，取到 webSocketDebuggerUrl 就设
+#    EGO_LINUX_CDP_URL 直接挂载；挂不上才退回用 Helium profile 自起一份
+#    （此时两者仍同一份数据，因为 EGO_LINUX_PROFILE 也指过去了）。
+#  · idleTimeoutMin: 0 —— 共享模式下不能让插件的空闲回收去关用户自己的浏览器。
+#  · chromePath/chromeArgs 只在「挂不上、需自起」时生效；Chrome 137+ 忽略
+#    --load-extension，所以内核必须留 Helium。
 - id: ego-browser
   config:
+    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared.mjs
+    idleTimeoutMin: 0
     chromePath: /opt/helium-browser-bin/helium
     chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
 
