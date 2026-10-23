@@ -354,7 +354,11 @@
       config:
         serverName: zvecgrep
         transport: stdio
-        command: zg
+        # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
+        # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
+        # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
+        # 代理内部用 `server --stdio` 拉起真 zg，参数原样透传。
+        command: /home/sx/.dsh/bin/zg-autoidx.mjs
         args:
           - server
           - '--stdio'
@@ -698,7 +702,9 @@
       文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
       - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
       - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
-      - 语义/跨文件理解类检索 → zvec_grep_search（要求该工作区已建索引；未建会报 WORKSPACE_INDEX_NOT_FOUND）。
+      - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
+        且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
+        zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
       - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
 - id: dsh-ops-background
   disabled: false
@@ -1952,23 +1958,7 @@
     chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula
       --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
 
-# ── 2026-10-23 事故修复：重试预算收敛（覆盖 build 层 L1448 的 maxRetries: 1000）──
-# 事故事实：c017f22b 13:02→15:20 重试 485 次仍未拿到一次回复；ChatGPT Plus 报
-# 「try again in ~232 min」时本插件把 Retry-After 截到 60s 后继续重试，用户看到的是
-# 「卡住」而不是「额度用完了」。
-#  · maxRetries: 60 → 最坏 ≈ 4×5s + 15×10s + 41×60s ≈ 42 分钟就以错误结束该步，
-#    错误对用户/模型可见，可以立刻换模型，而不是静默挂 8 小时。
-#  · retryableCodes 去掉 QUOTA → 额度类失败交回官方 llm-retry（5 次、约 16 秒内失败），
-#    不再用 60s 顶档去等一个 232 分钟的窗口。
-#  · RATE_LIMIT 保留：sensenova 的 tpm/rps 抖动确实是秒级可恢复的。
-- id: llm-retry-schedule
-  config:
-    maxRetries: 60
-    retryableCodes: [EMPTY_RESPONSE, RATE_LIMIT, SERVER, TIMEOUT, TRANSPORT]
-    schedule:
-      - fromRetry: 1
-        delayMs: 5000
-      - fromRetry: 5
-        delayMs: 10000
-      - fromRetry: 20
-        delayMs: 60000
+# ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
+# 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），
+# 用户明确要求保留：长重试是为了不必手动重发；重试过程在 Web Chat 的「模型重试」行可见。
+# 真正的根因（那种 232 分钟级别的等待）应由额度/模型切换解决，不再靠缩短重试预算。

@@ -1445,13 +1445,7 @@
 - id: llm-retry-schedule
   name: dsh-llm-retry-schedule
   config:
-    maxRetries: 60
-    retryableCodes:
-      - EMPTY_RESPONSE
-      - RATE_LIMIT
-      - SERVER
-      - TIMEOUT
-      - TRANSPORT
+    maxRetries: 1000
     schedule:
       - fromRetry: 1
         delayMs: 5000
@@ -1476,16 +1470,13 @@
     shellPolicy: advise
     allowSystemShellFallback: false
     bashPath: /usr/bin/bash
-    extraGuidance: >-
+    extraGuidance: |-
       文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
-
       - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
-
       - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
-
-      - 语义/跨文件理解类检索 → zvec_grep_search（要求该工作区已建索引；未建会报
-      WORKSPACE_INDEX_NOT_FOUND）。
-
+      - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
+        且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
+        zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
       - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
     configUpdateVersion: 1
 - id: dsh-ops-file
@@ -1581,7 +1572,7 @@
   config:
     serverName: zvecgrep
     transport: stdio
-    command: zg
+    command: /home/sx/.dsh/bin/zg-autoidx.mjs
     args:
       - server
       - '--stdio'

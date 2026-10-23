@@ -1,0 +1,7 @@
+# dsh-janitor.service —— dsh 运行时残留清理（2026-10-23 事故配套，见 ~/.dsh/bin/dsh-janitor.sh）
+[Unit]
+Description=dsh runtime janitor (stale subprocess scopes, MSBuild node-reuse, zvec daemon log)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.dsh/bin/dsh-janitor.sh

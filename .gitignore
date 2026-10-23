@@ -36,6 +36,10 @@ llm-deepseek/
 bin/*
 !bin/gen-project-presets.py
 !bin/opencode-zen-bridge.py
+# 2026-10-23：这两个是本机运行链路的一部分（profile 的 MCP command 直接指 zg-autoidx），
+# 必须入库，否则换机/回滚后 zvec 自动建索引与 scope 清理就没了。
+!bin/zg-autoidx.mjs
+!bin/dsh-janitor.sh
 evolve/
 
 # ── 依赖与构建产物 ────────────────────────────────────────────────────────
