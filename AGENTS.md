@@ -73,4 +73,7 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 
 - 经 dsh 跑 UE 构建时带 `-nodeReuse:false`（或 `/nodeReuse:false`）；跑过 `adb start-server` 的要在收尾 `adb kill-server`。这两类常驻子进程会让 `dsh-subprocess-*.scope` 永不退出（实测有 scope 从 00:01 挂到 16:18），累积后拖死整机。
 - `~/.dsh/bin/dsh-janitor.sh` 每 15 分钟由 `dsh-janitor.timer` 清一次：停掉空 `dsh-subprocess` scope、杀 MSBuild node-reuse 残留、截断超 100MB 的 zvec daemon 日志。手工排查先看 `/tmp/dsh-janitor.log`。
+- 2026-10-23 起 dsh 自己会回收 scope 里的孤儿：载荷退出后等 3s，若 cgroup 里只剩「沿用载荷会话号」的进程（MSBuild node-reuse 那种）就 `systemctl --user stop` 收掉整个 scope 并打一条 `reaped inherited stragglers`；**`setsid` 起来的进程自成一个会话，会被保留** —— 所以「要长驻就自己 setsid / 交给 systemd」这条依然成立。
+- bili 的「request sent DIRECT (uncompressed)」现在只对「远端 + 有 wire 尺寸请求体」上报；本机 loopback（dsh↔openviking、MCP health）不再刷屏。若真有自定义 wire 的**模型**端点要过代理压缩，用 `BILI_EXTRA_MODEL_PATHS=/api/llm/generate,...`（逗号分隔路径子串）声明后重启 dsh。
+- `run_code` 的失败现在带 `[diagnostic] code/errno/syscall`，宿主日志同时有 `ptc-runtime-node: worker <stage> failed: …`；scope 启动路径整体坏掉时可用 `DSH_SUBPROCESS_CONTAINMENT=direct` 临时回到直连进程树。
 - 抓 HTTP/JSON 用 `web_fetch`（`tool-web` 已开 `fetch`）；ego-browser 只用于需要登录态或真实交互的页面。在页面上下文里 `fetch` 跨站 API 会被 CORS 挡死（2026-10-23 共 39 次 `TypeError: Failed to fetch`）。
