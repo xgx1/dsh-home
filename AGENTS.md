@@ -41,6 +41,8 @@
 
 ## 代码检索
 
+- `zvec_grep_search`（语义检索）要求工作区已建索引，未建会返回 `INDEX_MISSING`。**这时不要反复重试、也不要自己跑 `zg index`**：立刻改用 `zvec_grep_rg` 做精确检索；索引由 `zg-autoidx` 代理在后台自动构建，工具结果里出现「已自动为该工作区建好索引」后再回去用语义检索。（2026-10-23 事故：0.2.2 的 `zg` 索引没人建，每次 `zvec_grep_search` 都白跑一轮。）
+
 omni preset 的 persona 已写完整检索优先级，这里只留判据：图查不到 ≠ 代码不存在——先 `check_index_coverage` / `query_graph(graph="missed")` 核覆盖，再回退文本搜索并标注「图未覆盖」；未索引的仓库先 `index_repository` 再查图。详见技能 `cbm-graph-first`。
 
 ## 逆向证据层（REA）
@@ -66,3 +68,9 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 
 - **ego 跑共享 profile 模式**：ego 不另起浏览器，而是挂到用户日常 Helium 的同一个进程（`--remote-debugging-port=9222`，来自 `~/.config/helium-browser-flags.conf`，故 Helium 必须经桌面图标 / `helium-browser` 启动才带该 flag）。`egoBin` = `~/.local/share/ego-lite-runtime/bin/ego-shared.mjs`，profile 直接用 `~/.config/net.imput.helium`。**不要**跑 `ego-browser --stop`、也不要把插件的 `idleTimeoutMin` 打开——共享模式下这两者都会关掉用户自己的浏览器。
 - **访问网页优先用 ego**：能开页面就先用 `ego_*` 工具（`ego_navigate` → `ego_snapshot` → `ego_click`/`ego_fill`）在 ego 浏览器里真开一次，登录态、Cookie、人机验证都在用户自己的窗口里。`web_search` 只做找线索与摘要；`curl`/`webshare` 抓页面、Playwright/CUA 驱浏览器都退居备选——只有 ego 起不来（`ego_doctor` 报错）或任务本就不需要浏览器时才换。
+
+## 长驻进程与 scope 卫生（2026-10-23）
+
+- 经 dsh 跑 UE 构建时带 `-nodeReuse:false`（或 `/nodeReuse:false`）；跑过 `adb start-server` 的要在收尾 `adb kill-server`。这两类常驻子进程会让 `dsh-subprocess-*.scope` 永不退出（实测有 scope 从 00:01 挂到 16:18），累积后拖死整机。
+- `~/.dsh/bin/dsh-janitor.sh` 每 15 分钟由 `dsh-janitor.timer` 清一次：停掉空 `dsh-subprocess` scope、杀 MSBuild node-reuse 残留、截断超 100MB 的 zvec daemon 日志。手工排查先看 `/tmp/dsh-janitor.log`。
+- 抓 HTTP/JSON 用 `web_fetch`（`tool-web` 已开 `fetch`）；ego-browser 只用于需要登录态或真实交互的页面。在页面上下文里 `fetch` 跨站 API 会被 CORS 挡死（2026-10-23 共 39 次 `TypeError: Failed to fetch`）。

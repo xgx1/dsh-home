@@ -80,8 +80,8 @@
         api: openai-completions
         baseURL: https://api-inference.modelscope.cn/v1
         models:
-          - id: deepseek-ai/DeepSeek-V4.1-Flash
-            name: deepseek-ai/DeepSeek-V4.1-Flash
+          - id: deepseek-ai/DeepSeek-V4.1-Flash-1017
+            name: deepseek-ai/DeepSeek-V4.1-Flash-1017
             contextWindow: 1000000
             maxTokens: 256000
       openai-codex:
@@ -586,7 +586,7 @@
     enabled: true
     allowedModels:
       - provider: md
-        model: deepseek-ai/DeepSeek-V4.1-Flash
+        model: deepseek-ai/DeepSeek-V4.1-Flash-1017
       - provider: sensenova
         model: sensenova-6.8-flash-lite
       - provider: sensenova
@@ -743,7 +743,7 @@
 - id: ui-chat
   name: '@deepseek-ai/dsh-client-ui-chat'
   config:
-    transcriptView: compact
+    transcriptView: detailed
     performanceUsage: compact
 - id: ui-brand-official
   name: '@deepseek-ai/dsh-client-ui-brand-official'
@@ -1445,7 +1445,13 @@
 - id: llm-retry-schedule
   name: dsh-llm-retry-schedule
   config:
-    maxRetries: 1000
+    maxRetries: 60
+    retryableCodes:
+      - EMPTY_RESPONSE
+      - RATE_LIMIT
+      - SERVER
+      - TIMEOUT
+      - TRANSPORT
     schedule:
       - fromRetry: 1
         delayMs: 5000
@@ -1512,6 +1518,8 @@
 - id: ego-browser
   name: dsh-ego-browser
   config:
+    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared.mjs
+    idleTimeoutMin: 0
     chromePath: /opt/helium-browser-bin/helium
     chromeArgs: >-
       --load-extension=/usr/local/share/browser-themes/dracula

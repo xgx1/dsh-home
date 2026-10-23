@@ -388,42 +388,16 @@
         api: openai-completions
         baseURL: https://api-inference.modelscope.cn/v1
         models:
-          - id: deepseek-ai/DeepSeek-V4.1-Flash
-            name: deepseek-ai/DeepSeek-V4.1-Flash
+          - id: deepseek-ai/DeepSeek-V4.1-Flash-1017
+            name: deepseek-ai/DeepSeek-V4.1-Flash-1017
             contextWindow: 1000000
             maxTokens: 256000
-      # ChatGPT Plus 订阅额度（用户要求 2026-10-15）。pi-ai 自带 catalog provider，
-      # 端点是 chatgpt.com/backend-api（Codex 协议），凭据不是 apiKeyEnv 而是
-      # .credentials.yaml 的 grant 记录 llm-pi-ai/openai-codex，由
-      # ~/.local/bin/dsh-codex-cred 从 ~/.codex/auth.json 灌入；codex CLI 刷新
-      # token 后重跑该脚本。模型目录同 codex：gpt-5.6-* / gpt-6-* 可用，
-      # gpt-5.3-codex-spark 与 gpt-5.5 在 ChatGPT 账号下会被端点拒绝。
-      # models 是白名单：写进即替换 catalog 全表。gpt-5.3-codex-spark 与 gpt-5.5
-      # 被端点拒（"not supported when using Codex with a ChatGPT account"），不列。
       openai-codex:
         displayName: ChatGPT Plus (Codex)
         models:
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
-      # ── 用户要求（2026-10-17）：opencode 免费层 ──────────────────────────
-      # opencode 免费层是「客户端身份」硬门，四条缺一即 403 FreeTierError：
-      #   ① User-Agent: opencode/<semver>（只写 opencode 不行）
-      #   ② x-opencode-session: ses_<12 hex 高位为 1><14 base62>（降序 Identifier 外形，
-      #      实测不校验时间新鲜度）
-      #   ③ body.tools 里存在名为 read 的函数工具
-      #   ④ body.stream === true
-      # ②③④ DSH 的 agent loop 本来就满足；① 是 pi-ai 适配器保留给自身归属的请求头
-      # （packages/llm/llm-pi-ai/src/adapter.ts 的 requestHeaders() 里 reserved 只含
-      # user-agent），配置层改不了，故经本机中继 ~/.dsh/bin/opencode-zen-bridge.py
-      # （单元 opencode-zen-bridge.service，:8790）转发：注入 UA 与 x-opencode-session，
-      # 缺 read 工具时兜底注入。中继直连 opencode.ai。
-      # 凭据是 .credentials.yaml 的 refs.OPENCODE_API_KEY（账号余额 0：付费模型 402，
-      # 下列免费模型不限额度）。
-      # 45 个 cost=0 候选里实测只有这 12 个可用：其余 27 个一律
-      # 400 "Upstream request failed: Model is unavailable."（换端点、换 body 形状均无效，
-      # 疑似需 OpenCode Go 订阅），另有 4 个 410 ModelDeprecated、2 个 400
-      # ModelProtocolUnsupported。nemotron-3-ultra-free 偶发上游 503（Nvidia 过载）。
       opencode-zen:
         displayName: OpenCode Zen (free)
         apiKeyEnv: OPENCODE_API_KEY
@@ -574,7 +548,7 @@
 - id: ui-chat
   name: "@deepseek-ai/dsh-client-ui-chat"
   config:
-    transcriptView: compact
+    transcriptView: detailed
     performanceUsage: compact
 
 # ── 0.2.1 settings.yaml 迁移补遗（2026-10-14）──────────────────────────────
@@ -629,8 +603,11 @@
   config:
     enabled: true
     allowedModels:
+      # 2026-10-23 事故修复：模型 id 必须与 llm-pi-ai 里 `md` 注册的 id 完全一致。
+      # 原写 deepseek-ai/DeepSeek-V4.1-Flash（无 -1017 后缀），ModelScope 已下线该
+      # 别名，任何走这条的请求都 400 `has no provider supported`（会话 134e19ed 实测）。
       - provider: md
-        model: deepseek-ai/DeepSeek-V4.1-Flash
+        model: deepseek-ai/DeepSeek-V4.1-Flash-1017
       - provider: sensenova
         model: sensenova-6.8-flash-lite
       - provider: sensenova
@@ -1972,5 +1949,26 @@
     egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared.mjs
     idleTimeoutMin: 0
     chromePath: /opt/helium-browser-bin/helium
-    chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
+    chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula
+      --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
 
+# ── 2026-10-23 事故修复：重试预算收敛（覆盖 build 层 L1448 的 maxRetries: 1000）──
+# 事故事实：c017f22b 13:02→15:20 重试 485 次仍未拿到一次回复；ChatGPT Plus 报
+# 「try again in ~232 min」时本插件把 Retry-After 截到 60s 后继续重试，用户看到的是
+# 「卡住」而不是「额度用完了」。
+#  · maxRetries: 60 → 最坏 ≈ 4×5s + 15×10s + 41×60s ≈ 42 分钟就以错误结束该步，
+#    错误对用户/模型可见，可以立刻换模型，而不是静默挂 8 小时。
+#  · retryableCodes 去掉 QUOTA → 额度类失败交回官方 llm-retry（5 次、约 16 秒内失败），
+#    不再用 60s 顶档去等一个 232 分钟的窗口。
+#  · RATE_LIMIT 保留：sensenova 的 tpm/rps 抖动确实是秒级可恢复的。
+- id: llm-retry-schedule
+  config:
+    maxRetries: 60
+    retryableCodes: [EMPTY_RESPONSE, RATE_LIMIT, SERVER, TIMEOUT, TRANSPORT]
+    schedule:
+      - fromRetry: 1
+        delayMs: 5000
+      - fromRetry: 5
+        delayMs: 10000
+      - fromRetry: 20
+        delayMs: 60000
