@@ -398,6 +398,8 @@
             maxTokens: 256000
       openai-codex:
         displayName: ChatGPT Plus (Codex)
+        # bili 拦截 fetch；Codex 默认 WebSocket 会绕过压缩。
+        transport: sse
         models:
           - id: gpt-6-astra
           - id: gpt-6-luna
