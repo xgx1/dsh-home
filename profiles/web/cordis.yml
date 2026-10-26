@@ -1734,7 +1734,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -1956,7 +1956,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -2187,7 +2187,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -2418,7 +2418,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -2654,7 +2654,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -2890,7 +2890,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
@@ -3114,7 +3114,7 @@
           - id: compaction-basic
             name: '@deepseek-ai/dsh-compaction-basic'
             config:
-              auto: false
+              auto: true
           - id: command-compact
             name: '@deepseek-ai/dsh-command-compact'
           - id: tool-result-pruner
