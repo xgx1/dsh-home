@@ -2,8 +2,7 @@
 # install-systemd-units.sh —— 把 deploy/systemd-user/ 里的 unit 部署到 systemd 用户目录
 #
 # 为什么需要它：~/.config/systemd/user/ 不在任何 git 仓库里，而这几个服务是
-# DSH 生产实例与 MCP 的前置（dsh-web 拉 MCP 子进程；headroom-deepseek 提供
-# MCP 要连的 :8787）。新设备只拉 ~/.dsh 是不够的，unit 得跟着过去。
+# DSH 生产实例及相关本机服务。新设备只拉 ~/.dsh 是不够的，unit 得跟着过去。
 #
 # 用法：
 #   ./install-systemd-units.sh --dry-run    # 只显示会做什么
@@ -72,12 +71,10 @@ done
 echo "  已 enable 全部 unit（随用户会话自启）"
 
 if [ "$start" = 1 ]; then
-  systemctl --user start headroom-deepseek.service \
-    headroom-sensenova.service 2>/dev/null || true
-  echo "  headroom-* 已启动"
-  echo "  dsh-web 最后启动（它会中断当前会话）：systemctl --user start dsh-web.service"
+  systemctl --user start dsh-web.service
+  echo "  dsh-web 已启动"
 fi
 
 echo
 echo "完成：写入 $changed，跳过 $skipped。"
-echo "核对：systemctl --user list-unit-files 'headroom*' 'dsh-web*'"
+echo "核对：systemctl --user list-unit-files 'dsh-web*'"

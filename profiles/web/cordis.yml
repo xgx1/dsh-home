@@ -33,6 +33,7 @@
     maxTitleBytes: 80
 - id: session-title-llm
   name: '@deepseek-ai/dsh-session-title-first-prompt-llm'
+  disabled: true
   config:
     targetWords: 5
     targetCjkCharacters: 10
@@ -48,9 +49,9 @@
 - id: agent-default-model
   name: '@deepseek-ai/dsh-agent-default-model'
   config:
-    provider: deepseek-official
-    model: deepseek-flash
-    reasoningEffort: max
+    provider: step
+    model: step-5-preview
+    reasoningEffort: high
 - id: jobs
   name: '@deepseek-ai/dsh-jobs-local'
 - id: llm-retry
@@ -90,81 +91,6 @@
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
-      opencode-zen:
-        displayName: OpenCode Zen (free)
-        apiKeyEnv: OPENCODE_API_KEY
-        api: openai-completions
-        baseURL: http://127.0.0.1:8790/v1
-        models:
-          - id: beam-free
-            name: Beam Free
-            contextWindow: 1048576
-            maxTokens: 131072
-          - id: big-pickle
-            name: Big Pickle
-            contextWindow: 200000
-            maxTokens: 32000
-          - id: cat-jam-free
-            name: Cat Jam Free
-            contextWindow: 1048576
-            maxTokens: 131072
-          - id: deepseek-v4.1-flash-free
-            name: DeepSeek V4.1 Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: exo-free
-            name: Exo Free
-            contextWindow: 1048576
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: glm-5.3-flash-free
-            name: GLM-5.3-Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: longcat-2.5-preview-free
-            name: LongCat 2.5 Preview Free
-            contextWindow: 1000000
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: mimo-v2.6-flash-free
-            name: MiMo-V2.6-Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: nemotron-3-ultra-free
-            name: Nemotron 3 Ultra Free
-            contextWindow: 1000000
-            maxTokens: 128000
-          - id: nemotron-3.5-lightning-free
-            name: Nemotron 3.5 Lightning Free
-            contextWindow: 262144
-            maxTokens: 262144
-          - id: nemotron-3.5-super-vl-free
-            name: Nemotron 3.5 Super VL Free
-            contextWindow: 1048576
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: space-bunny-free
-            name: Space Bunny Free
-            contextWindow: 1048576
-            maxTokens: 524288
-            input:
-              - text
-              - image
       sensenova:
         displayName: SenseNova token plan (Responses API)
         apiKeyEnv: SENSENOVA_API_KEY
@@ -203,7 +129,7 @@
               high: high
               xhigh: xhigh
       step:
-        displayName: StepFun Step Plan
+        displayName: StepFun Step 5
         apiKeyEnv: STEP_API_KEY
         api: openai-completions
         baseURL: https://api.stepfun.com/step_plan/v1
@@ -224,6 +150,16 @@
               low: low
               medium: medium
               high: high
+      freellmapi:
+        displayName: FreeLLMAPI (119.45.10.68)
+        apiKeyEnv: FREELLMAPI_API_KEY
+        api: openai-completions
+        baseURL: http://119.45.10.68:3001/v1
+        models:
+          - id: auto
+            name: Auto (面板智能路由)
+            contextWindow: 300000
+            maxTokens: 8192
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
@@ -585,11 +521,7 @@
   config:
     enabled: true
     allowedModels:
-      - provider: md
-        model: deepseek-ai/DeepSeek-V4.1-Flash-1017
-      - provider: sensenova
-        model: sensenova-6.8-flash-lite
-      - provider: sensenova
+      - provider: deepseek-official
         model: deepseek-flash
 - id: message-feedback
   name: '@deepseek-ai/dsh-message-feedback'
@@ -743,7 +675,7 @@
 - id: ui-chat
   name: '@deepseek-ai/dsh-client-ui-chat'
   config:
-    transcriptView: detailed
+    transcriptView: verbose
     performanceUsage: compact
 - id: ui-brand-official
   name: '@deepseek-ai/dsh-client-ui-brand-official'
@@ -1422,8 +1354,6 @@
       - id: tool-plugin-manager
         name: '@deepseek-ai/dsh-plugin-manager/tools'
         disabled: !!js '!ctx.get(''profileContext'')'
-- id: genui
-  name: '@changfenhuang/dsh-genui'
 - id: dsh-task-manager
   name: dsh-task-manager
 - id: dsh-sidebar-taskbar
@@ -1459,8 +1389,6 @@
   name: dsh-dracula-theme
 - id: openviking-memory-runtime
   name: '@openviking/dsh-memory-plugin'
-- id: dsh-perf-mode
-  name: dsh-perf-mode
 - id: dsh-ops-shell
   name: dsh-ops/shell
   disabled: false
@@ -1509,12 +1437,56 @@
 - id: ego-browser
   name: dsh-ego-browser
   config:
-    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared.mjs
+    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs
     idleTimeoutMin: 0
     chromePath: /opt/helium-browser-bin/helium
     chromeArgs: >-
       --load-extension=/usr/local/share/browser-themes/dracula
       --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
+- id: dsh-perf-mode
+  name: dsh-perf-mode
+- id: speech-to-text
+  name: '@deepseek-ai/dsh-experimental-speech-to-text'
+  config:
+    defaultProvider: sensevoice-local
+- id: speech-to-text-sensevoice
+  name: '@deepseek-ai/dsh-experimental-speech-to-text-sensevoice'
+  config:
+    dataRoot: !!js dshHomePath('speech-to-text', 'sensevoice')
+- id: api-speech-to-text
+  name: '@deepseek-ai/dsh-experimental-api-speech-to-text'
+- id: ui-voice-input
+  name: '@deepseek-ai/dsh-experimental-client-ui-voice-input'
+- id: worktree
+  name: '@deepseek-ai/dsh-experimental-worktree'
+- id: tool-worktree
+  name: '@deepseek-ai/dsh-experimental-tool-worktree'
+- id: optional-persistent-terminals
+  name: cordis:group
+  group: true
+  isolate:
+    terminals: true
+  config:
+    - id: optional-terminal-registry
+      name: '@deepseek-ai/dsh-terminal'
+    - id: optional-terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform === 'win32'
+    - id: optional-terminal-pwsh
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        shellDialect: pwsh
+    - id: optional-tool-terminal
+      name: '@deepseek-ai/dsh-tool-terminal'
+- id: optional-session-title-all-prompts
+  name: '@deepseek-ai/dsh-session-title-all-prompts-llm'
+  config:
+    targetWords: 5
+    targetCjkCharacters: 10
+    maxInputBytes: 4096
+    maxOutputTokens: 64
+    timeoutMs: 60000
 - id: mcp-cbm
   name: '@deepseek-ai/dsh-mcp-client'
   config:
@@ -1647,12 +1619,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -1869,12 +1836,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2100,12 +2062,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2331,12 +2288,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2567,12 +2519,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2803,12 +2750,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -3027,12 +2969,7 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        config:
-          includeDefaultRoots: false
-          customSkillDirs:
-            - !!js >-
-              process.getBuiltinModule('node:url').fileURLToPath(new
-              URL('skills/', baseUrl))
+        disabled: true
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:

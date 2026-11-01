@@ -56,17 +56,6 @@
         toolCallTimeoutMs: 180000
         failOnStartupError: false
 
-# ── 用户调整（2026-09-30）：headroom 层整体拆除 ────────────────────────────
-# 三个 headroom unit（:8787/:8788/:8789）、uv tool 与 ~/.headroom 已删除，
-# 这里的 mcp-headroom 条目（headroom_compress / headroom_retrieve /
-# headroom_stats 三个工具）随之移除。压缩权交给 billion-context：它的
-# bundle patch 插入 bili-native（宿主平面 cordis 插件，进程内 fetch 拦截 +
-# 原生 compress/decompress/search_context/acp_status/acp_cache 工具与
-# /acp、/acp-cache 命令），配置在 ~/.config/billion-context/billion-context.json。
-# 注意它自带的 `compaction-basic: auto:false` 打在宿主树那条 web-app 已
-# disabled 的行上，是静默 no-op；真正生效的预设行在
-# ~/.dsh/.agent-presets/{omni,manager}/agent.cordis.yml 里改。详见 ADR-0009。
-
 # ── 用户调整（2026-09-20）：浏览器控制迁到 DSH 0.1.6 的 browser-use provider ─
 # 旧接线：dsh-mcp-client 直挂全局裸 @playwright/mcp（`mcp__playwright__*`），
 # 靠 --cdp-endpoint attach 到 find-work 管的共享 Chrome（9222）复用登录态。
@@ -371,9 +360,9 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: deepseek-official
-    model: deepseek-flash
-    reasoningEffort: max
+    provider: step
+    model: step-5-preview
+    reasoningEffort: high
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -387,27 +376,6 @@
   name: "@deepseek-ai/dsh-llm-pi-ai"
   config:
     providers:
-      strata-local:
-        displayName: Strata Qwen3.8 Coder IQ1_M
-        api: openai-completions
-        baseURL: http://127.0.0.1:8080/v1
-        headers:
-          Authorization: 'Bearer local-no-auth'
-        reasoning: medium
-        compat:
-          maxTokensField: max_tokens
-          supportsDeveloperRole: false
-          supportsReasoningEffort: true
-        models:
-          - id: qwen3.8-flash-next-coder-iq1_m
-            name: Qwen3.8-Flash-Next Coder IQ1_M (local)
-            contextWindow: 262144
-            maxTokens: 32768
-            input: [text, image]
-            reasoningEfforts:
-              low: low
-              medium: medium
-              xhigh: xhigh
       md:
         apiKeyEnv: MD_API_KEY
         api: openai-completions
@@ -423,81 +391,6 @@
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
-      opencode-zen:
-        displayName: OpenCode Zen (free)
-        apiKeyEnv: OPENCODE_API_KEY
-        api: openai-completions
-        baseURL: http://127.0.0.1:8790/v1
-        models:
-          - id: beam-free
-            name: Beam Free
-            contextWindow: 1048576
-            maxTokens: 131072
-          - id: big-pickle
-            name: Big Pickle
-            contextWindow: 200000
-            maxTokens: 32000
-          - id: cat-jam-free
-            name: Cat Jam Free
-            contextWindow: 1048576
-            maxTokens: 131072
-          - id: deepseek-v4.1-flash-free
-            name: DeepSeek V4.1 Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: exo-free
-            name: Exo Free
-            contextWindow: 1048576
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: glm-5.3-flash-free
-            name: GLM-5.3-Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: longcat-2.5-preview-free
-            name: LongCat 2.5 Preview Free
-            contextWindow: 1000000
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: mimo-v2.6-flash-free
-            name: MiMo-V2.6-Flash Free
-            contextWindow: 200000
-            maxTokens: 32000
-            input:
-              - text
-              - image
-          - id: nemotron-3-ultra-free
-            name: Nemotron 3 Ultra Free
-            contextWindow: 1000000
-            maxTokens: 128000
-          - id: nemotron-3.5-lightning-free
-            name: Nemotron 3.5 Lightning Free
-            contextWindow: 262144
-            maxTokens: 262144
-          - id: nemotron-3.5-super-vl-free
-            name: Nemotron 3.5 Super VL Free
-            contextWindow: 1048576
-            maxTokens: 131072
-            input:
-              - text
-              - image
-          - id: space-bunny-free
-            name: Space Bunny Free
-            contextWindow: 1048576
-            maxTokens: 524288
-            input:
-              - text
-              - image
       sensenova:
         displayName: SenseNova token plan (Responses API)
         apiKeyEnv: SENSENOVA_API_KEY
@@ -536,7 +429,7 @@
               high: high
               xhigh: xhigh
       step:
-        displayName: StepFun Step Plan
+        displayName: StepFun Step 5
         apiKeyEnv: STEP_API_KEY
         api: openai-completions
         baseURL: https://api.stepfun.com/step_plan/v1
@@ -557,6 +450,25 @@
               low: low
               medium: medium
               high: high
+      # 2026-10-27 用户要求接入：腾讯云南京机 119.45.10.68 上的 FreeLLMAPI 面板
+      # （OpenAI 兼容 /v1，unified key 见 .credentials.yaml 的 FREELLMAPI_API_KEY）。
+      # 2026-10-28 用户要求：只留一个模型条目 `auto`。面板侧已把自定义链 modern
+      # 设为 active profile，所以这里的 auto 就是 modern 链（GLM-5.2 / DeepSeek-V4-Pro
+      # / MiniMax-M3 / Qwen3.5-397B / gemini-flash-lite ...），无需客户端再区分。
+      # 上下文 300000：面板按 estimatedTokens 预检上游窗口（fitsContextWindow），
+      # 窗口不够的模型会被跳过，不会把超长请求推给 128K 模型；代价是超过 262K 后
+      # modelscope 系（131K~256K）退出候选，只剩 1M 窗口的 Google/OpenRouter。
+      # 要保住 256K 档就改成 260000。
+      freellmapi:
+        displayName: FreeLLMAPI (119.45.10.68)
+        apiKeyEnv: FREELLMAPI_API_KEY
+        api: openai-completions
+        baseURL: http://119.45.10.68:3001/v1
+        models:
+          - id: auto
+            name: Auto (面板智能路由)
+            contextWindow: 300000
+            maxTokens: 8192
 - id: ui-theme
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:
@@ -573,7 +485,7 @@
 - id: ui-chat
   name: "@deepseek-ai/dsh-client-ui-chat"
   config:
-    transcriptView: detailed
+    transcriptView: verbose
     performanceUsage: compact
 
 # ── 0.2.1 settings.yaml 迁移补遗（2026-10-14）──────────────────────────────
@@ -628,14 +540,7 @@
   config:
     enabled: true
     allowedModels:
-      # 2026-10-23 事故修复：模型 id 必须与 llm-pi-ai 里 `md` 注册的 id 完全一致。
-      # 原写 deepseek-ai/DeepSeek-V4.1-Flash（无 -1017 后缀），ModelScope 已下线该
-      # 别名，任何走这条的请求都 400 `has no provider supported`（会话 134e19ed 实测）。
-      - provider: md
-        model: deepseek-ai/DeepSeek-V4.1-Flash-1017
-      - provider: sensenova
-        model: sensenova-6.8-flash-lite
-      - provider: sensenova
+      - provider: deepseek-official
         model: deepseek-flash
 
 # 2026-10-17 用户要求：删除全能(omni)/管理(manager)/简单(simple) 三个预设，
@@ -810,13 +715,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -971,13 +877,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1141,13 +1048,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1311,13 +1219,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1486,13 +1395,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1661,13 +1571,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1824,13 +1735,14 @@
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            config:
-              includeDefaultRoots: false
-              customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+            disabled: true
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
@@ -1973,7 +1885,7 @@
 #    --load-extension，所以内核必须留 Helium。
 - id: ego-browser
   config:
-    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared.mjs
+    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs
     idleTimeoutMin: 0
     chromePath: /opt/helium-browser-bin/helium
     chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula

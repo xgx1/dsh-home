@@ -79,34 +79,19 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 ```bash
 ~/.dsh/deploy/install-systemd-units.sh --dry-run   # 先看会做什么
 ~/.dsh/deploy/install-systemd-units.sh             # 写入 + daemon-reload + enable
-~/.dsh/deploy/install-systemd-units.sh --start     # 新设备：顺带启动 headroom-*
+~/.dsh/deploy/install-systemd-units.sh --start     # 部署后启动 dsh-web
 ```
 
 | unit | 作用 |
 |---|---|
 | `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
-| `headroom-deepseek.service` | `:8787` 代理 → `api.deepseek.com`；`mcp-headroom` 连的就是它，也是 `settings.yaml` 里 `llm-deepseek` 的 `baseURL` 目标 |
-| `headroom-sensenova.service` | `:8788` 代理 → `token.sensenova.cn`；对应 `settings.yaml` 里 `llm-pi-ai.providers.sensenova` 路由 |
 | `opencode-zen-bridge.service` | `:8790` 本地 OpenAI 兼容端点（`bin/opencode-zen-bridge.py`），对应 `agent-default-model` 的 `opencode-zen` provider |
 
 unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
 的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
-headroom 代理同样不持密钥：客户端发来的 `Authorization` 被原样转发到上游，所以
-`sensenova` 路由只要 `apiKeyEnv: SENSENOVA_API_KEY`（客户端侧解析）即可。
-
-> **2026-09-13 移除**：`headroom-scnet`（`:8789`）/ `headroom-siliconflow`（`:8788`）/
-> `headroom-moda`（`:8790`）三个上游代理已彻底删除——三者的 unit 文件、仓库副本、
-> 与 systemd 注册一并清除。
->
-> **2026-09-19 新增**：`headroom-sensenova`（`:8788`，复用原 siliconflow 的端口）接商汤
-> 日日新 token-plan 免费套餐。`settings.yaml` 里只挂了 `sensenova-6.8-flash-lite`
-> 一个模型（多模态 + `reasoning_effort` 支持 low/medium/high/xhigh/none）。两个易踩点：
-> ① 上游**不接受 `developer` 角色**，必须 `compat: { supportsDeveloperRole: false }`；
-> ② 上游**不接受 `reasoning_effort: minimal`**，所以只声明 off/low/medium/high/xhigh。
-
 ## MCP 前置依赖（配置同步 ≠ 那台设备能用）
 
-`profiles/web/cordis.patch.yml` 里的 MCP 条目（cbm / ue / headroom / playwright）**随本仓库同步**，
+`profiles/web/cordis.patch.yml` 里的 MCP 条目（cbm / ue / playwright）**随本仓库同步**，
 但每条 `stdio` 型 MCP 都要**在设备上有那个命令**，否则 DSH 会静默跳过它（配置里带着
 `failOnStartupError: false`），表现为"工具凭空消失"而没有任何报错。新设备需要另行安装：
 
@@ -114,14 +99,10 @@ headroom 代理同样不持密钥：客户端发来的 `Authorization` 被原样
 |---|---|---|---|
 | cbm | `codebase-memory-mcp` | `uv tool install codebase-memory-mcp` | v0.10.8 |
 | playwright | `playwright-mcp` | `npm i -g @playwright/mcp`（软链到 `~/.local/bin`） | 0.0.80 |
-| headroom | `headroom` | `uv tool install headroom-ai` | v0.37.0 |
 
 装完用 `command -v <命令>` 逐个确认，再重启 `dsh-web.service`（MCP 子进程由它拉起）。
 `http` 型（如 `mcp-ue` 的 `127.0.0.1:8000`）不依赖命令，依赖那台设备的服务在跑。
 
-`headroom` 那条还必须清代理——它要连本机 8787，而 `dsh-web` 继承的 `all_proxy=socks5://…`
-会让子进程报 `socksio` 缺失；该条目的 `env` 段就是为此显式清空 `*_proxy` 并设 `no_proxy`。
-**它连的 8787 由 `headroom-deepseek.service` 提供**，所以那份 unit 也是前置（见上一节）。
 
 ## 凭据机制备忘
 

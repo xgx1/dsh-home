@@ -19,4 +19,14 @@ export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
 # 那个 dsh 进程上（父进程 watchdog），dev 一重启就把生产的模型链路一起带走。
 # 固定各自的 lane，各起各的代理（端口按 lane sticky 分配）。
 export BILI_NATIVE_DSH_LANE=dsh-prod
+# 2026-10-24：/tmp 是 32G tmpfs（size=50% RAM，Arch tmp.mount 带 usrquota）。当天约 22G 修复样本
+# 落进 /tmp 后用户 tmpfs 配额到顶，而 run_code（PTC）每次 spawn 前必须写
+# /tmp/dsh-subprocess-launch-*/launch-request.json（subprocess-local/src/runner-protocol.ts:104），
+# 内核以 EDQUOT(122) 拒绝 —— libuv 1.52 的 errno 名表没有 EDQUOT，于是报成
+# “worker spawn failed: code=UNKNOWN errno=-122 syscall=write”，整个 run_code 工具全挂。
+# 把临时目录挪到大盘（/mnt/Storage，btrfs）：PTC 启动文件、输出 spill、shell-activity 不再和内存盘抢配额。
+# 目录不可用时静默回退 /tmp，保证服务一定能起来。
+if [ -d /mnt/Storage/tmp ] && [ -w /mnt/Storage/tmp ]; then
+  export TMPDIR=/mnt/Storage/tmp
+fi
 exec dsh web --no-open

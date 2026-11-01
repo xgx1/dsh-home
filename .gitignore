@@ -66,3 +66,5 @@ remote-web-ui-devices.json
 settings.yaml
 settings.yaml.imported
 settings.yaml.bak-*
+speech-to-text/
+*.bak-*

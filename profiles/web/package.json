@@ -2,11 +2,9 @@
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
-    "@changfenhuang/dsh-genui": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-genui",
     "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
-    "dsh-agent-presets": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-agent-presets",
     "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
@@ -20,7 +18,6 @@
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
-        "@changfenhuang/dsh-genui",
         "dsh-task-manager",
         "dsh-sidebar-taskbar",
         "@deepseek-ai/dsh-experimental-agent-team-profile",
@@ -28,11 +25,14 @@
         "billion-context",
         "dsh-dracula-theme",
         "@openviking/dsh-memory-plugin",
-        "dsh-agent-presets",
-        "dsh-perf-mode",
         "dsh-ops",
         "@dsh-external/dsh-blender-plugin",
-        "dsh-ego-browser"
+        "dsh-ego-browser",
+        "dsh-perf-mode",
+        "@deepseek-ai/dsh-experimental-voice-input-bundle",
+        "@deepseek-ai/dsh-experimental-tool-worktree",
+        "@deepseek-ai/dsh-experimental-terminal-bundle",
+        "@deepseek-ai/dsh-experimental-session-titles-bundle"
       ]
     }
   }
