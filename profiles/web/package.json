@@ -4,14 +4,15 @@
   "dependencies": {
     "@deepseek-ai/dsh-browser-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use",
     "@deepseek-ai/dsh-computer-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use",
-    "@deepseek-ai/dsh-experimental-browser-use-playwright-mcp": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp",
-    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native",
-    "@deepseek-ai/dsh-session-manager": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/session/session-manager",
-    "@deepseek-ai/dsh-web-search-exa": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/web/web-search-exa",
+    "@deepseek-ai/dsh-hooks-claude-code": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code",
+    "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
+    "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
+    "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-ops": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops",
+    "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
   },
@@ -25,8 +26,16 @@
         "@deepseek-ai/dsh-experimental-agent-team-profile",
         "dsh-llm-retry-schedule",
         "billion-context",
+        "dsh-dracula-theme",
         "@openviking/dsh-memory-plugin",
-        "dsh-ops"
+        "dsh-ops",
+        "@dsh-external/dsh-blender-plugin",
+        "dsh-ego-browser",
+        "dsh-perf-mode",
+        "@deepseek-ai/dsh-experimental-voice-input-bundle",
+        "@deepseek-ai/dsh-experimental-tool-worktree",
+        "@deepseek-ai/dsh-experimental-terminal-bundle",
+        "@deepseek-ai/dsh-experimental-session-titles-bundle"
       ]
     }
   }

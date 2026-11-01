@@ -8,12 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@openviking/dsh-memory-plugin':
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
-        version: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
       billion-context:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
         version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
-      dsh-ops:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops
-        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-ops

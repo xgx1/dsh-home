@@ -6,10 +6,12 @@
       config:
         serverName: cbm
         transport: stdio
+        # 2026-10-16 用户要求：UI 开关与端口是 codebase-memory-mcp 的**持久化配置**
+        # （`codebase-memory-mcp config list`：ui_enabled=true / ui_port=9749），
+        # 由 systemd 的 `codebase-memory-mcp daemon start`（codebase-memory.service）
+        # 单点持有；MCP 这行再传一次只是每次启动重写同一份配置，属冗余，故删除。
+        # 删除不改行为：缺省不传即不动配置，daemon 仍在 9749 提供 UI。
         command: codebase-memory-mcp
-        args:
-          - '--ui=true'
-          - '--port=9749'
 
     - id: mcp-ue
       name: '@deepseek-ai/dsh-mcp-client'
@@ -25,16 +27,34 @@
         url: http://127.0.0.1:8000/mcp
         failOnStartupError: false
 
-# ── 用户调整（2026-09-30）：headroom 层整体拆除 ────────────────────────────
-# 三个 headroom unit（:8787/:8788/:8789）、uv tool 与 ~/.headroom 已删除，
-# 这里的 mcp-headroom 条目（headroom_compress / headroom_retrieve /
-# headroom_stats 三个工具）随之移除。压缩权交给 billion-context：它的
-# bundle patch 插入 bili-native（宿主平面 cordis 插件，进程内 fetch 拦截 +
-# 原生 compress/decompress/search_context/acp_status/acp_cache 工具与
-# /acp、/acp-cache 命令），配置在 ~/.config/billion-context/billion-context.json。
-# 注意它自带的 `compaction-basic: auto:false` 打在宿主树那条 web-app 已
-# disabled 的行上，是静默 no-op；真正生效的预设行在
-# ~/.dsh/.agent-presets/{omni,manager}/agent.cordis.yml 里改。详见 ADR-0009。
+    # ── CoplayDev/unity-mcp（MCP for Unity）2026-10-14 接入 ──────────────
+    # 两端：Unity 侧 UPM 包 com.coplaydev.unity-mcp（git 依赖，钉 v10.3.0）；
+    # 客户端走 stdio，由 uvx 拉 Python 服务端 mcpforunityserver==10.3.0（与 UPM
+    # 包同版本），服务端再连 Unity 侧的反向桥 127.0.0.1:6400。
+    #
+    # Unity 侧起桥：默认懒得自启（HTTP 模式才是包默认），用包自带的 CI 入口显式拉起——
+    #   Unity -projectPath <proj> -executeMethod MCPForUnity.Editor.McpCiBoot.StartStdioForCi
+    # 起了会监听 6400 并写 ~/.unity-mcp/unity-mcp-status-<hash>.json（reason:"ready"）。
+    #
+    # 代理坑（2026-10-14 实测）：本机全局 all_proxy=socks5://127.0.0.1:7897，httpx
+    # 构造期就建 SOCKS 传输层，缺 socksio 直接 ImportError；且 no_proxy 里的 `[::1]`
+    # 写法让 httpx 抛 `InvalidURL: Invalid port: ':1]'`。故一律经包装脚本
+    # ~/.local/bin/uvx-no-proxy（先清代理变量、换干净的本地白名单再 exec uvx）。
+    - id: mcp-unity
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: unity
+        transport: stdio
+        command: /home/sx/.local/bin/uvx-no-proxy
+        args:
+          - '--from'
+          - 'mcpforunityserver==10.3.0'
+          - 'mcp-for-unity'
+          - '--transport'
+          - 'stdio'
+        # 编译、进播放模式这类调用超过默认 60s。
+        toolCallTimeoutMs: 180000
+        failOnStartupError: false
 
 # ── 用户调整（2026-09-20）：浏览器控制迁到 DSH 0.1.6 的 browser-use provider ─
 # 旧接线：dsh-mcp-client 直挂全局裸 @playwright/mcp（`mcp__playwright__*`），
@@ -214,8 +234,8 @@
 - id: session-log-download
   disabled: true
 
-- id: tool-ralph
-  disabled: true
+# tool-ralph 已于 0.2.1 移除，此前的 disabled:true 变成失效引用（启动时报
+# patch: entry "tool-ralph" not found），2026-10-14 删掉这行。
 
 # ── 用户要求（2026-09-25）：goal 相关插件全部启用 ────────────────────────
 # 目标系统留在 host plane 的三项：服务（ctx.goals）、自动续跑 driver、
@@ -243,21 +263,18 @@
   config:
     apiKeyEnv: DEEPSEEK_API_KEY
 
-# ── 用户要求（2026-09-06）：搜索 provider 切到 Exa ─────────────────────
-# 现用 web-search-deepseek 每次搜索 = 一次完整辅助模型请求（烧 DeepSeek 令牌），
-# Exa 是普通 HTTP POST /search（不走模型），返回 URL+标题+高亮摘要，最省。
-# 包来源：官方 harness packages/web/web-search-exa（本仓库现成插件，未开发新代码）。
-# 接线：apps/cli/package.json 加依赖 → profiles/node_modules 建 symlink（heal 会接管）。
-# 切换步骤（key 到位后）：① EXA_API_KEY=<key> 写进 ~/.dsh/.env；② 下面 web 条目的
-# searchProvider 改成 exa；③ pm2 restart dsh-web（launch env 是启动时快照，必须重启）。
-- insert:
-    - id: web-search-exa
-      name: '@deepseek-ai/dsh-web-search-exa'
+# ── 用户要求（2026-10-16）：搜索 provider 改回 DeepSeek，Exa 整段移除 ───────
+# 2026-09-06 曾因「exa 是普通 HTTP POST、不烧 DeepSeek 令牌」切到 Exa；现按用户
+# 口径回到 web-search-deepseek（每次搜索 = 一次完整辅助模型请求，消耗 DeepSeek
+# 额度）。原 `- insert: [web-search-exa]` 段删除；包仍由 apps/cli 依赖，无需改
+# 依赖或 pnpm。EXA_API_KEY 留在 ~/.dsh/.env 不碍事，未被选中的 provider 不参与。
 
-# searchProvider 整行替换覆盖（2026-09-06 key 已入 credentials.yaml 并实测通过）：
+# searchProvider 整行替换覆盖：2026-09-06 曾切到 exa（普通 HTTP POST，不烧模型令牌）；
+# 2026-10-16 用户要求改回 DeepSeek 搜索——web-search-exa 的 insert 段已整段删除，
+# 取值回到 base 层默认 `deepseek-official`（packages/bundle/base/cordis.patch.yml:463）。
 - id: web
   config:
-    searchProvider: exa
+    searchProvider: deepseek-official
 
 - id: fs-observation-policy
   disabled: true
@@ -328,7 +345,7 @@
         transport: stdio
         # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
         # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
-        # 结果里追加一句「已建好/构建中」。回滚只需把 command 改回 `zg`。
+        # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
         # 代理内部用 `server --stdio` 拉起真 zg，参数原样透传。
         command: /home/sx/.dsh/bin/zg-autoidx.mjs
         args:
@@ -336,60 +353,308 @@
           - '--stdio'
           - '--mcp-toolset'
           - full
-
-# ── 用户要求（2026-10-15）：DSH 走 ChatGPT Plus 额度 ─────────────────────
-# 复用 pi-ai 自带 catalog provider `openai-codex`（OAuth，ChatGPT Plus/Pro 订阅；
-# endpoint https://chatgpt.com/backend-api，协议 openai-codex-responses，模型
-# gpt-5.x 一档）。凭据不是 apiKeyEnv，而是 $DSH_HOME/.credentials.yaml 里的
-# grant 记录 `llm-pi-ai/openai-codex`，由 `~/.local/bin/dsh-codex-cred` 从
-# ~/.codex/auth.json 灌入；codex CLI 刷新 token 后重跑该脚本。
-# models 是白名单：写进去即替换 catalog 全表。只留端点真正放行的 7 个；
-# gpt-5.3-codex-spark 与 gpt-5.5 在 ChatGPT 账号下被端点拒（"not supported"），
-# 不进列表，免得选择器里留两个必挂的坑。catalog 里别的 id 也不上。
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: step
+    model: step-5-preview
+    reasoningEffort: high
+- id: agent-loop
+  name: "@deepseek-ai/dsh-agent-loop"
+  config:
+    agents: []
+    maxParallelToolCalls: 10
+- id: locale
+  name: "@deepseek-ai/dsh-client-locale"
+  config:
+    preference: zh
 - id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
   config:
     providers:
+      md:
+        apiKeyEnv: MD_API_KEY
+        api: openai-completions
+        baseURL: https://api-inference.modelscope.cn/v1
+        models:
+          - id: deepseek-ai/DeepSeek-V4.1-Flash-1017
+            name: deepseek-ai/DeepSeek-V4.1-Flash-1017
+            contextWindow: 1000000
+            maxTokens: 256000
       openai-codex:
         displayName: ChatGPT Plus (Codex)
         models:
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
-      strata-local:
-        displayName: Strata Qwen3.8 Coder IQ1_M
+      sensenova:
+        displayName: SenseNova token plan (Responses API)
+        apiKeyEnv: SENSENOVA_API_KEY
+        api: openai-responses
+        baseURL: https://token.sensenova.cn/v1
+        reasoning: xhigh
+        compat:
+          supportsDeveloperRole: true
+          supportsMaxOutputTokens: true
+          supportsStrictMode: true
+        models:
+          - id: deepseek-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 1000000
+            maxTokens: 65536
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+          - id: sensenova-6.8-flash-lite
+            name: sensenova-6.8-flash-lite
+            contextWindow: 262144
+            maxTokens: 65536
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+      step:
+        displayName: StepFun Step 5
+        apiKeyEnv: STEP_API_KEY
         api: openai-completions
-        baseURL: http://127.0.0.1:8080/v1
-        headers:
-          Authorization: 'Bearer local-no-auth'
+        baseURL: https://api.stepfun.com/step_plan/v1
         reasoning: medium
         compat:
-          maxTokensField: max_tokens
-          supportsDeveloperRole: false
           supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
         models:
-          - id: qwen3.8-flash-next-coder-iq1_m
-            name: Qwen3.8-Flash-Next Coder IQ1_M (local)
-            contextWindow: 262144
-            maxTokens: 32768
-            input: [ text, image ]
+          - id: step-5-preview
+            name: step-5-preview
+            contextWindow: 1000000
+            maxTokens: 131072
+            input:
+              - text
+              - image
             reasoningEfforts:
               low: low
               medium: medium
-              xhigh: xhigh
+              high: high
+      # 2026-10-27 用户要求接入：腾讯云南京机 119.45.10.68 上的 FreeLLMAPI 面板
+      # （OpenAI 兼容 /v1，unified key 见 .credentials.yaml 的 FREELLMAPI_API_KEY）。
+      # 2026-10-28 用户要求：只留一个模型条目 `auto`。面板侧已把自定义链 modern
+      # 设为 active profile，所以这里的 auto 就是 modern 链（GLM-5.2 / DeepSeek-V4-Pro
+      # / MiniMax-M3 / Qwen3.5-397B / gemini-flash-lite ...），无需客户端再区分。
+      # 上下文 300000：面板按 estimatedTokens 预检上游窗口（fitsContextWindow），
+      # 窗口不够的模型会被跳过，不会把超长请求推给 128K 模型；代价是超过 262K 后
+      # modelscope 系（131K~256K）退出候选，只剩 1M 窗口的 Google/OpenRouter。
+      # 要保住 256K 档就改成 260000。
+      freellmapi:
+        displayName: FreeLLMAPI (119.45.10.68)
+        apiKeyEnv: FREELLMAPI_API_KEY
+        api: openai-completions
+        baseURL: http://119.45.10.68:3001/v1
+        models:
+          - id: auto
+            name: Auto (面板智能路由)
+            contextWindow: 300000
+            maxTokens: 8192
+      # 2026-11-01 用户要求接入 NVIDIA NIM（integrate.api.nvidia.com，OpenAI 兼容），
+      # 只挂 mistralai/mistral-large-4-1t-a52b（Mistral Large 4：1T 总参 / A52B 激活，
+      # 262K 上下文，文本+图片输入，reasoning 模型，免费档 40rpm）。
+      # pi-ai 内置 catalog 没有这个 nvidia 条目，capacities/compat 全部手写，事实来自
+      # build.nvidia.com 模型卡的 OpenAPI spec（2026-11-01 实测）：
+      #   · reasoning_effort 实测（2026-11-01）：low/medium/high 均 200 且都思考；
+      #     none/max 被 recipe 400（deserializer 认七档，recipe 只实现 low/medium/high），
+      #     不传该字段同样思考——思考关不掉，故只声明 low/medium/high、不声明 off。
+      #   · role 枚举 [system,user,assistant,tool]，无 developer → supportsDeveloperRole:false。
+      #   · max_tokens 上限 262144（prompt+output 合计不超 262K），这里取 65536 兜底。
+      # ponytail: 无 off 档可声明（上游无法关闭思考，传 none 直接 400）；NVCF-POLL-SECONDS
+      # 头防冷启动时网关提前踢连接（v4.1-flash 实测 10~15 分钟被踢，mistral 秒回）。
+      # 换 model 记录：旧 key（nvapi-r2mf8k…）全模型 403（账号未开 Public API
+      # Endpoints）；新 key（nvapi-BadGP…）鉴权已通；deepseek-ai/deepseek-v4.1-flash
+      # 函数本身挂起（接住请求 10~15 分钟 0 字节被踢，NVIDIA 侧 preview 函数问题），
+      # 故按用户 2026-11-01 指示换 mistral-large-4-1t-a52b。
+      nvidia:
+        displayName: NVIDIA NIM (Mistral Large 4 1T)
+        apiKeyEnv: NVIDIA_API_KEY
+        api: openai-completions
+        baseURL: https://integrate.api.nvidia.com/v1
+        reasoning: high
+        headers:
+          NVCF-POLL-SECONDS: "3600"
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: mistralai/mistral-large-4-1t-a52b
+            name: Mistral Large 4 (1T A52B)
+            contextWindow: 262144
+            maxTokens: 65536
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+- id: ui-theme
+  name: "@deepseek-ai/dsh-client-ui-theme"
+  config:
+    preference: dark
+    fontSize: 22
+- id: ui-conversation
+  name: "@deepseek-ai/dsh-client-ui-conversation"
+  config:
+    busyEnter: steer
+- id: subagent
+  name: "@deepseek-ai/dsh-subagent"
+  config:
+    maxDepth: 10
+    maxActiveSubagents: 20
+- id: ui-chat
+  name: "@deepseek-ai/dsh-client-ui-chat"
+  config:
+    transcriptView: verbose
+    performanceUsage: compact
+
+# ── 0.2.1 settings.yaml 迁移补遗（2026-10-14）──────────────────────────────
+# 0.2.1 启动时把 $DSH_HOME/settings.yaml 改名成 settings.yaml.imported，并把可写字段
+# 导入 profile patch。五节没导进来，原因逐条写明；下面按 0.2.1 的条目 id 补回，值与原
+# settings.yaml 一致（.imported 里仍留原件备查）：
+#   · llm-deepseek             原节含 0.2.1 已删除的 protocol 字段，校验不过
+#   · shell                    LEGACY 映射到 bash-sandbox，而该条目被本 patch disabled，
+#                              用户实际执行器是 bash-local
+#   · subagent-model-selection  条目 id 改为 subagent-model-selection-settings
+#   · agent-presets             条目 id 改为 agent-preset-registry
+#   · permission                permission 条目被本 patch disabled（无限制执行器），
+#                              这节的 defaultPreset 属预期丢弃
+# patch 的 config 是整条目替换，不合并，故每节都写全。
+- id: llm-deepseek
+  config:
+    apiKeyEnv: DEEPSEEK_API_KEY
+    # 0.2.1 的 llm-deepseek（api-key provider）本身就是 Messages 协议
+    # （PUBLIC_BASE_URL = https://api.deepseek.com/anthropic），原 protocol 字段已删。
+    thinking: enabled
+    # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
+    reasoningEffort: low
+    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
+    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
+    models:
+      - id: deepseek-flash
+        name: DeepSeek-V4.1-Flash
+        contextWindow: 1048576
+        maxTokens: 393216
+        inputModalities:
+          - text
+          - image
+        imagePixelBudget: 640000
+        imageMaxBytes: 1048576
+        systemPromptUpdate: in-history
+      - id: deepseek-v4-pro
+        name: DeepSeek-V4-Pro
+        description: 更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。
+        contextWindow: 1048576
+        maxTokens: 393216
+        inputModalities:
+          - text
+
+# 原 settings.yaml 的 shell.timeoutMs = 1800000（30 分钟）。落到实际执行器 bash-local 上，
+# 并同步抬高 maxTimeoutMs——默认上限 600000 会把请求钳回去。
+- id: bash-local
+  config:
+    timeoutMs: 1800000
+    maxTimeoutMs: 1800000
+
+- id: subagent-model-selection-settings
+  config:
+    enabled: true
+    allowedModels:
+      - provider: deepseek-official
+        model: deepseek-flash
+
+# 2026-10-17 用户要求：删除全能(omni)/管理(manager)/简单(simple) 三个预设，
+# omni 的能力折进类型预设（基础树见 ~/.dsh/preset-base.yml，类型清单见
+# ~/.dsh/type-presets.yaml，由 ~/.dsh/bin/gen-project-presets.py 生成）。
+# 默认预设因此改为 js（通用编码类型）；要别的类型在新建会话时挑。
+- id: agent-preset-registry
+  config:
+    default: js
+
+# ── 用户要求（2026-10-14）：禁用右侧面板（文件 / 浏览器 / 终端 / 文档预览）──────
+# ui-sidebar-right 的 panel:false 只停住「面板 + 会话头展开按钮」两处挂载；
+# ctx.sidebarRight 服务与 sidebarRightTabs 注册表照常提供，ui-chat / ui-reference /
+# ui-plan / ui-deliverables / ui-schedule 等 inject 它的插件不会卡在 pending。
+# （整行 disabled 会把这些插件一起打掉，对话区直接空白，故不能用 disabled。）
+# 文件路径点击改由系统默认程序打开：ui-chat 的 openFile 已改走 Host 桌面，
+# Sidebar 只作兜底。
+- id: ui-sidebar-right
+  config:
+    panel: false
+
+# ── 用户要求（2026-10-14）：/goal 不依赖 preset 面 ───────────────────────────
+# command-goal 在 web-app bundle 的 host 面被 disabled（packages/bundle/web-app/
+# cordis.patch.yml），靠 preset 面补挂；preset 面一死 /goal 就消失（08:05 实测）。
+# 命令注册表是「全局 + 会话域遮蔽」语义，两层同时注册不会 fail loud，故在 host 面
+# 直接补一行。**不要**照做 tool-goal（create_goal/get_goal/update_goal）：工具 id
+# 重复注册会 fail loud，host 面挂它会让所有 preset 会话起不来。
+- id: command-goal
+  disabled: false
+
+# ── 用户要求（2026-10-14）：接入 REA（morluto/rea）逆向证据层 ──────────────────
+# npm 包 rea-agents@6.4.0 已全局装（~/.npm-global/bin/rea；~/.local/bin/rea 是它的软链，
+# 与 codebase-memory-mcp 同路——dsh-web 进程的 PATH 里确实有 ~/.local/bin）。
+# 已装引擎：Ghidra 12.1.2（Arch extra 包，树在 /opt/ghidra）、JADX、binwalk、
+# pwntools + pwndbg、mitmproxy、完整 JDK（java-environment）、adb、.NET SDK。
+# Hopper / IDA / JEB 是付费软件或自带服务，本机没有；对应 provider 报 unavailable 属预期。
+#
+# 两个非默认值都有实测依据：
+#   1. GHIDRA_INSTALL_DIR：REA 只在未设该变量时才去 PATH 找 ghidra / ghidraRun，且要求
+#      解析出的真实路径属于一棵 Ghidra 树；Arch 的 /usr/bin/ghidra 是包装脚本
+#      （launch.sh bg jdk Ghidra），不是树内文件，PATH 发现必然失败
+#      （实测 doctor：ok=false, detail=GHIDRA_INSTALL_DIR is not set）。显式给 /opt/ghidra
+#      后 doctor 该 provider 全绿：12.1.2; compatible 12.1.x release。
+#   2. toolCallTimeoutMs：REA 侧 Ghidra 冷启动默认允许 330,000 ms
+#      （REA_GHIDRA_STARTUP_TIMEOUT_MS，REA 自己的下限），而 dsh-mcp-client 默认每次工具
+#      调用 60,000 ms 即取消——首次 binary_overview 很可能死在导入阶段。放大到 600,000 ms。
+- insert:
+    - id: mcp-rea
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: rea
+        transport: stdio
+        command: rea
+        args:
+          - mcp
+        env:
+          GHIDRA_INSTALL_DIR: /opt/ghidra
+        toolCallTimeoutMs: 600000
 
 # ── dsh-ops（2026-10-16，fork xgx1/dsh-ops 的 Linux 移植）────────────────
-# 四个组件都开：
-#  · shell 用宿主 bash（bashPath=/usr/bin/bash）——Linux 没有随包 bash/pwsh
-#    载荷，而 allowSystemShellFallback 被 config update 1 强制改回 false，
-#    不能当开关用；改完实测 ops_bash exit 0。
-#  · background 也要自己的 bashPath：每行各自解析 shell，本行缺它就发布不出
-#    command/job 工具；command 工具另需 worker 为 danger-full-access。FastCtx
-#    由 `node bin/dsh-ops.mjs build --force` 在本机构建（vendor/fastctx/
-#    target/release/fastctx），实测后台任务能起、能读、能 kill。
-#  · file/ptc 走本地 Rust worker（`npm run build:ptc` stage 到
-#    runtime/linux-x64）。
-# PTC 工具只在「纯 PTC 呈现」的 agent 里注册（由 agent preset 的
-# tool-presentation 行决定）。
+# 上游 0.3.0 只有 Windows x64；fork 放开平台门并修了 Linux 上的 O_PATH 目录
+# fsync（EBADF）bug。四个组件都开：
+#  · shell：宿主 bash（bashPath=/usr/bin/bash）。Linux 没有随包 bash/pwsh
+#    载荷，allowSystemShellFallback 又被 config update 1 强制改回 false，
+#    所以 bashPath 是唯一开关。实测 ops_bash exit 0。
+#  · background：同一份 bashPath 必须也写在**本行**——每行各自解析 shell，
+#    缺它本行发布不出 command/job 工具；command 工具另需 worker 处于
+#    danger-full-access（本 profile 正是）。FastCtx 由
+#    `node bin/dsh-ops.mjs build --force` 在 vendor/fastctx 就地构建。
+#  · file/ptc：本地 Rust worker（`npm run build:ptc` → runtime/linux-x64）。
+# PTC 工具只在「纯 PTC 呈现」的 agent 里注册，由 preset 的 tool-presentation
+# 行决定（omni 与 manager 都已切 mode: ptc）。改动细节与构建命令见
+# vendor/dsh-ops/LOCAL-PATCHES.md。
 - id: dsh-ops-shell
   disabled: false
   config:
@@ -398,6 +663,16 @@
     shellPolicy: advise
     allowSystemShellFallback: false
     bashPath: /usr/bin/bash
+    # D2：文件与检索路由（file 组件已按 D1 关闭，故路由只能靠提示词兜住）。
+    # 措辞与 harness 内建文件工具的说明保持一致，不新增能力，只交代选哪一个。
+    extraGuidance: |-
+      文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
+      - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
+      - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
+      - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
+        且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
+        zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
+      - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
 - id: dsh-ops-background
   disabled: false
   config:
@@ -406,7 +681,14 @@
     required: false
     toolCallTimeoutMs: 300000
     bashPath: /usr/bin/bash
+# ── 用户要求（2026-10-16，D1）：关掉 dsh-ops 的 file 组件 ──────────────────
+# file 组件发布的 ops_inspect_local_file / ops_grep / ops_glob / ops_replace 与
+# read/edit/write 及 zvecgrep 的 zvec_grep_rg 部分重叠。取舍：省 4 个工具，
+# 代价是丢 ops_replace（带 glob 的跨文件字面批量替换）与 ops_inspect_local_file
+# （hex / 编码 / PDF / 多区间读取）；需要时把本行改回 disabled: false 即恢复。
+# 同一 worker 的 PTC 组件（dsh-ops-ptc）不在本行开关内，仍启用。
 - id: dsh-ops-file
+  disabled: true
   config:
     promptPolicy: true
     enableShellTools: false
@@ -417,37 +699,1240 @@
   config:
     required: false
 
-- id: ui-settings-general
-  name: "@deepseek-ai/dsh-client-ui-settings-general"
-  config:
-    welcomeNoticeVersion: 2026-09-28.1
-- id: agent-default-model
-  name: "@deepseek-ai/dsh-agent-default-model"
-  config:
-    provider: deepseek-official
-    model: deepseek-flash
-    reasoningEffort: max
+# ── 用户要求（2026-10-17）：工具按需加载 ────────────────────────────────────
+# 400+ 枚注册工具的目录成本（PTC 下生成 SDK 段 267,755 字符，占系统提示 94%）
+# 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
+# 运行期 set_plugin 关/开整族 MCP（如 mcp-rea），不必改文件重启。
+# 代价：多 1 枚工具；每次调用需 danger-full-access 审批（本 profile 全权限常开）。
+- id: tool-plugin-manager
+  disabled: false
+- id: mcp-rea
+  disabled: true
 
-# ── 2026-10-23：重试预算**故意保持原样**（与生产一致，maxRetries: 1000 + 阶梯 5s/10s/60s）
-# 长重试是用户要的行为（不必手动重发），不要改成快速失败。
-
-# ── 2026-10-28：管理模式（session-manager）开发侧验证 ─────────────────────────
-# 可选启用：management 预设自身不声明插件，能力完全由 session-manager 的
-# 受限提示段 + 工具白名单 + 执行守卫提供；工作端沿用独立预设 standard。
-# 生产 3080 不挂这段。
+# <<< BEGIN generated type presets — 改 ~/.dsh/type-presets.yaml 或 ~/.dsh/preset-base.yml 后跑 ~/.dsh/bin/gen-project-presets.py >>>
+- id: mcp-unity
+  disabled: true
+- id: mcp-ue
+  disabled: true
+- id: computer-use-cua-native
+  disabled: true
+- id: dsh-blender-plugin
+  disabled: true
+- id: browser-use-playwright
+  disabled: true
 - insert:
-    - id: session-manager
-      name: '@deepseek-ai/dsh-session-manager'
-      config:
-        managerPreset: management
-        workerPresets: [ standard ]
-        maxMessageBytes: 16384
-        questionWaitSeconds: 1
-    - id: preset-management
+    - id: preset-js
       name: '@deepseek-ai/dsh-agent-preset'
       config:
-        id: management
-        name: 管理模式
-        description: 仅管理用户交接或自行创建的普通工作对话，不直接执行任务。
-        order: 9
-        plugins: []
+        id: js
+        name: JS 项目
+        order: 20
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+- insert:
+    - id: preset-unreal
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: unreal
+        name: Unreal 项目
+        order: 21
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: mcp-ue
+            name: '@deepseek-ai/dsh-mcp-client'
+            config:
+              serverName: ue
+              transport: streamable-http
+              url: http://127.0.0.1:8000/mcp
+              reconnect:
+                maxAttempts: 215
+              failOnStartupError: false
+- insert:
+    - id: preset-unreal-dotnet
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: unreal-dotnet
+        name: Unreal + dotnet 项目
+        order: 22
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: mcp-ue
+            name: '@deepseek-ai/dsh-mcp-client'
+            config:
+              serverName: ue
+              transport: streamable-http
+              url: http://127.0.0.1:8000/mcp
+              reconnect:
+                maxAttempts: 215
+              failOnStartupError: false
+- insert:
+    - id: preset-unity
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: unity
+        name: Unity 项目
+        order: 23
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: mcp-unity
+            name: '@deepseek-ai/dsh-mcp-client'
+            config:
+              serverName: unity
+              transport: stdio
+              command: /home/sx/.local/bin/uvx-no-proxy
+              args:
+                - --from
+                - mcpforunityserver==10.3.0
+                - mcp-for-unity
+                - --transport
+                - stdio
+              toolCallTimeoutMs: 180000
+              failOnStartupError: false
+- insert:
+    - id: preset-unity-dotnet
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: unity-dotnet
+        name: Unity + dotnet 项目
+        order: 24
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: mcp-unity
+            name: '@deepseek-ai/dsh-mcp-client'
+            config:
+              serverName: unity
+              transport: stdio
+              command: /home/sx/.local/bin/uvx-no-proxy
+              args:
+                - --from
+                - mcpforunityserver==10.3.0
+                - mcp-for-unity
+                - --transport
+                - stdio
+              toolCallTimeoutMs: 180000
+              failOnStartupError: false
+- insert:
+    - id: preset-modeling
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: modeling
+        name: 建模项目
+        order: 25
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: blender
+            name: '@dsh-external/dsh-blender-plugin'
+- insert:
+    - id: preset-ops
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: ops
+        name: 电脑与网页操作
+        order: 26
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
+                You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
+                Cordis rules are NOT stored in this prompt, and there is no skill carrying them. Before reading or changing a Cordis composition or an agent preset, or before defining, running, updating, repairing, or removing a dynamic Cordis Plugin, read the current rules directly rather than reconstructing them from memory: `docs/cordis-primer.md` and `docs/architecture.md` in the harness checkout, plus the shipped preset you are copying.
+                Code retrieval priority: to locate symbols, callers, call chains, architecture, complexity hotspots, or change impact in a codebase, query the codebase-memory MCP first (`mcp__cbm__search_graph`, `trace_path`, `get_architecture`, `search_code`); grep/glob are the fallback for literals, filenames, and raw counts. When the graph misses, verify coverage (`mcp__cbm__check_index_coverage` or `query_graph(graph="missed")`) before concluding "not found"; index unindexed repos with `mcp__cbm__index_repository` first. Detailed workflow: the `cbm-graph-first` skill.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: true
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: true
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+            disabled: true
+          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
+          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
+          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
+          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
+          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            disabled: true
+          - id: skill-filter
+            name: '@deepseek-ai/dsh-skill-filter'
+            config:
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
+                  baseUrl))"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+            config:
+              catalogDescriptionMaxLength: 150
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                disabled: true
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                disabled: true
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+                disabled: true
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: tool-subagent-codex
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: codex
+                  toolName: subagent_codex
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: tool-subagent-claude-code
+                name: '@deepseek-ai/dsh-tool-subagent'
+                disabled: true
+                config:
+                  provider: claude-code
+                  toolName: subagent_claude_code
+                  enableRunInBackground: false
+                  maxDepth: provider-managed
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+              - id: tool-ralph
+                name: '@deepseek-ai/dsh-tool-ralph'
+                config:
+                  subagentProvider: spawn
+                  maxRounds: 64
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: false
+              searchTimeoutMs: 60000
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: cua
+            name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'
+          - id: playwright
+            name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+            config:
+              mode: attach
+              endpoint: http://127.0.0.1:9222
+              exclusive: false
+
+# <<< END generated type presets >>>
+
+# ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
+# 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
+# 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
+#  · 前置：~/.config/helium-browser-flags.conf 里的 --remote-debugging-port=9222
+#    （Helium 必须由 helium-wrapper/桌面图标启动才读这份 flags）。
+#  · egoBin 指向本地 JS 包装：先探 9222，取到 webSocketDebuggerUrl 就设
+#    EGO_LINUX_CDP_URL 直接挂载；挂不上才退回用 Helium profile 自起一份
+#    （此时两者仍同一份数据，因为 EGO_LINUX_PROFILE 也指过去了）。
+#  · idleTimeoutMin: 0 —— 共享模式下不能让插件的空闲回收去关用户自己的浏览器。
+#  · chromePath/chromeArgs 只在「挂不上、需自起」时生效；Chrome 137+ 忽略
+#    --load-extension，所以内核必须留 Helium。
+- id: ego-browser
+  config:
+    egoBin: /home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs
+    idleTimeoutMin: 0
+    chromePath: /opt/helium-browser-bin/helium
+    chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula
+      --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
+
+# ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
+# 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），
+# 用户明确要求保留：长重试是为了不必手动重发；重试过程在 Web Chat 的「模型重试」行可见。
+# 真正的根因（那种 232 分钟级别的等待）应由额度/模型切换解决，不再靠缩短重试预算。
