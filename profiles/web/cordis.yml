@@ -49,9 +49,9 @@
 - id: agent-default-model
   name: '@deepseek-ai/dsh-agent-default-model'
   config:
-    provider: step
-    model: step-5-preview
-    reasoningEffort: high
+    provider: nvidia
+    model: deepseek-ai/deepseek-v4.1-flash
+    reasoningEffort: max
 - id: jobs
   name: '@deepseek-ai/dsh-jobs-local'
 - id: llm-retry
@@ -161,13 +161,29 @@
             contextWindow: 300000
             maxTokens: 8192
       nvidia:
-        displayName: NVIDIA NIM (DeepSeek V4.1 Flash)
+        displayName: NVIDIA NIM (Mistral Large 4 1T)
         apiKeyEnv: NVIDIA_API_KEY
         api: openai-completions
         baseURL: https://integrate.api.nvidia.com/v1
         reasoning: high
+        headers:
+          NVCF-POLL-SECONDS: '3600'
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
         models:
-          - id: deepseek-ai/deepseek-v4.1-flash
+          - id: mistralai/mistral-large-4-1t-a52b
+            name: Mistral Large 4 (1T A52B)
+            contextWindow: 262144
+            maxTokens: 65536
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:

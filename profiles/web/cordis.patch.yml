@@ -470,26 +470,45 @@
             contextWindow: 300000
             maxTokens: 8192
       # 2026-11-01 用户要求接入 NVIDIA NIM（integrate.api.nvidia.com，OpenAI 兼容），
-      # 只挂 deepseek-ai/deepseek-v4.1-flash：1M 上下文 / 384K 输出 / 文本+图片 / 免费档。
-      # 模型条目只写 id——reasoning、thinkingLevelMap（high/max 可选）、thinkingFormat
-      # deepseek、NVCF-POLL-SECONDS 冷启动头全部继承 pi-ai 内置 catalog 的 nvidia 条目。
-      # ponytail: NIM 的 OpenAI 端点不吃 reasoning_effort（catalog 标 supportsReasoningEffort
-      # false），思考开关走 deepseek 格式 thinking={enabled|disabled}，所以菜单只有
-      # off/high/max 且 high 与 max 线上等价。要细分强度：等 v4.1-flash 函数恢复后实测
-      # reasoning_effort（模型卡称参考编码支持 1-100 数值），再在模型条目覆写
-      # reasoningEfforts + 路由 compat.supportsReasoningEffort: true。
-      # 2026-11-01 实况：旧 key（nvapi-r2mf8k…）全模型 403（账号未开 Public API
-      # Endpoints）；新 key（nvapi-BadGP…）鉴权已通（minimax 等函数 200 流式返回），
-      # 但 deepseek-v4.1-flash 函数本身挂起——接住请求后 10~15 分钟 0 字节被踢，
-      # 属 NVIDIA 侧 preview 函数部署问题，客户端无需改动，函数恢复即生效。
+      # 只挂 mistralai/mistral-large-4-1t-a52b（Mistral Large 4：1T 总参 / A52B 激活，
+      # 262K 上下文，文本+图片输入，reasoning 模型，免费档 40rpm）。
+      # pi-ai 内置 catalog 没有这个 nvidia 条目，capacities/compat 全部手写，事实来自
+      # build.nvidia.com 模型卡的 OpenAPI spec（2026-11-01 实测）：
+      #   · reasoning_effort 实测（2026-11-01）：low/medium/high 均 200 且都思考；
+      #     none/max 被 recipe 400（deserializer 认七档，recipe 只实现 low/medium/high），
+      #     不传该字段同样思考——思考关不掉，故只声明 low/medium/high、不声明 off。
+      #   · role 枚举 [system,user,assistant,tool]，无 developer → supportsDeveloperRole:false。
+      #   · max_tokens 上限 262144（prompt+output 合计不超 262K），这里取 65536 兜底。
+      # ponytail: 无 off 档可声明（上游无法关闭思考，传 none 直接 400）；NVCF-POLL-SECONDS
+      # 头防冷启动时网关提前踢连接（v4.1-flash 实测 10~15 分钟被踢，mistral 秒回）。
+      # 换 model 记录：旧 key（nvapi-r2mf8k…）全模型 403（账号未开 Public API
+      # Endpoints）；新 key（nvapi-BadGP…）鉴权已通；deepseek-ai/deepseek-v4.1-flash
+      # 函数本身挂起（接住请求 10~15 分钟 0 字节被踢，NVIDIA 侧 preview 函数问题），
+      # 故按用户 2026-11-01 指示换 mistral-large-4-1t-a52b。
       nvidia:
-        displayName: NVIDIA NIM (DeepSeek V4.1 Flash)
+        displayName: NVIDIA NIM (Mistral Large 4 1T)
         apiKeyEnv: NVIDIA_API_KEY
         api: openai-completions
         baseURL: https://integrate.api.nvidia.com/v1
         reasoning: high
+        headers:
+          NVCF-POLL-SECONDS: "3600"
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
         models:
-          - id: deepseek-ai/deepseek-v4.1-flash
+          - id: mistralai/mistral-large-4-1t-a52b
+            name: Mistral Large 4 (1T A52B)
+            contextWindow: 262144
+            maxTokens: 65536
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
 - id: ui-theme
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:
