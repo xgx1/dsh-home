@@ -105,7 +105,7 @@
           - id: deepseek-flash
             name: DeepSeek V4.1 Flash
             contextWindow: 1000000
-            maxTokens: 256000
+            maxTokens: 65536
             input:
               - text
               - image
@@ -118,7 +118,7 @@
           - id: sensenova-6.8-flash-lite
             name: sensenova-6.8-flash-lite
             contextWindow: 262144
-            maxTokens: 256000
+            maxTokens: 65536
             input:
               - text
               - image
