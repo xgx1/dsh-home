@@ -1,0 +1,65 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+
+- id: permission
+  name: "@deepseek-ai/dsh-permission-presets"
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: workspace-write
+- id: agent-loop
+  name: "@deepseek-ai/dsh-agent-loop"
+  config:
+    agents: []
+    maxParallelToolCalls: 10
+- id: bash-sandbox
+  name: "@deepseek-ai/dsh-bash-sandbox"
+  config:
+    timeoutMs: 1800000
+- id: subagent
+  name: "@deepseek-ai/dsh-subagent"
+  config:
+    maxDepth: 10
+    maxActiveSubagents: 20
+
+# ── dsh-ops（2026-10-16，fork xgx1/dsh-ops 的 Linux 移植）────────────────
+# 四个组件在 Linux 上都开：bash 走宿主 /usr/bin/bash（用 bashPath——上游的
+# allowSystemShellFallback 被 config update 1 强制改回 false，不当开关用），
+# background 走源码构建出的 vendor/fastctx/target/release/fastctx。
+- id: dsh-ops-shell
+  disabled: false
+  config:
+    promptPolicy: true
+    publishBashTool: true
+    shellPolicy: advise
+    allowSystemShellFallback: false
+    bashPath: /usr/bin/bash
+- id: dsh-ops-background
+  disabled: false
+  config:
+    promptPolicy: true
+    enableShellTools: true
+    required: false
+    toolCallTimeoutMs: 300000
+    # 每行各自解析 shell：background 行也要 bashPath，否则它自己的 bash 梯级
+    # 解析不到（Linux 没有随包载荷），command/job 工具就不会发布。
+    bashPath: /usr/bin/bash
+- id: dsh-ops-file
+  config:
+    promptPolicy: true
+    enableShellTools: false
+    required: false
+    toolCallTimeoutMs: 300000
+- id: dsh-ops-ptc
+  disabled: false
+  config:
+    required: false

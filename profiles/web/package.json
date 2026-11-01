@@ -1,0 +1,33 @@
+{
+  "name": "dsh-profile-web",
+  "private": true,
+  "dependencies": {
+    "@deepseek-ai/dsh-browser-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use",
+    "@deepseek-ai/dsh-computer-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use",
+    "@deepseek-ai/dsh-experimental-browser-use-playwright-mcp": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp",
+    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native",
+    "@deepseek-ai/dsh-session-manager": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/session/session-manager",
+    "@deepseek-ai/dsh-web-search-exa": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/web/web-search-exa",
+    "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
+    "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
+    "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
+    "dsh-ops": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops",
+    "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
+    "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-task-manager",
+        "dsh-sidebar-taskbar",
+        "@deepseek-ai/dsh-experimental-agent-team-profile",
+        "dsh-llm-retry-schedule",
+        "billion-context",
+        "@openviking/dsh-memory-plugin",
+        "dsh-ops"
+      ]
+    }
+  }
+}

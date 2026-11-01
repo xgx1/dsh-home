@@ -1,0 +1,48 @@
+# ~/.dsh-dev —— dsh-home 仓 dev 分支的 worktree（开发实例 :3081 的 DSH_HOME）
+# 只跟踪「开发实例配置层」；密钥、会话/存储、与生产共享的软链、插件运行时目录一律不入库。
+# 生产 composition 变更后：cp 过来 → 在此 worktree git commit（dev 分支）。
+
+# ── 密钥：永不入库 ──────────────────────────────────────────────
+.credentials.yaml
+.env
+**/.env
+
+# ── 会话与存储：纯本机运行时数据 ──────────────────────────────────
+sessions/
+attachments/
+cache/
+storages/
+session-search.db*
+task-manager/
+llm-deepseek/
+
+# ── 与生产 ~/.dsh 共享的软链（软链不跟踪，避免分支间漂移）──────────
+.agent-presets
+AGENTS.md
+skills
+
+# ── 运行时状态、日志与缓存 ────────────────────────────────────────
+*.log
+*.jsonl
+*.tmp
+*.swp
+logs/
+.skill-filter-cache.json
+.anonymous-user-id
+remote-web-ui-devices.json
+skill-backups/
+speech-to-text/
+evolve/
+settings.yaml
+settings.yaml.bak-*
+*.bak-*
+
+# ── 插件/工具运行时目录 ───────────────────────────────────────────
+node_modules/
+.plugin-manager/
+patches/
+channel-pack/
+native-open/
+our-free-model/
+openai-gateway/
+backup-*/

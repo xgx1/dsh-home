@@ -1,0 +1,46 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@deepseek-ai/dsh-browser-use':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
+      '@deepseek-ai/dsh-computer-use':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
+      '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp
+      '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+      '@deepseek-ai/dsh-session-manager':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/session/session-manager
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/session/session-manager
+      '@deepseek-ai/dsh-web-search-exa':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/web/web-search-exa
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/web/web-search-exa
+      '@openviking/dsh-memory-plugin':
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+      billion-context:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
+      dsh-llm-retry-schedule:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+      dsh-ops:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-ops
+      dsh-sidebar-taskbar:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+      dsh-task-manager:
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
