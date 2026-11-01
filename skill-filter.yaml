@@ -1,46 +1,6 @@
 # DSH 技能过滤（model catalog）
-# 白名单制：仅列名技能对模型可见；未列名的仍可用 /name 手动调用。
-# 2026-10-26 整肃：本 home 只服务「写代码」，只保留编码工作流必要的技能。
-#   - persona：ponytail 四件套（常驻人格 + 审计/审查/极简优化）
-#   - DSH 自身开发：dsh-extension-dev / installing-dsh-extensions / cbm-graph-first / reverse-engineer-anything
-#   - 工程流程：需求→计划→并行执行→审查→测试→调试→文档→提交
-#   - 资料读取：pdf / wakaru / strip-cpp-comments / browser-mcp-playwright
-#   - 网盘（用户点名必要）：baidupcs-cli / baidupcs-batch-pipeline
-#   - git 归档：local-git-archive-server（已合并原 local-git-server-archive）
-# 一律不再入列：UE 全套（项目级 <项目>/.dsh/skill-filter.yaml 可单独开，或 /name）、
-#   .NET/MSBuild 长尾、Obsidian/meeting/recap、 anime、淘宝/小红书、Windows 装环境、
-#   本地模型与 headroom 运维、update-all、aliyunpan、modelscope、alvr/fcitx、OCR/转写。
-# 改动后需重开会话生效。
+# 2026-10-31 用户要求「启用所有技能」：白名单通开为 "*"（按 ADR-0002，
+# 用户 allow 覆盖 skill 自己的 disable-model-invocation，故 349 个技能全可见）。
+# 想收窄就改回具体 glob（如 "ponytail"、"dotnet-*"）；改动后需重开会话生效。
 allow:
-  - "ponytail"
-  - "ponytail-audit"
-  - "ponytail-review"
-  - "optimize-feature-code"
-  - "dsh-extension-dev"
-  - "installing-dsh-extensions"
-  - "cbm-graph-first"
-  - "reverse-engineer-anything"
-  - "make-feature-plan"
-  - "feature-inventory-docs-first"
-  - "execute-feature-plan"
-  - "subagent-driven-development"
-  - "dispatching-parallel-agents"
-  - "role-templates"
-  - "sdd-no-git-adaptation"
-  - "code-review"
-  - "test-driven-development"
-  - "systematic-debugging"
-  - "dev-docs"
-  - "write-feature-docs"
-  - "summarize-feature-work"
-  - "solidify-feature-lessons"
-  - "git-pull-commit-push"
-  - "git-merge-cleanup"
-  - "cleanup-worktrees"
-  - "local-git-archive-server"
-  - "pdf"
-  - "wakaru"
-  - "strip-cpp-comments"
-  - "browser-mcp-playwright"
-  - "baidupcs-cli"
-  - "baidupcs-batch-pipeline"
+  - "*"
