@@ -2,6 +2,8 @@
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
+    "@deepseek-ai/dsh-browser-use": "link:/home/sx/projects/MyAI/deepseek-harness/packages/browser-use/browser-use",
+    "@deepseek-ai/dsh-computer-use": "link:/home/sx/projects/MyAI/deepseek-harness/packages/computer-use/computer-use",
     "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",

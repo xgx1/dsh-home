@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@deepseek-ai/dsh-browser-use':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness/packages/browser-use/browser-use
+        version: link:../../../projects/MyAI/deepseek-harness/packages/browser-use/browser-use
+      '@deepseek-ai/dsh-computer-use':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness/packages/computer-use/computer-use
+        version: link:../../../projects/MyAI/deepseek-harness/packages/computer-use/computer-use
       '@dsh-external/dsh-blender-plugin':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
