@@ -360,9 +360,9 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: step
-    model: step-5-preview
-    reasoningEffort: high
+    provider: nvidia
+    model: deepseek-ai/deepseek-v4.1-flash
+    reasoningEffort: max
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -475,9 +475,13 @@
       # deepseek、NVCF-POLL-SECONDS 冷启动头全部继承 pi-ai 内置 catalog 的 nvidia 条目。
       # ponytail: NIM 的 OpenAI 端点不吃 reasoning_effort（catalog 标 supportsReasoningEffort
       # false），思考开关走 deepseek 格式 thinking={enabled|disabled}，所以菜单只有
-      # off/high/max 且 high 与 max 线上等价。要细分强度：等 NVIDIA 给账号开 Public API
-      # Endpoints 权限后实测 reasoning_effort（模型卡称参考编码支持 1-100 数值），再在模型
-      # 条目覆写 reasoningEfforts + 路由 compat.supportsReasoningEffort: true。
+      # off/high/max 且 high 与 max 线上等价。要细分强度：等 v4.1-flash 函数恢复后实测
+      # reasoning_effort（模型卡称参考编码支持 1-100 数值），再在模型条目覆写
+      # reasoningEfforts + 路由 compat.supportsReasoningEffort: true。
+      # 2026-11-01 实况：旧 key（nvapi-r2mf8k…）全模型 403（账号未开 Public API
+      # Endpoints）；新 key（nvapi-BadGP…）鉴权已通（minimax 等函数 200 流式返回），
+      # 但 deepseek-v4.1-flash 函数本身挂起——接住请求后 10~15 分钟 0 字节被踢，
+      # 属 NVIDIA 侧 preview 函数部署问题，客户端无需改动，函数恢复即生效。
       nvidia:
         displayName: NVIDIA NIM (DeepSeek V4.1 Flash)
         apiKeyEnv: NVIDIA_API_KEY
