@@ -14,6 +14,12 @@ importers:
       '@deepseek-ai/dsh-computer-use':
         specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
         version: link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
+      '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/browser-use-playwright-mcp
+      '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
       '@deepseek-ai/dsh-hooks-claude-code':
         specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code
         version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code
