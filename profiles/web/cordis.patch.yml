@@ -469,6 +469,23 @@
             name: Auto (面板智能路由)
             contextWindow: 300000
             maxTokens: 8192
+      # 2026-11-01 用户要求接入 NVIDIA NIM（integrate.api.nvidia.com，OpenAI 兼容），
+      # 只挂 deepseek-ai/deepseek-v4.1-flash：1M 上下文 / 384K 输出 / 文本+图片 / 免费档。
+      # 模型条目只写 id——reasoning、thinkingLevelMap（high/max 可选）、thinkingFormat
+      # deepseek、NVCF-POLL-SECONDS 冷启动头全部继承 pi-ai 内置 catalog 的 nvidia 条目。
+      # ponytail: NIM 的 OpenAI 端点不吃 reasoning_effort（catalog 标 supportsReasoningEffort
+      # false），思考开关走 deepseek 格式 thinking={enabled|disabled}，所以菜单只有
+      # off/high/max 且 high 与 max 线上等价。要细分强度：等 NVIDIA 给账号开 Public API
+      # Endpoints 权限后实测 reasoning_effort（模型卡称参考编码支持 1-100 数值），再在模型
+      # 条目覆写 reasoningEfforts + 路由 compat.supportsReasoningEffort: true。
+      nvidia:
+        displayName: NVIDIA NIM (DeepSeek V4.1 Flash)
+        apiKeyEnv: NVIDIA_API_KEY
+        api: openai-completions
+        baseURL: https://integrate.api.nvidia.com/v1
+        reasoning: high
+        models:
+          - id: deepseek-ai/deepseek-v4.1-flash
 - id: ui-theme
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:

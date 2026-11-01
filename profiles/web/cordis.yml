@@ -160,6 +160,14 @@
             name: Auto (面板智能路由)
             contextWindow: 300000
             maxTokens: 8192
+      nvidia:
+        displayName: NVIDIA NIM (DeepSeek V4.1 Flash)
+        apiKeyEnv: NVIDIA_API_KEY
+        api: openai-completions
+        baseURL: https://integrate.api.nvidia.com/v1
+        reasoning: high
+        models:
+          - id: deepseek-ai/deepseek-v4.1-flash
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
