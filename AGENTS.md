@@ -66,7 +66,8 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 
 ## 浏览器
 
-- **ego 跑共享 profile 模式**：ego 不另起浏览器，而是挂到用户日常 Helium 的同一个进程（`--remote-debugging-port=9222`，来自 `~/.config/helium-browser-flags.conf`，故 Helium 必须经桌面图标 / `helium-browser` 启动才带该 flag）。`egoBin` = `~/.local/share/ego-lite-runtime/bin/ego-shared.mjs`，profile 直接用 `~/.config/net.imput.helium`。**不要**跑 `ego-browser --stop`、也不要把插件的 `idleTimeoutMin` 打开——共享模式下这两者都会关掉用户自己的浏览器。
+- **ego 跑共享 profile 模式**：ego 不另起浏览器，而是挂到用户日常 Helium 的同一个进程（`--remote-debugging-port=9222`，来自 `~/.config/helium-browser-flags.conf`，故 Helium 必须经桌面图标 / `helium-browser` 启动才带该 flag）。`egoBin` = `~/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs`（探 9224；9224 是 socat 转发到 9222，所以实际挂在日常 Helium 上；探不到才用 `~/.config/net.imput.helium-bili` 自起一份）。**不要**跑 `ego-browser --stop`、也不要把插件的 `idleTimeoutMin` 打开——共享模式下这两者都会关掉用户自己的浏览器。
+- **ego 不许抢用户前台**（2026-11-04 用户要求）：ego 每个 `ego_*` 调用都经 `ensureRealTab` → `switchTab` → `Target.activateTarget`，会把用户当前 tab 顶掉并抢窗口焦点。已在两个 vendored bundle 的 `switchTab` 里删掉该调用（带 `ponytail:` 注释）：`~/.local/share/ego-lite-runtime/runtime/ego-browser/dist/out/index.js`（egoBin 实际指向的那份）与插件副本 `~/.dsh/profiles/web/node_modules/dsh-ego-browser/runtime/ego-browser/dist/out/index.js`。**ego 运行时重装 / 插件更新后补丁会丢，要重打**；残留天花板：浏览器侧 `createTab` 新建的 tab 仍会激活（ego SDK 在 Chromium 扩展里，宿主侧改不到）。
 - **访问网页优先用 ego**：能开页面就先用 `ego_*` 工具（`ego_navigate` → `ego_snapshot` → `ego_click`/`ego_fill`）在 ego 浏览器里真开一次，登录态、Cookie、人机验证都在用户自己的窗口里。`web_search` 只做找线索与摘要；`curl`/`webshare` 抓页面、Playwright/CUA 驱浏览器都退居备选——只有 ego 起不来（`ego_doctor` 报错）或任务本就不需要浏览器时才换。
 
 ## 长驻进程与 scope 卫生（2026-10-23）
