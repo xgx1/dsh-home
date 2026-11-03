@@ -23,6 +23,9 @@ importers:
       '@deepseek-ai/dsh-hooks-claude-code':
         specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code
         version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code
+      '@deepseek-ai/dsh-session-manager':
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/session/session-manager
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/session/session-manager
       '@dsh-external/dsh-blender-plugin':
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin

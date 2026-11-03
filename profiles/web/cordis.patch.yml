@@ -1932,6 +1932,29 @@
     chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula
       --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
 
+# ── 管理模式闭环（2026-11-03，ADR-0011）──────────────────────────────────────
+# session-manager 是可选独立包（默认 web profile 不含它）。这里显式启用：
+#  · session-manager 行：managerPreset 指向下面声明的空插件预设；workerPresets
+#    必须是真实存在的预设 id，填错 manager_create 会当场抛错。
+#  · preset-management：plugins 故意为空——这个包的完整系统提示、7 个工具与
+#    执行护栏都由包自己装，预设里再挂 persona/执行插件会把被拒的能力装回来。
+#  · 生产 ~/.dsh 的同名改动等 3081 验收通过、用户点头后再做。
+- insert:
+    - id: session-manager
+      name: '@deepseek-ai/dsh-session-manager'
+      config:
+        managerPreset: management
+        workerPresets: [js, unreal]
+        maxMessageBytes: 16384
+        questionWaitSeconds: 1
+    - id: preset-management
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: management
+        name: 管理模式
+        description: 只管理对话，不直接执行任务。
+        plugins: []
+
 # ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
 # 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），
 # 用户明确要求保留：长重试是为了不必手动重发；重试过程在 Web Chat 的「模型重试」行可见。
