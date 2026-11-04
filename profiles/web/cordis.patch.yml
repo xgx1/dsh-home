@@ -360,9 +360,9 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: step
-    model: step-5-preview
-    reasoningEffort: high
+    provider: opencode-go
+    model: deepseek-v4.1-flash
+    reasoningEffort: max
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -372,10 +372,35 @@
   name: "@deepseek-ai/dsh-client-locale"
   config:
     preference: zh
+- insert:
+    - id: opencode-go-headers
+      name: /home/sx/.dsh/profiles/web/opencode-go-headers.mjs
 - id: llm-pi-ai
   name: "@deepseek-ai/dsh-llm-pi-ai"
   config:
     providers:
+      opencode-go:
+        displayName: OpenCode Go
+        apiKeyEnv: OPENCODE_API_KEY
+        api: openai-completions
+        baseURL: https://opencode.ai/inference/go/openai/v1
+        reasoning: max
+        compat:
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: beam-free
+            name: Beam Free
+            contextWindow: 1048576
+            maxTokens: 131072
+            input: [text]
+            reasoningEfforts: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
+          - id: deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 1000000
+            maxTokens: 384000
+            input: [text, image]
+            reasoningEfforts: { low: low, high: high, max: max }
       md:
         apiKeyEnv: MD_API_KEY
         api: openai-completions
