@@ -232,16 +232,26 @@ def host_snapshot():
                                                       capture_output=True, text=True).stdout.strip() or 0)
     except Exception:
         snap['waybar_instances'] = -1
-    # 只数"活着的" socket：agent 桌面共用 /run/user/1000，但各自 wayland-2/3…，
-    # 死掉留下的 socket 文件不应该算成多开桌面。
+    # 只数"人的桌面"里活着的 niri socket：agent 桌面共用 /run/user/1000，各自 wayland-2/3…，
+    # 它们的 socket 是正常的（不报），死掉留下的 socket 文件也不该算成多开桌面。
+    agent_pids = set()
+    for desk in glob.glob(os.path.join(os.path.expanduser('~/.dsh/agent-desktops'), '*', 'desk.json')):
+        try:
+            with open(desk, 'r', encoding='utf-8') as fh:
+                agent_pids.add(int(json.load(fh).get('niri_pid') or 0))
+        except (OSError, ValueError, TypeError):
+            continue
     live_sockets = 0
     for sock in glob.glob('/run/user/1000/niri.wayland-*.sock'):
         pid = sock.rsplit('.', 2)[-2] if sock.count('.') >= 3 else ''
         try:
-            os.kill(int(pid), 0)
-            live_sockets += 1
+            pid_i = int(pid)
+            os.kill(pid_i, 0)
         except (OSError, ValueError):
             continue
+        if pid_i in agent_pids:
+            continue
+        live_sockets += 1
     snap['niri_sockets'] = live_sockets
     try:
         snap['agent_desktops'] = len(glob.glob(os.path.join(

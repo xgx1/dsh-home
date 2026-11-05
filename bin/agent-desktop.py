@@ -135,6 +135,9 @@ def env_lines(doc):
         'export WAYLAND_DISPLAY=%s' % doc['wayland'],
         'export DISPLAY=%s' % doc['app_display'],
         'export NIRI_SOCKET=%s' % doc['niri_socket'],
+        # 软件渲染下的稳定性开关，见 child_env() 的注释
+        'export LP_NUM_THREADS=1',
+        'export MESA_GLTHREAD=false',
     ]
     return lines
 
@@ -219,13 +222,18 @@ def prune_old():
 # ── supervise：真正干活的那个进程（由 systemd-run 拉起，常驻到空闲） ──────────
 
 def child_env(display):
+    # 嵌套 niri 在 Xvfb 上只能走 llvmpipe（软件光栅化）。llvmpipe 的多线程光栅化在
+    # 并发绘制下会 SIGSEGV（2026-11-06 实测：agent 桌面里开 zenity 直接带走整个 niri，
+    # 栈在 llvmpipe-9 线程）。单线程 + 关 GL 线程池换来稳定，慢一点无所谓。
     return {'PATH': '/usr/local/bin:/usr/bin:/bin',
             'HOME': HOME,
             'XDG_RUNTIME_DIR': RUNTIME,
             'DISPLAY': display,
             'WINIT_UNIX_BACKEND': 'x11',
             'XDG_SESSION_TYPE': 'wayland',
-            'XDG_CURRENT_DESKTOP': 'niri'}
+            'XDG_CURRENT_DESKTOP': 'niri',
+            'LP_NUM_THREADS': '1',
+            'MESA_GLTHREAD': 'false'}
 
 
 def start_xvfb(size, log):

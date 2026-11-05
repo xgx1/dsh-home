@@ -42,6 +42,7 @@ STATE = os.path.join(WATCH, 'desktop-state.json')
 PROD_RUNTIME = '/run/user/%d' % os.getuid()
 NIRI = shutil.which('niri') or '/usr/local/bin/niri'
 GRIM = shutil.which('grim') or '/usr/bin/grim'
+WL_COPY = shutil.which('wl-copy') or '/usr/bin/wl-copy'
 MAGICK = shutil.which('magick') or '/usr/bin/magick'
 XDOTOOL = shutil.which('xdotool') or '/usr/bin/xdotool'
 SCOPED_SHOT = os.path.join(HOME, 'projects', 'agent-seat-probe', 'target', 'debug', 'scoped-shot')
@@ -461,6 +462,40 @@ def cmd_windows(args):
     return 0
 
 
+def desk_wayland_env(desk):
+    env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': HOME,
+           'XDG_RUNTIME_DIR': desk.get('runtime') or PROD_RUNTIME}
+    if desk.get('wayland'):
+        env['WAYLAND_DISPLAY'] = desk['wayland']
+    return env
+
+
+def type_text(desk, display, text):
+    """打字：ASCII 走 xdotool；中文等非 ASCII 走这个桌面的 Wayland 剪贴板 + Ctrl+V。
+
+    xdotool type 只认 X keysym，中文会直接报 "Invalid multi-byte sequence"。wl-copy 把文本
+    放进嵌套 niri 的剪贴板，xwayland-satellite 会在 X11 侧同步选区，X11 窗口 Ctrl+V 就能拿到；
+    Wayland 原生窗口收不到 XTEST，这条路对它们无效（见文末限制）。
+    """
+    text = text or ''
+    if text.isascii():
+        return x_input(display, ['type', '--delay', '25', '--', text])
+    if not os.access(WL_COPY, os.X_OK):
+        return 1, '', '非 ASCII 文本需要 wl-copy，本机没装'
+    proc = subprocess.Popen([WL_COPY], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.PIPE, env=desk_wayland_env(desk),
+                            start_new_session=True)
+    try:
+        _out, err = proc.communicate(text.encode('utf-8'), timeout=5)
+    except subprocess.TimeoutExpired:
+        err = b''
+    time.sleep(0.3)
+    code, out2, err2 = x_input(display, ['key', '--clearmodifiers', 'ctrl+v'])
+    if code != 0:
+        return code, out2, (err2 or err.decode('utf-8', 'replace'))
+    return 0, 'via-clipboard', ''
+
+
 def x_input(display, argv, timeout=20):
     env = {'DISPLAY': display, 'PATH': '/usr/bin:/bin', 'HOME': HOME}
     return run([XDOTOOL] + argv, env=env, timeout=timeout)
@@ -496,12 +531,12 @@ def cmd_action(args):
         print('找不到桌面 %s' % (key,))
         return 1
     op = args.get('op')
-    if op == 'focus-window' and desk['kind'] == 'niri':
+    if op == 'focus-window' and desk['kind'] in ('niri', 'agent'):
         code, out, err = run([NIRI, 'msg', 'action', 'focus-window', '--id', str(args['window'])],
                              env=niri_env(desk), timeout=10)
         print(out.strip() or err.strip())
         return code
-    if op == 'close-window' and desk['kind'] == 'niri':
+    if op == 'close-window' and desk['kind'] in ('niri', 'agent'):
         code, out, err = run([NIRI, 'msg', 'action', 'close-window', '--id', str(args['window'])],
                              env=niri_env(desk), timeout=10)
         print(out.strip() or err.strip())
@@ -513,7 +548,7 @@ def cmd_action(args):
     if op in ('type', 'key', 'click'):
         focus_x_root(display)
     if op == 'type':
-        code, out, err = x_input(display, ['type', '--delay', '25', '--', args.get('text') or ''])
+        code, out, err = type_text(desk, display, args.get('text') or '')
     elif op == 'key':
         code, out, err = x_input(display, ['key', '--clearmodifiers', args.get('combo') or 'Return'])
     elif op == 'click':

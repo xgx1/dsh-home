@@ -135,7 +135,7 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
   它们和人的桌面共用 `/run/user/1000`，靠 `-c` 配置路径与 `niri.service` 的 MainPID 区分）；
   ② 别的嵌套环境（`XDG_RUNTIME_DIR` 不是 `/run/user/1000` 的 niri，如 regression-visibility）。
   每类的 wayland/niri socket 从 runtime 目录或 `desk.json` 里认，父 X 显示取 niri 的 `DISPLAY`（如 `:2`）。
-- 采集（`dsh-observe.timer` 每分钟；service 里两条 ExecStart 依次跑我的桌面和别的桌面）：整屏用 grim 截到
+- 采集（`dsh-observe.timer` 每分钟；service 里三条 ExecStart 依次跑我的桌面、别的桌面、回收过期 agent 桌面）：整屏用 grim 截到
   `~/.dsh/watch/desktops/<key>/shots/`，每个窗口用 fork 的 scoped-shot 单独抓一张（别的工作区也抓得到，
   不动剪贴板），窗口/工作区列表来自嵌套 niri 的 IPC；索引 `watch/desktops.json`，事件
   `watch/desktop-events.jsonl`。截图保留 24h / 1 GiB，自动裁。
@@ -165,3 +165,10 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 - 观察/接手：http://127.0.0.1:8793/ 的「其他桌面」区（实时图 + 窗口按钮 + 打字/点击接管）。
 - 不经过钩子的：systemd 单元/timer、从 niri 配置 `spawn-at-startup` 拉的程序 —— 它们还在生产桌面。
 - 已经开错桌面的窗口不会自动搬家，只能关掉重开。
+- 稳定性（2026-11-06 实测后修）：嵌套 niri 只能软件渲染（Xvfb 没有 DRI3 → llvmpipe）。fork 的 winit 后端
+  现在**没有 EGL render node 就不宣告 dmabuf**（否则客户端 dmabuf 导入失败后 llvmpipe 会 SIGSEGV，整个
+  agent 桌面一起没）；agent 桌面另加 `LP_NUM_THREADS=1` / `MESA_GLTHREAD=false`（软件光栅化单线程）。
+  生产走 TTY 后端，不受影响；**新二进制要等下次桌面重启才进内存**。
+- 打字：ASCII 走 `xdotool type`；中文等非 ASCII 走 `wl-copy`（把文本放进这个桌面的 Wayland 剪贴板，
+  satellite 桥到 X11）再 `Ctrl+V`。所以中文只能打进**X11 窗口**（Wayland 原生窗口收不到 XTEST，仍不行）。
+- GPU 类负载（Vulkan / 需要真 GPU 的 UE、Unity）在软件渲染的 agent 桌面里跑不动，只能做界面/逻辑验证。
