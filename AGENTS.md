@@ -37,7 +37,7 @@
 ## GUI 窗口
 
 - 助手拉起的 GUI 进程**会在 DSH 命令 scope 拆除时被回收**——要长驻就自己 `setsid` / systemd 管，别指望命令返回后窗口还在。（2026-10-05 已拆「AI 窗口隔离」：不再自动搬 workspace 10，`aiw` / `AIW_SHOW` / `AIW_WS` 全部废止。）
-- **要纯 Wayland 就 `niri msg action spawn -- <命令>` 启动**，别直接从 DSH 的 shell 拉 GUI：DSH 跑在 systemd 用户服务里，不继承 niri config 的 `environment` 块（`SDL_VIDEO_DRIVER` / `SDL_VIDEODRIVER` / fcitx 等），SDL3 程序见到 `DISPLAY=:0` 就回落 XWayland。2026-11-05 UE6 编辑器实测因此跑到 x11（日志 `Using SDL video driver 'x11'`），菜单弹窗出现重绘残影；走 niri spawn 后是 `wayland`。验收：日志里的 SDL video driver，或 `xdotool search --name <标题>` 在 XWayland 里搜不到该窗口。
+- **纯 Wayland**：三个引擎检出（`ue6` / `ue5.8` / `pico-5.6-sdk3.4.0`）的 `LinuxPlatformApplicationMisc.cpp` 已改源码强制 Wayland（`WAYLAND_DISPLAY` 存在就用 `SDL_HINT_OVERRIDE`/`setenv` 压过一切环境变量与 `DISPLAY`），UE 从任何 shell 启动都是原生 Wayland。**其他 SDL 程序仍要从 `niri msg action spawn -- <命令>` 启动**：DSH 跑在 systemd 用户服务里，不继承 niri config 的 `environment` 块（`SDL_VIDEO_DRIVER`/`SDL_VIDEODRIVER`、fcitx 等），SDL3 见到 `DISPLAY=:0` 就回落 XWayland。验收：日志 `Using SDL video driver 'wayland'`，或 `xdotool search --name <标题>` 在 XWayland 里搜不到该窗口。
 - **本机桌面只有 niri**（Hyprland 已于 2026-11-05 连同配置/数据彻底卸载删除）。窗口与工作区操作走 niri IPC：`niri msg action <名字>`、`niri msg -j windows`（JSON，配 jq 取 id/app_id）、`niri msg -j outputs` / `workspaces`；现场校验配置用 `niri validate -c ~/.config/niri/config.kdl`。不要再找 `hyprctl`（命令已不存在）。
 
 ## 代码检索
