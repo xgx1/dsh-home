@@ -56,64 +56,12 @@
         toolCallTimeoutMs: 180000
         failOnStartupError: false
 
-# ── 用户调整（2026-09-20）：浏览器控制迁到 DSH 0.1.6 的 browser-use provider ─
-# 旧接线：dsh-mcp-client 直挂全局裸 @playwright/mcp（`mcp__playwright__*`），
-# 靠 --cdp-endpoint attach 到 find-work 管的共享 Chrome（9222）复用登录态。
-# 新接线：DSH 自带 dsh-browser-use 服务 + Playwright provider，同样 attach 9222，
-# 登录态原地继承，不用搬 user-data-dir。DSH provider pin 的 @playwright/mcp 也是
-# 0.0.80（同版本同工具清单），但命名空间变成 `mcp__playwright-mcp__*`。
-# 技能文字未受影响：~/.dsh/skills 下 grep `mcp__playwright` 命中 0（技能只按
-# browser_navigate / browser_snapshot 等短名引用）。browser-mcp-playwright 技能里
-# references/setup-mcp.md 的接线描述已过时（那套是裸 @playwright/mcp 的 CLI 参数）。
-#
-# 硬约束（读 README 确认）：dsh-browser-use 是**互斥单注册**——
-# "A deployment can enable one browser-use provider at a time. Loading another
-# provider fails with the registered provider name." 所以三个浏览器 provider
-# 只能挂一个，不能"全部挂上"。三个包的依赖都已装进 apps/cli/package.json，
-# 切换只需在本文件里换段，不用重装、不用改检出。
-#
-# attach 模式的独占语义：默认 `exclusive: true`，新 live Session 在初始化时认领
-# attachment 并持有到卸载；attachment 忙时该次激活**直接跳过浏览器、后续轮次不重试**；
-# 另一个 Session 直连会失败。也就是说默认同一时刻只有一个会话能用 9222 那个 Chrome。
-# 下面 config 里已显式关掉（`exclusive: false`）：每个 live Session 各自起一个
-# @playwright/mcp 挂同一个 9222，谁创建谁都能拿到浏览器工具，不用再"先关别的会话"。
-# 代价是没有串行保证——多会话同时操作同一个 Chrome 需要自己排队
-# （find-work/docs/adr/0004-shared-browser-session.md 本来就是这个约定）。
-- insert:
-    - id: browser-use
-      name: '@deepseek-ai/dsh-browser-use'
-    - id: browser-use-playwright
-      name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
-      config:
-        mode: attach
-        endpoint: 'http://127.0.0.1:9222'
-        exclusive: false
-    # 备选 1：Chrome DevTools MCP（与 Playwright 同构配置）
-    #   工具命名空间 `mcp__chrome-devtools-mcp__*`（与 playwright-mcp 不同，
-    #   是 CDP 直接驱动，工具集偏 inspection/控制）。
-    # - id: browser-use-devtools
-    #   name: '@deepseek-ai/dsh-experimental-browser-use-chrome-devtools-mcp'
-    #   config:
-    #     mode: attach
-    #     endpoint: 'http://127.0.0.1:9222'
-    #
-    # 备选 2：Stagehand native（AI 辅助的浏览器自然语言操作）
-    #   必须配**非 DeepSeek** 的模型 key：pin 的 SDK 只认 OpenAI / Anthropic /
-    #   Google / Groq / Cerebras，README 明写 DeepSeek endpoint 与 baseURL 覆盖
-    #   都不支持。而且 `model` 必填，即使只做导航。挂载步骤：
-    #     ① 拿一个 OpenAI key，export OPENAI_API_KEY（或写进启动环境）
-    #     ② 解开下面这段注释（同时注释掉上面的 playwright 段）
-    #     ③ attach 模式额外要求 Chrome 带 --remote-allow-origins=* 与
-    #        --enable-unsafe-extension-debugging（当前 9222 那个没带，得重开）
-    # - id: browser-use-stagehand
-    #   name: '@deepseek-ai/dsh-experimental-browser-use-stagehand-native'
-    #   config:
-    #     mode: attach
-    #     cdpEndpoint: 'http://127.0.0.1:9222'
-    #     operationTimeoutMs: 60000
-    #     model:
-    #       modelName: openai/gpt-5.4-mini
-    #       apiKey: !!js process.env.OPENAI_API_KEY
+# ── 浏览器控制只走 ego-browser（2026-11-05 用户要求：Playwright 彻底卸载）──
+# 这里原先挂 dsh-browser-use + Playwright provider（attach 9222），2026-11-05 移除：
+# 它在建 tab / 切 tab 时会 bringToFront，抢用户前台；Playwright MCP、playwright
+# 浏览器二进制与相关配置一并从设备上卸载。网页访问统一走本文件后面的
+# dsh-ego-browser（共享 profile，CDP 层丢弃 Target.activateTarget，建 tab 带
+# background，行为上不抢前台）。
 
     # ── 用户调整（2026-09-20）：桌面控制挂 Cua Driver native（0.1.6 新能力，实验性）─
     # dsh-computer-use 同样是**互斥单注册**（"A deployment can enable one
@@ -317,7 +265,7 @@
 # ── 用户要求（2026-09-13）：接入 zvec-grep（本地优先检索层）────────────────
 # 上游 zvec-ai/zvec-grep v0.2.2，npm 全局装：npm i -g @zvec/zvec-grep，
 # 再软链 ~/.local/bin/zg（本机 ~/.npm-global/bin 不在 dsh-web 的 PATH 里，
-# 与 playwright-mcp 同一处理）。它自带 ripgrep（@vscode/ripgrep）与本地
+# 需要的话软链到 PATH 上的目录）。它自带 ripgrep（@vscode/ripgrep）与本地
 # embedding（local/potion-code-16m-v2，CPU），全局配置在 ~/.zvec-grep/config.json。
 #
 # 用 --stdio：DSH 拉起子进程并复用共享 daemon，无需预先 `zg server on`，
@@ -357,12 +305,6 @@
   name: "@deepseek-ai/dsh-client-ui-settings-general"
   config:
     welcomeNoticeVersion: 2026-09-28.1
-- id: agent-default-model
-  name: "@deepseek-ai/dsh-agent-default-model"
-  config:
-    provider: opencode-go
-    model: deepseek-v4.1-flash
-    reasoningEffort: max
 - id: agent-loop
   name: "@deepseek-ai/dsh-agent-loop"
   config:
@@ -428,7 +370,7 @@
           supportsStrictMode: true
         models:
           - id: deepseek-flash
-            name: DeepSeek V4.1 Flash
+            name: DeepSeek
             contextWindow: 1000000
             maxTokens: 65536
             input:
@@ -440,8 +382,8 @@
               medium: medium
               high: high
               xhigh: xhigh
-          - id: sensenova-6.8-flash-lite
-            name: sensenova-6.8-flash-lite
+          - id: sensenova-6.8-flash
+            name: sensenova
             contextWindow: 262144
             maxTokens: 65536
             input:
@@ -475,15 +417,6 @@
               low: low
               medium: medium
               high: high
-      # 2026-10-27 用户要求接入：腾讯云南京机 119.45.10.68 上的 FreeLLMAPI 面板
-      # （OpenAI 兼容 /v1，unified key 见 .credentials.yaml 的 FREELLMAPI_API_KEY）。
-      # 2026-10-28 用户要求：只留一个模型条目 `auto`。面板侧已把自定义链 modern
-      # 设为 active profile，所以这里的 auto 就是 modern 链（GLM-5.2 / DeepSeek-V4-Pro
-      # / MiniMax-M3 / Qwen3.5-397B / gemini-flash-lite ...），无需客户端再区分。
-      # 上下文 300000：面板按 estimatedTokens 预检上游窗口（fitsContextWindow），
-      # 窗口不够的模型会被跳过，不会把超长请求推给 128K 模型；代价是超过 262K 后
-      # modelscope 系（131K~256K）退出候选，只剩 1M 窗口的 Google/OpenRouter。
-      # 要保住 256K 档就改成 260000。
       freellmapi:
         displayName: FreeLLMAPI (119.45.10.68)
         apiKeyEnv: FREELLMAPI_API_KEY
@@ -494,22 +427,6 @@
             name: Auto (面板智能路由)
             contextWindow: 300000
             maxTokens: 8192
-      # 2026-11-01 用户要求接入 NVIDIA NIM（integrate.api.nvidia.com，OpenAI 兼容），
-      # 只挂 mistralai/mistral-large-4-1t-a52b（Mistral Large 4：1T 总参 / A52B 激活，
-      # 262K 上下文，文本+图片输入，reasoning 模型，免费档 40rpm）。
-      # pi-ai 内置 catalog 没有这个 nvidia 条目，capacities/compat 全部手写，事实来自
-      # build.nvidia.com 模型卡的 OpenAPI spec（2026-11-01 实测）：
-      #   · reasoning_effort 实测（2026-11-01）：low/medium/high 均 200 且都思考；
-      #     none/max 被 recipe 400（deserializer 认七档，recipe 只实现 low/medium/high），
-      #     不传该字段同样思考——思考关不掉，故只声明 low/medium/high、不声明 off。
-      #   · role 枚举 [system,user,assistant,tool]，无 developer → supportsDeveloperRole:false。
-      #   · max_tokens 上限 262144（prompt+output 合计不超 262K），这里取 65536 兜底。
-      # ponytail: 无 off 档可声明（上游无法关闭思考，传 none 直接 400）；NVCF-POLL-SECONDS
-      # 头防冷启动时网关提前踢连接（v4.1-flash 实测 10~15 分钟被踢，mistral 秒回）。
-      # 换 model 记录：旧 key（nvapi-r2mf8k…）全模型 403（账号未开 Public API
-      # Endpoints）；新 key（nvapi-BadGP…）鉴权已通；deepseek-ai/deepseek-v4.1-flash
-      # 函数本身挂起（接住请求 10~15 分钟 0 字节被踢，NVIDIA 侧 preview 函数问题），
-      # 故按用户 2026-11-01 指示换 mistral-large-4-1t-a52b。
       nvidia:
         displayName: NVIDIA NIM (Mistral Large 4 1T)
         apiKeyEnv: NVIDIA_API_KEY
@@ -534,6 +451,29 @@
               low: low
               medium: medium
               high: high
+      qwen:
+        displayName: Qwen token plan (DeepSeek V4.1 Flash)
+        apiKeyEnv: QWEN_API_KEY
+        api: openai-completions
+        baseURL: https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1
+        reasoning: high
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+          thinkingFormat: qwen
+        models:
+          - id: deepseek-v4.1-flash-1017
+            name: deepseek-v4.1-flash-1017
+            contextWindow: 1048576
+            maxTokens: 393216
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
 - id: ui-theme
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:
@@ -608,6 +548,10 @@
     allowedModels:
       - provider: deepseek-official
         model: deepseek-flash
+      - provider: opencode-go
+        model: beam-free
+      - provider: opencode-go
+        model: deepseek-v4.1-flash
 
 # 2026-10-17 用户要求：删除全能(omni)/管理(manager)/简单(simple) 三个预设，
 # omni 的能力折进类型预设（基础树见 ~/.dsh/preset-base.yml，类型清单见
@@ -743,8 +687,6 @@
   disabled: true
 - id: dsh-blender-plugin
   disabled: true
-- id: browser-use-playwright
-  disabled: true
 - insert:
     - id: preset-js
       name: '@deepseek-ai/dsh-agent-preset'
@@ -775,26 +717,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -813,12 +752,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -937,26 +876,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -975,12 +911,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1108,26 +1044,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -1146,12 +1079,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1279,26 +1212,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -1317,12 +1247,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1418,11 +1348,11 @@
               transport: stdio
               command: /home/sx/.local/bin/uvx-no-proxy
               args:
-                - --from
-                - mcpforunityserver==10.3.0
-                - mcp-for-unity
-                - --transport
-                - stdio
+              - --from
+              - mcpforunityserver==10.3.0
+              - mcp-for-unity
+              - --transport
+              - stdio
               toolCallTimeoutMs: 180000
               failOnStartupError: false
 - insert:
@@ -1455,26 +1385,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -1493,12 +1420,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1594,11 +1521,11 @@
               transport: stdio
               command: /home/sx/.local/bin/uvx-no-proxy
               args:
-                - --from
-                - mcpforunityserver==10.3.0
-                - mcp-for-unity
-                - --transport
-                - stdio
+              - --from
+              - mcpforunityserver==10.3.0
+              - mcp-for-unity
+              - --transport
+              - stdio
               toolCallTimeoutMs: 180000
               failOnStartupError: false
 - insert:
@@ -1631,26 +1558,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -1669,12 +1593,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1795,26 +1719,23 @@
             name: '@deepseek-ai/dsh-tool-fs'
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
-            disabled: true # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
+            disabled: true          # 2026-09-13 用户要求禁用自带 grep（改用 zvecgrep MCP 的检索）
             config:
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
             disabled: true
-          # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
-          # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
-          # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
-          # skill-filter 内部自带 includeDefaultRoots:true 的 FileSystemSkillProvider，
-          # 是原生 filesystem provider 的超集，所以这里禁用原生那个，只留 filter。
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
-            disabled: true
+            config:
+              includeDefaultRoots: false
+              customSkillDirs:
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: skill-filter
             name: '@deepseek-ai/dsh-skill-filter'
             config:
               customSkillDirs:
-                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/',
-                  baseUrl))"
+                - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
             config:
@@ -1833,12 +1754,12 @@
                 name: '@deepseek-ai/dsh-plan-mode'
                 config:
                   section: |
-                    You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
-                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
-                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
-                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
-                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
-                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+                        You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+                        Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+                        The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+                        Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+                        Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+                        When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
           - id: compaction
             name: cordis:group
             group: true
@@ -1929,13 +1850,6 @@
               mode: ptc
           - id: cua
             name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'
-          - id: playwright
-            name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
-            config:
-              mode: attach
-              endpoint: http://127.0.0.1:9222
-              exclusive: false
-
 # <<< END generated type presets >>>
 
 # ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
@@ -1956,6 +1870,11 @@
     chromePath: /opt/helium-browser-bin/helium
     chromeArgs: --load-extension=/usr/local/share/browser-themes/dracula
       --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: opencode-go
+    model: deepseek-v4.1-flash
 
 # ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
 # 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），

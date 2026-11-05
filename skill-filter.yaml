@@ -25,7 +25,6 @@ allow:
   - "binlog-generation"
   - "brainstorming"
   - "brand"
-  - "browser-mcp-playwright"
   - "build-parallelism"
   - "build-perf-baseline"
   - "build-perf-diagnostics"
