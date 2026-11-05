@@ -86,9 +86,11 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 或改动这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里，
 这里只留硬约束。
 
-- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里；
-  生产 `niri --session`(2585)、`xwayland-satellite :0`(3087) 是上游 niri，没有这些 IPC，
-  不要对着它调，也不要重启它。
+- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里。
+  生产桌面自 2026-11-05 起也跑 fork：`niri.service` 的 drop-in
+  `~/.config/systemd/user/niri.service.d/fork.conf` → `target/release/niri`；**重启它等于重启整个
+  桌面会话，动手前先问用户**。回退到上游 `/usr/bin/niri` 时这些 IPC 不存在（删 drop-in +
+  `systemctl --user daemon-reload` 再 restart）。
 - 默认在嵌套环境干活：`/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility`；
   `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
 - 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
