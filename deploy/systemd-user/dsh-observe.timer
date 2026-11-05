@@ -1,0 +1,12 @@
+[Unit]
+Description=Run dsh-observe every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=5s
+RandomizedDelaySec=2s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

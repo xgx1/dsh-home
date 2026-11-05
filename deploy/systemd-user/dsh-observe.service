@@ -1,0 +1,14 @@
+[Unit]
+Description=dsh-observe: per-minute screenshot + window/workspace snapshot (read-only)
+Documentation=file:///home/sx/.dsh/AGENTS.md
+
+[Service]
+Type=oneshot
+# 一次采样两件事：我先自己的桌面（dsh-observe），再别的桌面（dsh-desktops）。
+ExecStart=/usr/bin/python3 /home/sx/.dsh/bin/dsh-observe.py snapshot --quiet
+ExecStart=/usr/bin/python3 /home/sx/.dsh/bin/dsh-desktops.py snapshot --quiet
+Nice=15
+IOSchedulingClass=idle
+CPUQuota=20%
+StandardOutput=journal
+StandardError=journal

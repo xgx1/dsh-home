@@ -25,6 +25,8 @@ storages/
 session-search.db*
 # dsh-guard 的运行状态（findings/state），只在本机有意义
 guard/
+# dsh-observe / dsh-desktops 的运行产物（截图、lastest.json、事件流），纯本机数据
+watch/
 task-manager/
 # DeepSeek 文件上传索引（files-v3.json，本机运行时状态）
 llm-deepseek/
@@ -44,6 +46,10 @@ bin/*
 !bin/dsh-janitor.sh
 # 2026-11-05：会话监察（只读扫各会话越界动作），运行链路的一部分，必须入库
 !bin/dsh-guard.py
+# 2026-11-05：桌面观察台 —— 我的桌面（observe）+ 别的桌面（desktops）+ 只读展示页（view）
+!bin/dsh-observe.py
+!bin/dsh-desktops.py
+!bin/dsh-view.py
 evolve/
 
 # ── 依赖与构建产物 ────────────────────────────────────────────────────────

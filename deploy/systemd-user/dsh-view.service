@@ -1,0 +1,15 @@
+[Unit]
+Description=dsh-view: 本机 Web 面板，看别的工作区/别处跑的程序并一键接手 (127.0.0.1:8793)
+Documentation=file:///home/sx/.dsh/AGENTS.md
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/sx/.dsh/bin/dsh-view.py --port 8793
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

@@ -118,3 +118,24 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
   `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
 - 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
 
+## 其他桌面观察（dsh-desktops + dsh-view，2026-11-05）
+
+agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-satellite），那些程序在我的屏幕上看不到。
+`~/.dsh/bin/dsh-desktops.py` 负责发现并盯着它们，`dsh-view.py` 在 http://127.0.0.1:8793/ 的「其他桌面」区展示，
+可以看进度，也可以直接接手。
+
+- 发现：扫 `/proc` 找 `XDG_RUNTIME_DIR` 不是 `/run/user/1000` 的 niri；它的 wayland/niri socket 从
+  runtime 目录里认（合成器进程自己没有 `WAYLAND_DISPLAY`），父 X 显示取它的 `DISPLAY`（如 `:1`）。
+  只认这种「嵌套合成器」；裸 Xvfb、别的命名空间里的 X server 都不算。
+- 采集（`dsh-observe.timer` 每分钟；service 里两条 ExecStart 依次跑我的桌面和别的桌面）：整屏用 grim 截到
+  `~/.dsh/watch/desktops/<key>/shots/`，每个窗口用 fork 的 scoped-shot 单独抓一张（别的工作区也抓得到，
+  不动剪贴板），窗口/工作区列表来自嵌套 niri 的 IPC；索引 `watch/desktops.json`，事件
+  `watch/desktop-events.jsonl`。截图保留 24h / 1 GiB，自动裁。
+- 接手（面板按钮，或命令行）：
+  `dsh-desktops.py action <桌面> focus-window --window N | type --text 文本 | key --combo Return | click --x X --y Y`。
+  输入走父 X display 的 XTEST：先把焦点给嵌套 niri 那个**有名字**的 X 窗口（裸 Xvfb 没有 WM，默认焦点常落在
+  无名全屏窗口上），再打字/点击。人的真实指针和键盘不受影响——那是另一台 X server。
+- 面板：`http://127.0.0.1:8793/`，点图看大图；开「点击接管」后点图就是点那个桌面（截图是 0.5 缩放，
+  页面自动 ×2 换算）；窗口按钮聚焦该窗口，输入框 + 发送/回车往当前焦点窗口打字。
+- `dsh-view.service`（127.0.0.1:8793）与 `dsh-observe.timer`（每分钟）都由 `deploy/install-systemd-units.sh` 装。
+- 只读边界：除了面板上这些明确按钮，采集侧不改任何桌面状态；别人的会话、窗口、剪贴板一律不碰。
