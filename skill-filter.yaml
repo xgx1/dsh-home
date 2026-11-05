@@ -1,6 +1,4 @@
-# DSH 技能过滤（model catalog）
-# 2026-10-31 用户要求「启用所有技能」：白名单通开为 "*"（按 ADR-0002，
-# 用户 allow 覆盖 skill 自己的 disable-model-invocation，故 349 个技能全可见）。
-# 想收窄就改回具体 glob（如 "ponytail"、"dotnet-*"）；改动后需重开会话生效。
 allow:
-  - "*"
+  - "background-window-control"
+  - "unreal*"
+  - "ue*"
