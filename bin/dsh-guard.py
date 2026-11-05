@@ -32,12 +32,8 @@ BT = chr(96)
 SEV_ORDER = {'critical': 0, 'high': 1, 'med': 2, 'low': 3}
 
 RULES = [
-    ('prod-git-write', 'critical',
-     r'(?:cd\s+\S*deepseek-harness(?!-dev)\b|deepseek-harness/)[^\n]{0,140}\bgit\s+(cherry-pick|commit|add|checkout|push|reset|stash|rebase|tag)\b|\bmerge\b(?!-base)'
-     r'|\bgit\s+(cherry-pick|commit|add|checkout|push|reset|stash|rebase|tag)\b|\bmerge\b(?!-base)'
-     r'[^\n]{0,140}(?:deepseek-harness/|cd\s+\S*deepseek-harness(?!-dev)\b)'),
-    ('prod-build', 'critical',
-     r'deepseek-harness(?!-dev)[^\n]{0,120}\b(pnpm|npm|yarn|npx)\s+(run\s+)?(build|install|i\b|test|vitest|lint|typecheck|pack)\b'),
+    # prod-checkout writes/builds are detected by prod_repo_actions() below (it tracks cd
+    # segments); a flat regex here produced false positives on the parent repo's submodule commits.
     ('dsh-web-restart', 'critical',
      r'systemctl\s+--user\s+(restart|stop|start|disable|mask)\s+dsh-web'),
     ('desktop-restart', 'critical',
@@ -141,6 +137,42 @@ def session_ids(path):
     return home, ws, sid
 
 
+PROD_NAME = 'deepseek-harness'
+GIT_WRITE_VERBS = {'add', 'commit', 'cherry-pick', 'checkout', 'reset', 'stash', 'rebase', 'merge', 'tag', 'push', 'pull'}
+PKG_VERBS = {'build', 'install', 'i', 'add', 'test', 'vitest', 'lint', 'typecheck', 'pack', 'prune'}
+
+
+def _segments(cmd):
+    return re.split(r'&&|\|\||;|\n', cmd)
+
+
+def prod_repo_actions(cmd):
+    """Writes/builds aimed at the production checkout, resolved via 'cd' inside the command."""
+    cwd = ''
+    hits = []
+    for seg in _segments(cmd):
+        s = seg.strip()
+        m = re.match(r'cd\s+([^\s;&|]+)', s)
+        if m:
+            cwd = m.group(1)
+            s = s[m.end():].strip()
+        if not s:
+            continue
+        target = cwd
+        cm = re.search(r'\bgit\s+-C\s+(\S+)', s)
+        if cm:
+            target = cm.group(1)
+        in_prod = PROD_NAME in target and '-dev' not in target
+        gm = re.search(r'\bgit\s+(?:-[CS]\s+\S+\s+)?([a-z][a-z-]*)', s)
+        if gm and gm.group(1) in GIT_WRITE_VERBS and in_prod:
+            hits.append(('prod-git-write', 'critical', 'git %s: %s' % (gm.group(1), s[:170])))
+            continue
+        pm = re.search(r'\b(pnpm|npm|yarn|npx)\s+(?:run\s+)?([a-z:.-]+)', s)
+        if pm and pm.group(2).split(':')[0] in PKG_VERBS and in_prod:
+            hits.append(('prod-build', 'critical', '%s %s: %s' % (pm.group(1), pm.group(2), s[:170])))
+    return hits
+
+
 def check_record(rec, path):
     if rec.get('type') != 'tool/call':
         return []
@@ -150,6 +182,7 @@ def check_record(rec, path):
     commands, paths = extract(name, d.get('arguments') or '')
     hits = []
     for cmd in commands:
+        hits.extend(prod_repo_actions(cmd))
         if re.search(r'\b(grep|rg|ls|cat|readlink)\b', cmd) and '/usr/bin/niri' in cmd:
             cmd = cmd.replace('/usr/bin/niri', 'NIRI-README-MENTION')
         for rule, sev, rx in RULES:
@@ -199,7 +232,22 @@ def host_snapshot():
                                                       capture_output=True, text=True).stdout.strip() or 0)
     except Exception:
         snap['waybar_instances'] = -1
-    snap['niri_sockets'] = len(glob.glob('/run/user/1000/niri.wayland-*.sock'))
+    # 只数"活着的" socket：agent 桌面共用 /run/user/1000，但各自 wayland-2/3…，
+    # 死掉留下的 socket 文件不应该算成多开桌面。
+    live_sockets = 0
+    for sock in glob.glob('/run/user/1000/niri.wayland-*.sock'):
+        pid = sock.rsplit('.', 2)[-2] if sock.count('.') >= 3 else ''
+        try:
+            os.kill(int(pid), 0)
+            live_sockets += 1
+        except (OSError, ValueError):
+            continue
+    snap['niri_sockets'] = live_sockets
+    try:
+        snap['agent_desktops'] = len(glob.glob(os.path.join(
+            os.path.expanduser('~/.dsh/agent-desktops'), '*', 'desk.json')))
+    except OSError:
+        snap['agent_desktops'] = 0
     snap['niri_pkg'] = subprocess.run(['pacman', '-Q', 'niri'], capture_output=True).returncode == 0
     snap['usr_bin_niri'] = os.path.exists('/usr/bin/niri')
     return snap
@@ -223,7 +271,7 @@ def host_findings(prev, cur, now):
     if cur.get('waybar_instances', 1) > 1:
         add('host-waybar-duplicate', 'med', 'waybar instances = %s (expected 1)' % cur['waybar_instances'])
     if cur.get('niri_sockets', 1) > 1:
-        add('host-niri-multi-session', 'high', 'niri sockets = %s' % cur['niri_sockets'])
+        add('host-niri-multi-session', 'high', 'live niri sockets = %s' % cur['niri_sockets'])
     if cur.get('niri_pkg'):
         add('host-niri-package-returned', 'high', 'pacman -Q niri succeeded again')
     if cur.get('usr_bin_niri'):
@@ -364,6 +412,7 @@ def cmd_status(args):
             print('%-20s %-8s pid=%-8s since=%s' % (unit, v['state'], v['pid'], v['since']))
     print('%-20s %s' % ('waybar instances', cur['waybar_instances']))
     print('%-20s %s' % ('niri sockets', cur['niri_sockets']))
+    print('%-20s %s' % ('agent desktops', cur.get('agent_desktops', 0)))
     print('%-20s %s' % ('niri package installed', cur['niri_pkg']))
     print('%-20s %s' % ('/usr/bin/niri exists', cur['usr_bin_niri']))
     now = time.time()

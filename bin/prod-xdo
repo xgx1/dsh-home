@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# 在人的桌面上发 X 事件（生产 XWayland :0），不看当前 shell 被 agent 桌面改过的 DISPLAY。
+d="$PROD_DISPLAY"
+[ -n "$d" ] || d=":0"
+exec env DISPLAY="$d" xdotool "$@"

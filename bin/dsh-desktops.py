@@ -5,8 +5,10 @@
 那里跑的程序在人的屏幕上完全看不到。这个工具每分钟给每个这样的桌面截一张图、
 列出窗口、抓每个窗口的图，并支持定向送键鼠（接手）。
 
-发现方式：扫 /proc 里 XDG_RUNTIME_DIR 不是 /run/user/1000 的 niri 实例；
-顺带认出没被任何 niri 拿走的裸 Xvfb 桌面。
+两类"别的桌面"：
+  1) agent 自己的桌面：~/.dsh/agent-desktops/<key>/ 下由 agent-desktop.py 起的 niri
+     （它们和人的桌面共用 /run/user/1000，所以不能靠 XDG_RUNTIME_DIR 区分，靠 config 路径）；
+  2) 别的嵌套环境：XDG_RUNTIME_DIR 不是 /run/user/1000 的 niri（regression-visibility 那种）。
 
   dsh-desktops.py discover                     # 现在有哪些其他桌面
   dsh-desktops.py snapshot [-q]                # 采集一次（timer 调用）
@@ -31,6 +33,7 @@ from datetime import datetime
 
 HOME = os.path.expanduser('~')
 DSH = os.path.join(HOME, '.dsh')
+AGENT_DESK_ROOT = os.path.join(DSH, 'agent-desktops')
 WATCH = os.path.join(DSH, 'watch')
 ROOT = os.path.join(WATCH, 'desktops')
 INDEX = os.path.join(WATCH, 'desktops.json')
@@ -150,58 +153,79 @@ def desktop_key(kind, ident):
     return '%s-%s' % (kind, ident)
 
 
+def prod_niri_pid():
+    try:
+        out = subprocess.run(['systemctl', '--user', 'show', '-p', 'MainPID', '--value',
+                              'niri.service'], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        out = ''
+    out = out.strip()
+    return int(out) if out.isdigit() and out != '0' else None
+
+
 def discover():
-    """扫 /proc 找"别的桌面"。返回 list[dict]。"""
+    """扫 /proc 找"别的桌面"：agent 自己的桌面（~/.dsh/agent-desktops/）与别的嵌套环境。"""
     found = {}
+    prod_pid = prod_niri_pid()
     for entry in os.listdir('/proc'):
         if not entry.isdigit():
             continue
         argv = proc_cmdline(entry)
         if not argv:
             continue
-        exe = os.path.basename(argv[0])
-        if exe not in ('niri', 'Xvfb'):
+        if os.path.basename(argv[0]) != 'niri':
             continue
+        if prod_pid and int(entry) == prod_pid:
+            continue                          # 人的桌面，不算"别的桌面"
         env = proc_environ(entry)
-        rt = env.get('XDG_RUNTIME_DIR')
-        if exe == 'niri':
-            if not rt or os.path.normpath(rt) == os.path.normpath(PROD_RUNTIME):
-                continue                      # 生产桌面，不算"其他桌面"
-            socket = env.get('NIRI_SOCKET')
-            if not socket:
+        rt = env.get('XDG_RUNTIME_DIR') or PROD_RUNTIME
+        config = ''
+        for i, a in enumerate(argv):
+            if a == '-c' and i + 1 < len(argv):
+                config = argv[i + 1]
+        agent_dir = os.path.dirname(config) if config.startswith(AGENT_DESK_ROOT + os.sep) else ''
+        if not agent_dir and os.path.normpath(rt) == os.path.normpath(PROD_RUNTIME):
+            continue                          # 既不是 agent 桌面也不是别的 runtime，跳过
+        desc = read_json(os.path.join(agent_dir, 'desk.json'), {}) if agent_dir else {}
+        key = os.path.basename(agent_dir) if agent_dir else desktop_key('niri', entry)
+        socket = desc.get('niri_socket') or env.get('NIRI_SOCKET')
+        if not socket:
+            own = sorted(glob.glob(os.path.join(rt, 'niri.wayland-*.%s.sock' % entry)))
+            if own:
+                socket = own[0]
+            else:
                 cands = sorted(glob.glob(os.path.join(rt, 'niri.*.sock')))
                 socket = cands[0] if cands else None
-            config = ''
-            for i, a in enumerate(argv):
-                if a == '-c' and i + 1 < len(argv):
-                    config = argv[i + 1]
-            wayland = env.get('WAYLAND_DISPLAY')
-            if not wayland:
-                # 合成器自己的进程里没有 WAYLAND_DISPLAY；socket 名要从 runtime 目录里认。
-                for cand in sorted(glob.glob(os.path.join(rt, 'wayland-*'))):
-                    name = os.path.basename(cand)
-                    if name.endswith('.lock'):
-                        continue
-                    wayland = name
-                    break
-            desk = {
-                'key': desktop_key('niri', entry),
-                'kind': 'niri',
-                'pid': int(entry),
-                'runtime': rt,
-                'wayland': wayland,
-                'niri_socket': socket,
-                'x_display': env.get('DISPLAY'),
-                'config': config,
-                'label': os.path.basename(os.path.dirname(config)) if config else 'niri',
-            }
-            if not desk['niri_socket']:
-                continue
-            ver, _err = niri_json(desk, 'version')
-            if ver is None:
-                continue                      # 进程在但 IPC 不通（启动中/已坏）
-            desk['version'] = ver.get('compositor') if isinstance(ver, dict) else str(ver)
-            found[desk['key']] = desk
+        wayland = desc.get('wayland') or env.get('WAYLAND_DISPLAY')
+        if not wayland:
+            # 合成器自己的进程里没有 WAYLAND_DISPLAY；socket 名要从 runtime 目录里认。
+            for cand in sorted(glob.glob(os.path.join(rt, 'wayland-*'))):
+                name = os.path.basename(cand)
+                if name.endswith('.lock'):
+                    continue
+                wayland = name
+                break
+        desk = {
+            'key': key,
+            'kind': 'agent' if agent_dir else 'nested',
+            'pid': int(entry),
+            'runtime': rt,
+            'wayland': wayland,
+            'niri_socket': socket,
+            'x_display': desc.get('xvfb_display') or env.get('DISPLAY'),
+            'app_display': desc.get('app_display'),
+            'workspace': desc.get('workspace') or '',
+            'config': config,
+            'label': (desc.get('workspace') or key) if agent_dir
+                     else os.path.basename(os.path.dirname(config)) or 'nested',
+        }
+        if not desk['niri_socket']:
+            continue
+        ver, _err = niri_json(desk, 'version')
+        if ver is None:
+            continue                          # 进程在但 IPC 不通（启动中/已坏）
+        desk['version'] = ver.get('compositor') if isinstance(ver, dict) else str(ver)
+        found[desk['key']] = desk
     return sorted(found.values(), key=lambda d: (d['kind'], d['label'], d['key']))
 
 
@@ -220,7 +244,7 @@ def capture_shot(desk, ts):
     path = os.path.join(d, stamp(ts, '%H%M%S') + '.jpg')
     if os.path.exists(path):
         path = os.path.join(d, stamp(ts, '%H%M%S-%f') + '.jpg')
-    if desk['kind'] == 'niri':
+    if desk['kind'] in ('niri', 'agent'):
         env = niri_env(desk)
         env['HOME'] = HOME
         code, out, err = run([GRIM, '-s', SHOT_SCALE, '-t', 'jpeg', '-q', SHOT_QUALITY, path],
@@ -286,7 +310,7 @@ def x11_windows(desk):
 def window_shots(desk, windows, ts):
     """niri 桌面用 scoped-shot 逐窗口抓图（别的工作区也抓得到，不动剪贴板）。"""
     out = {}
-    if desk['kind'] != 'niri' or not windows or not os.path.exists(SCOPED_SHOT):
+    if desk['kind'] not in ('niri', 'agent') or not windows or not os.path.exists(SCOPED_SHOT):
         return out
     base, _shots, win_dir = desktop_paths(desk)
     d = os.path.join(win_dir, stamp(ts, '%Y%m%d'))
@@ -355,7 +379,7 @@ def cmd_snapshot(args):
     events = []
     for desk in desktops:
         shot_rel, shot_bytes, shot_err = capture_shot(desk, ts)
-        if desk['kind'] == 'niri':
+        if desk['kind'] in ('niri', 'agent'):
             windows, werr = nested_windows(desk)
             workspaces, _ = niri_json(desk, 'workspaces')
         else:
@@ -399,10 +423,11 @@ def cmd_discover(args):
         print('没有其他桌面在跑。起一个嵌套环境（environment.py）后这里会列出来。')
         return 0
     for d in desktops:
-        print('%-22s %-6s pid=%-7s runtime=%s' % (d.get('label'), d['kind'], d.get('pid'),
-                                                  d.get('runtime')))
-        print('    key=%s wayland=%s niri=%s x=%s config=%s' % (
-            d['key'], d.get('wayland'), d.get('niri_socket'), d.get('x_display'), d.get('config')))
+        print('%-34s %-7s pid=%-7s wayland=%s x=%s' % (
+            (d.get('label') or '')[:34], d['kind'], d.get('pid'), d.get('wayland'),
+            d.get('x_display')))
+        print('    key=%s niri=%s x11(app)=%s config=%s' % (
+            d['key'], d.get('niri_socket'), d.get('app_display'), d.get('config')))
     return 0
 
 
@@ -423,7 +448,7 @@ def cmd_windows(args):
     if not desk:
         print('找不到桌面 %s（先 discover）' % args['key'])
         return 1
-    windows, err = (nested_windows(desk) if desk['kind'] == 'niri' else x11_windows(desk))
+    windows, err = (nested_windows(desk) if desk['kind'] in ('niri', 'agent') else x11_windows(desk))
     if err:
         print('错误: %s' % err)
         return 1

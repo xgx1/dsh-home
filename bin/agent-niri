@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# 明确对「我自己的 agent 桌面」执行 niri 命令（默认 NIRI_SOCKET 已经指向它，这里给脚本用）。
+sock="$AGENT_DESKTOP_NIRI_SOCKET"
+[ -n "$sock" ] || sock="$NIRI_SOCKET"
+if [ -n "$sock" ] && [ -S "$sock" ]; then
+  exec env NIRI_SOCKET="$sock" XDG_RUNTIME_DIR=/run/user/1000 niri "$@"
+fi
+echo "agent-niri: 当前 shell 没有 agent 桌面（AGENT_DESKTOP_NIRI_SOCKET）" >&2
+exit 1

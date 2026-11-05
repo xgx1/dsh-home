@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# 截人的桌面（生产 niri），而不是 agent 自己的桌面。
+wl="$PROD_WAYLAND_DISPLAY"
+[ -n "$wl" ] || wl="wayland-1"
+exec env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY="$wl" grim "$@"

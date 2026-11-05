@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# 用「人的桌面」的 niri 执行命令（agent 会话里默认的 niri 是它自己的桌面）。
+sock="$PROD_NIRI_SOCKET"
+if [ -z "$sock" ] || [ ! -S "$sock" ]; then
+  for s in /run/user/1000/niri.wayland-1.*.sock; do [ -S "$s" ] && sock="$s"; done
+fi
+if [ -n "$sock" ] && [ -S "$sock" ]; then
+  exec env NIRI_SOCKET="$sock" XDG_RUNTIME_DIR=/run/user/1000 niri "$@"
+fi
+echo "prod-niri: 找不到生产 niri 的 socket（PROD_NIRI_SOCKET）" >&2
+exit 1

@@ -40,6 +40,13 @@
 - **纯 Wayland**：三个引擎检出（`ue6` / `ue5.8` / `pico-5.6-sdk3.4.0`）的 `LinuxPlatformApplicationMisc.cpp` 已改源码强制 Wayland（`WAYLAND_DISPLAY` 存在就用 `SDL_HINT_OVERRIDE`/`setenv` 压过一切环境变量与 `DISPLAY`），UE 从任何 shell 启动都是原生 Wayland。**其他 SDL 程序仍要从 `niri msg action spawn -- <命令>` 启动**：DSH 跑在 systemd 用户服务里，不继承 niri config 的 `environment` 块（`SDL_VIDEO_DRIVER`/`SDL_VIDEODRIVER`、fcitx 等），SDL3 见到 `DISPLAY=:0` 就回落 XWayland。验收：日志 `Using SDL video driver 'wayland'`，或 `xdotool search --name <标题>` 在 XWayland 里搜不到该窗口。
 - **本机桌面只有 niri**（Hyprland 已于 2026-11-05 连同配置/数据彻底卸载删除）。窗口与工作区操作走 niri IPC：`niri msg action <名字>`、`niri msg -j windows`（JSON，配 jq 取 id/app_id）、`niri msg -j outputs` / `workspaces`；现场校验配置用 `niri validate -c ~/.config/niri/config.kdl`。不要再找 `hyprctl`（命令已不存在）。
 
+- **GUI 默认落点是会话自己的 agent 桌面**（2026-11-06 起）：`dsh-web` 的 bash 工具命令启动时
+  会 source `~/.dsh/bin/agent-shell-env.sh`，按当前工作区（向上找 `.git` / `AGENTS.md` / `.dsh`）
+  找或拉起一个嵌套 niri 桌面，并导出 `WAYLAND_DISPLAY` / `DISPLAY` / `NIRI_SOCKET`。
+  所以直接跑 Electron / Unity / Unreal / GTK 程序**默认就落在你自己的桌面里**，不会糊到人的桌面上；
+  `niri msg ...` 也指向你自己的桌面。人的桌面用 `prod-niri` / `prod-xdo` / `prod-grim`（见文末「agent 桌面」节）。
+  单个命令想留在生产桌面：`AGENT_DESKTOP=0 <命令>`。
+
 ## 代码检索
 
 - `zvec_grep_search`（语义检索）要求工作区已建索引，未建会返回 `INDEX_MISSING`。**这时不要反复重试、也不要自己跑 `zg index`**：立刻改用 `zvec_grep_rg` 做精确检索；索引由 `zg-autoidx` 代理在后台自动构建，工具结果里出现「已自动为该工作区建好索引」后再回去用语义检索。（2026-10-23 事故：0.2.2 的 `zg` 索引没人建，每次 `zvec_grep_search` 都白跑一轮。）
@@ -124,9 +131,10 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 `~/.dsh/bin/dsh-desktops.py` 负责发现并盯着它们，`dsh-view.py` 在 http://127.0.0.1:8793/ 的「其他桌面」区展示，
 可以看进度，也可以直接接手。
 
-- 发现：扫 `/proc` 找 `XDG_RUNTIME_DIR` 不是 `/run/user/1000` 的 niri；它的 wayland/niri socket 从
-  runtime 目录里认（合成器进程自己没有 `WAYLAND_DISPLAY`），父 X 显示取它的 `DISPLAY`（如 `:1`）。
-  只认这种「嵌套合成器」；裸 Xvfb、别的命名空间里的 X server 都不算。
+- 发现两类：① **agent 桌面**（`~/.dsh/agent-desktops/<key>/` 下、由 `agent-desktop.py` 起的 niri；
+  它们和人的桌面共用 `/run/user/1000`，靠 `-c` 配置路径与 `niri.service` 的 MainPID 区分）；
+  ② 别的嵌套环境（`XDG_RUNTIME_DIR` 不是 `/run/user/1000` 的 niri，如 regression-visibility）。
+  每类的 wayland/niri socket 从 runtime 目录或 `desk.json` 里认，父 X 显示取 niri 的 `DISPLAY`（如 `:2`）。
 - 采集（`dsh-observe.timer` 每分钟；service 里两条 ExecStart 依次跑我的桌面和别的桌面）：整屏用 grim 截到
   `~/.dsh/watch/desktops/<key>/shots/`，每个窗口用 fork 的 scoped-shot 单独抓一张（别的工作区也抓得到，
   不动剪贴板），窗口/工作区列表来自嵌套 niri 的 IPC；索引 `watch/desktops.json`，事件
@@ -139,3 +147,21 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
   页面自动 ×2 换算）；窗口按钮聚焦该窗口，输入框 + 发送/回车往当前焦点窗口打字。
 - `dsh-view.service`（127.0.0.1:8793）与 `dsh-observe.timer`（每分钟）都由 `deploy/install-systemd-units.sh` 装。
 - 只读边界：除了面板上这些明确按钮，采集侧不改任何桌面状态；别人的会话、窗口、剪贴板一律不碰。
+
+## agent 桌面（GUI 默认落点，2026-11-06）
+
+每个工具会话一个嵌套 niri 桌面（Xvfb 父显示 → niri fork → 首次连 X11 时 niri 自拉 xwayland-satellite），
+和人的桌面共用 `/run/user/1000`（DBus/Pulse/portal 不用另配）。
+
+- 机制：`~/.config/systemd/user/dsh-web.service.d/agent-desktop.conf`（和 `dsh-web-dev` 同名 drop-in）
+  给服务加 `Environment=BASH_ENV=/home/sx/.dsh/bin/agent-shell-env.sh`。每条 bash 工具命令进 shell 时：
+  1) 记下生产桌面的 `PROD_DISPLAY` / `PROD_WAYLAND_DISPLAY` / `PROD_NIRI_SOCKET`；
+  2) 按工作区 key（工作区根目录 md5 前 8 位，形如 `ws-6f1aa0a4`）找桌面，没有就 `systemd-run` 拉起；
+  3) 导出 agent 桌面的 `WAYLAND_DISPLAY` / `DISPLAY`（嵌套 niri 的 X11 socket）/ `NIRI_SOCKET`。
+- 管理：`agent-desktop.py list | up [--key K] | down [--key K|--all] | env | run -- <命令> | prune`。
+  连续 30 分钟没有命令、也没有窗口就自动收；有窗口就一直留着。
+- 人（生产）桌面：`prod-niri msg ...`、`prod-xdo ...`、`prod-grim ...`，或直接用 `PROD_*` 变量。
+  `niri msg` 不带前缀 = 你自己的桌面。要看/接别人的 agent 桌面用下面「其他桌面观察」那套。
+- 观察/接手：http://127.0.0.1:8793/ 的「其他桌面」区（实时图 + 窗口按钮 + 打字/点击接管）。
+- 不经过钩子的：systemd 单元/timer、从 niri 配置 `spawn-at-startup` 拉的程序 —— 它们还在生产桌面。
+- 已经开错桌面的窗口不会自动搬家，只能关掉重开。

@@ -27,6 +27,8 @@ session-search.db*
 guard/
 # dsh-observe / dsh-desktops 的运行产物（截图、lastest.json、事件流），纯本机数据
 watch/
+# agent 桌面的运行时目录（desk.json / env.sh / 日志），纯本机状态
+agent-desktops/
 task-manager/
 # DeepSeek 文件上传索引（files-v3.json，本机运行时状态）
 llm-deepseek/
@@ -50,6 +52,13 @@ bin/*
 !bin/dsh-observe.py
 !bin/dsh-desktops.py
 !bin/dsh-view.py
+# 2026-11-06：agent 桌面（GUI 默认落点）+ 生产桌面包装脚本
+!bin/agent-desktop.py
+!bin/agent-shell-env.sh
+!bin/prod-niri
+!bin/prod-xdo
+!bin/prod-grim
+!bin/agent-niri
 evolve/
 
 # ── 依赖与构建产物 ────────────────────────────────────────────────────────
