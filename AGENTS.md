@@ -89,13 +89,31 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里。生产桌面自
   2026-11-05 起跑 fork，且**上游 `niri` 包已彻底卸载**（`pacman -Q niri` 查不到，`/usr/bin/niri` 不存在）：
   - 单元：`~/.config/systemd/user/niri.service`（整份本地 unit，`ExecStart=/home/sx/projects/niri/target/release/niri --session`）
-  - 入口链：greetd `/etc/greetd/config.toml` → `/usr/local/bin/start-desktop` → `/usr/local/bin/niri-session`（本地 systemd 分支）→ `systemctl --user start niri.service`；start-desktop 带 30s 看门狗，会话起不来会自动 `pacman -U` 缓存包并拉起 `niri-fallback.service`
+  - 入口链：greetd `/etc/greetd/config.toml` → `/usr/local/bin/start-desktop` → `/usr/local/bin/niri-session`（本地 systemd 分支）→ `systemctl --user start niri.service`
   - `niri` 命令：`/usr/local/bin/niri` 包装脚本 → fork release；`niri msg` / `niri validate` 都走它
   - 门户与关闭链：`~/.config/xdg-desktop-portal/niri-portals.conf`、`~/.config/systemd/user/niri-shutdown.target`
   - 重建即生效：`cd /home/sx/projects/niri && cargo build --release --bin niri`，重启桌面会话后才用上新二进制
   - **重启 niri.service 等于重启整个桌面会话，动手前先问用户**
-  - 救急（fork 起不来）：start-desktop 会自动回退；手工等价步骤 `sudo pacman -U /var/cache/pacman/pkg/niri-26.04-1-x86_64.pkg.tar.zst` → `systemctl --user daemon-reload` → `systemctl --user start niri-fallback.service`（该 unit 用 `/usr/bin/niri`，仅恢复用）。实测：`systemctl --user stop niri.service` 后用 `start-desktop` 拉起，第一次 start 可能被上一会话残留的 `niri-shutdown.target` 任务判成 destructive transaction，脚本会清掉它并重试一次，最终会话正常起来
+  - 救急（fork 起不来）：`sudo pacman -U /var/cache/pacman/pkg/niri-26.04-1-x86_64.pkg.tar.zst` → `systemctl --user daemon-reload` → `systemctl --user start niri-fallback.service`（该 unit 用 `/usr/bin/niri`，仅恢复用）
 - waybar 由 `waybar.service`（用户单元，`Restart=always`）托管，日志 `journalctl --user -u waybar -f`；niri 自启只跑 `systemctl --user start waybar.service`。不要改回 while 循环：它会被 reparent 到 systemd --user、桌面重启后不退出，每个会话多出一个 bar（2026-11-05 实测）。
+
+## 会话监察（dsh-guard，2026-11-05）
+
+本机同时跑多个会话（GUI 里开着的、后台 teammate 都算）。`~/.dsh/bin/dsh-guard.py` 每分钟由
+`dsh-guard.timer` 扫一遍 `~/.dsh/sessions/*` 与 `~/.dsh-dev/sessions/*` 里新出现的 tool call，
+命中红线就追加到 `~/.dsh/guard/findings.jsonl` 并给桌面发 critical 通知；主机侧同时盯 unit 与进程状态。
+**它只读**：不写会话、不杀进程、不改别人的东西。
+
+- 规则表就是脚本里的 `RULES`（改规则改那里，别在别处拷贝一份）。当前覆盖：生产检出里的 git 写操作与
+  `pnpm build/install/test`、重启/停 `dsh-web`、重启/停 `niri`/`waybar`、`pkill -f`、`kill -9 -1`、
+  动 `/usr/bin/niri`（已不存在）、`pacman -S/-R niri`、`hyprctl`、往 `~/.dsh/skills` 写实体文件、
+  碰 `.credentials.yaml`、把 `[MODE: SANDBOX]` 提交进 git。主机侧：`dsh-web`/`niri` 的 MainPID 变化、
+  waybar 实例数 ≠ 1、niri socket 数 > 1、niri 包被装回来、`/usr/bin/niri` 又出现。
+- 读法：`dsh-guard.py status`（主机状态 + 5 分钟内有活动的会话）、`dsh-guard.py report -m 120`
+  （最近 2 小时命中）、`dsh-guard.py since -m 480`（只读回放 8 小时，不动 state）、
+  `journalctl --user -u dsh-guard -f`（每轮跑批日志）。命中 ≠ 违规，按 severity 人判。
+- 我自己（用户明确批准的动作）也会被记进去：日志里带 session id，别把它当别人的错。
+
 - 默认在嵌套环境干活：`/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility`；
   `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
 - 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。

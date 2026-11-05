@@ -23,6 +23,8 @@ cache/
 storages/
 # 含 -shm / -wal 两个 SQLite 伴随文件
 session-search.db*
+# dsh-guard 的运行状态（findings/state），只在本机有意义
+guard/
 task-manager/
 # DeepSeek 文件上传索引（files-v3.json，本机运行时状态）
 llm-deepseek/
@@ -40,6 +42,8 @@ bin/*
 # 必须入库，否则换机/回滚后 zvec 自动建索引与 scope 清理就没了。
 !bin/zg-autoidx.mjs
 !bin/dsh-janitor.sh
+# 2026-11-05：会话监察（只读扫各会话越界动作），运行链路的一部分，必须入库
+!bin/dsh-guard.py
 evolve/
 
 # ── 依赖与构建产物 ────────────────────────────────────────────────────────

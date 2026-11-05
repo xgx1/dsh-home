@@ -1,0 +1,11 @@
+[Unit]
+Description=dsh-guard: watch other DSH sessions for rule violations
+Documentation=file:///home/sx/.dsh/AGENTS.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/sx/.dsh/bin/dsh-guard.py scan --quiet
+Nice=10
+IOSchedulingClass=idle
+StandardOutput=journal
+StandardError=journal

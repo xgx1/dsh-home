@@ -36,7 +36,8 @@ fi
 
 changed=0
 skipped=0
-for unit in "$SRC"/*.service; do
+for unit in "$SRC"/*.service "$SRC"/*.timer; do
+  [ -e "$unit" ] || continue
   name="$(basename "$unit")"
   target="$DEST/$name"
   if [ -f "$target" ] && cmp -s "$unit" "$target"; then
@@ -64,11 +65,12 @@ if [ "$changed" -gt 0 ]; then
   echo "  已执行    systemctl --user daemon-reload"
 fi
 
-# enable（不 start）：让服务随登录自启
-for unit in "$SRC"/*.service; do
+# enable（不 start）：让服务与定时器随登录自启
+for unit in "$SRC"/*.service "$SRC"/*.timer; do
+  [ -e "$unit" ] || continue
   systemctl --user enable "$(basename "$unit")" >/dev/null 2>&1 || true
 done
-echo "  已 enable 全部 unit（随用户会话自启）"
+echo "  已 enable 全部 unit/timer（随用户会话自启）"
 
 if [ "$start" = 1 ]; then
   systemctl --user start dsh-web.service
