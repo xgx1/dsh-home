@@ -79,3 +79,17 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - bili 的「request sent DIRECT (uncompressed)」现在只对「远端 + 有 wire 尺寸请求体」上报；本机 loopback（dsh↔openviking、MCP health）不再刷屏。若真有自定义 wire 的**模型**端点要过代理压缩，用 `BILI_EXTRA_MODEL_PATHS=/api/llm/generate,...`（逗号分隔路径子串）声明后重启 dsh。
 - `run_code` 的失败现在带 `[diagnostic] code/errno/syscall`，宿主日志同时有 `ptc-runtime-node: worker <stage> failed: …`；scope 启动路径整体坏掉时可用 `DSH_SUBPROCESS_CONTAINMENT=direct` 临时回到直连进程树。
 - 抓 HTTP/JSON 用 `web_fetch`（`tool-web` 已开 `fetch`）；ego-browser 只用于需要登录态或真实交互的页面。在页面上下文里 `fetch` 跨站 API 会被 CORS 挡死（2026-10-23 共 39 次 `TypeError: Failed to fetch`）。
+
+## 后台窗口控制（本机能力）
+
+要在不打断当前工作的前提下显示或操作另一批 GUI 应用（Unity、Unreal、浏览器、.NET 等），
+或改动这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里，
+这里只留硬约束。
+
+- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里；
+  生产 `niri --session`(2585)、`xwayland-satellite :0`(3087) 是上游 niri，没有这些 IPC，
+  不要对着它调，也不要重启它。
+- 默认在嵌套环境干活：`/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility`；
+  `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
+- 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
+
