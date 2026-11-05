@@ -18,6 +18,7 @@ allow:
   - "ask-matt"
   - "assertion-quality"
   - "authoring-github-workflows"
+  - "background-window-control"
   - "baidupcs-download-pipeline"
   - "banner-design"
   - "batch-file-organizing"
