@@ -86,11 +86,16 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 或改动这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里，
 这里只留硬约束。
 
-- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里。
-  生产桌面自 2026-11-05 起也跑 fork：`niri.service` 的 drop-in
-  `~/.config/systemd/user/niri.service.d/fork.conf` → `target/release/niri`；**重启它等于重启整个
-  桌面会话，动手前先问用户**。回退到上游 `/usr/bin/niri` 时这些 IPC 不存在（删 drop-in +
-  `systemctl --user daemon-reload` 再 restart）。
+- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里。生产桌面自
+  2026-11-05 起跑 fork，且**上游 `niri` 包已彻底卸载**（`pacman -Q niri` 查不到，`/usr/bin/niri` 不存在）：
+  - 单元：`~/.config/systemd/user/niri.service`（整份本地 unit，`ExecStart=/home/sx/projects/niri/target/release/niri --session`）
+  - 入口链：greetd `/etc/greetd/config.toml` → `/usr/local/bin/start-desktop` → `/usr/local/bin/niri-session`（本地 systemd 分支）→ `systemctl --user start niri.service`
+  - `niri` 命令：`/usr/local/bin/niri` 包装脚本 → fork release；`niri msg` / `niri validate` 都走它
+  - 门户与关闭链：`~/.config/xdg-desktop-portal/niri-portals.conf`、`~/.config/systemd/user/niri-shutdown.target`
+  - 重建即生效：`cd /home/sx/projects/niri && cargo build --release --bin niri`，重启桌面会话后才用上新二进制
+  - **重启 niri.service 等于重启整个桌面会话，动手前先问用户**
+  - 救急（fork 起不来）：`sudo pacman -U /var/cache/pacman/pkg/niri-26.04-1-x86_64.pkg.tar.zst` → `systemctl --user daemon-reload` → `systemctl --user start niri-fallback.service`（该 unit 用 `/usr/bin/niri`，仅恢复用）
+- waybar 由 `waybar.service`（用户单元，`Restart=always`）托管，日志 `journalctl --user -u waybar -f`；niri 自启只跑 `systemctl --user start waybar.service`。不要改回 while 循环：它会被 reparent 到 systemd --user、桌面重启后不退出，每个会话多出一个 bar（2026-11-05 实测）。
 - 默认在嵌套环境干活：`/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility`；
   `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
 - 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
