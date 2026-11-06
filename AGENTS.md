@@ -146,6 +146,13 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 - 面板：`http://127.0.0.1:8793/`，点图看大图；开「点击接管」后点图就是点那个桌面（截图是 0.5 缩放，
   页面自动 ×2 换算）；窗口按钮聚焦该窗口，输入框 + 发送/回车往当前焦点窗口打字。
 - `dsh-view.service`（127.0.0.1:8793）与 `dsh-observe.timer`（每分钟）都由 `deploy/install-systemd-units.sh` 装。
+- 第三类是**裸 X 服务器**（2026-11-06 补）：会话自己开的 `Xvfb :N`（例如 Unity 要固定分辨率就 `Xvfb :143 -screen 0 1600x1000x24` + `openbox`）。
+  它里面没有 niri，靠 niri 扫不到，以前在面板上完全看不见。现在 `dsh-desktops.py` 也扫 Xvfb，只认 DSH 会话拉起的
+  （进程 cgroup 在 `dsh-*` / `app-*` 里；容器里的 Xvfb 不算），面板上显示为 `xvfb` 卡片：整屏用 `import -display :N -window root`，
+  窗口用 `xdotool search` + `import -window <id>` 逐窗抓；接手用 `dsh-desktops.py action xvfb-143 type --text … | key --combo … | click --x X --y Y`
+  （先 focus 最大的有名窗口）。那是另一台 X server，人的指针/键盘/焦点一点不动。
+- 但**别默认开裸 Xvfb 跑 GUI**：它没 GPU（llvmpipe）、也没有真窗口管理，只是"能看见"。要 GPU 就在自己的 agent 桌面里跑；
+  确实需要固定分辨率的 X 环境，就在自己 agent 桌面的 X11（例如 `:10`）里跑，而不是另开 Xvfb。
 - 只读边界：除了面板上这些明确按钮，采集侧不改任何桌面状态；别人的会话、窗口、剪贴板一律不碰。
 
 ## agent 桌面（GUI 默认落点，2026-11-06）

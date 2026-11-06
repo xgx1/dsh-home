@@ -125,6 +125,19 @@ def proc_cmdline(pid):
         return []
 
 
+def dsh_owned_pid(pid):
+    """这个进程是不是 DSH 会话拉起来的（cgroup 落在 dsh-*.scope 里）。
+
+    用来把"会话自己开的 Xvfb"和容器里的 Xvfb（docker-*.scope）分开——后者不属于任何人。
+    """
+    try:
+        with open('/proc/%s/cgroup' % pid, 'r', encoding='utf-8', errors='replace') as fh:
+            cg = fh.read()
+    except OSError:
+        return False
+    return 'dsh-' in cg or 'app-' in cg
+
+
 def run(argv, env=None, timeout=20, input_text=None):
     try:
         res = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=timeout,
@@ -397,6 +410,35 @@ def discover():
             continue                          # 进程在但 IPC 不通（启动中/已坏）
         desk['version'] = ver.get('compositor') if isinstance(ver, dict) else str(ver)
         found[desk['key']] = desk
+
+    # 裸 X 服务器（Xvfb）：有些会话不走 agent 桌面，自己开 Xvfb + WM 跑 GUI。
+    # 那些窗口不在人的屏幕上、里面也没有 niri，靠 niri 扫不到，但一样得看得见。
+    # 只认 DSH 会话拉起来的（cgroup 落 dsh-*/app-*），容器里的 Xvfb 不算。
+    used = set()
+    for desk in found.values():
+        xd = desk.get('x_display') or desk.get('display')
+        if xd:
+            used.add(str(xd).split('.')[0])
+    for entry in os.listdir('/proc'):
+        if not entry.isdigit():
+            continue
+        argv = proc_cmdline(entry)
+        if not argv or os.path.basename(argv[0]) != 'Xvfb':
+            continue
+        display = ''
+        for a in argv[1:]:
+            if a.startswith(':') and len(a) > 1:
+                display = a.split('.')[0]
+                break
+        if not display or display in used or not dsh_owned_pid(entry):
+            continue
+        key = 'xvfb-%s' % display.lstrip(':')
+        found[key] = {
+            'key': key, 'kind': 'xvfb', 'pid': int(entry), 'runtime': PROD_RUNTIME,
+            'wayland': None, 'niri_socket': None, 'x_display': display, 'display': display,
+            'app_display': display, 'parent_window': None, 'parent_wayland': '',
+            'workspace': '', 'config': '', 'label': 'Xvfb %s' % display, 'version': 'Xvfb',
+        }
     return sorted(found.values(), key=lambda d: (d['kind'], d['label'], d['key']))
 
 
@@ -421,7 +463,8 @@ def capture_shot(desk, ts):
         code, out, err = run([GRIM, '-s', SHOT_SCALE, '-t', 'jpeg', '-q', SHOT_QUALITY, path],
                              env=env, timeout=30)
     else:
-        code, out, err = run([MAGICK, 'import', '-display', desk['display'], '-window', 'root',
+        display = desk.get('x_display') or desk.get('display')
+        code, out, err = run([MAGICK, 'import', '-display', display, '-window', 'root',
                               '-resize', '50%', '-quality', SHOT_QUALITY, path],
                              env={'PATH': '/usr/bin:/bin', 'HOME': HOME}, timeout=30)
     if code != 0 or not os.path.exists(path):
@@ -459,12 +502,18 @@ def nested_windows(desk):
 
 
 def x11_windows(desk):
-    env = {'DISPLAY': desk['display'], 'PATH': '/usr/bin:/bin'}
+    env = {'DISPLAY': desk.get('x_display') or desk.get('display'), 'PATH': '/usr/bin:/bin'}
     code, out, err = run([XDOTOOL, 'search', '--onlyvisible', '--name', ''], env=env, timeout=10)
     if code != 0:
         return [], (err or out).strip()[:200]
+    code, scr, _ = run([XDOTOOL, 'getdisplaygeometry'], env=env, timeout=5)
+    parts = (scr or '').split()
+    try:
+        screen = (int(parts[0]), int(parts[1]))
+    except (IndexError, ValueError):
+        screen = (0, 0)
     rows = []
-    for wid in out.split()[:MAX_WINDOWS]:
+    for wid in out.split():
         code, name, _ = run([XDOTOOL, 'getwindowname', wid], env=env, timeout=5)
         code2, geom, _ = run([XDOTOOL, 'getwindowgeometry', '--shell', wid], env=env, timeout=5)
         meta = {}
@@ -472,15 +521,52 @@ def x11_windows(desk):
             if '=' in line:
                 k, v = line.split('=', 1)
                 meta[k.strip()] = v.strip()
-        rows.append({'id': int(wid), 'title': (name or '').strip(), 'app_id': 'x11',
+        title = (name or '').strip()
+        try:
+            width = int(meta.get('WIDTH') or 0)
+            height = int(meta.get('HEIGHT') or 0)
+        except ValueError:
+            width = height = 0
+        # 裸 X 里 xdotool 会把根窗口和一堆无名的子窗口都列出来：扔掉无名的，
+        # 以及正好铺满整屏的无名根窗口（有名字的全屏窗口要留，那是真的全屏应用）。
+        if not title:
+            continue
+        if screen != (0, 0) and (width, height) == screen and not title:
+            continue
+        rows.append({'id': int(wid), 'title': title, 'app_id': 'x11',
                      'x': meta.get('X'), 'y': meta.get('Y'),
                      'width': meta.get('WIDTH'), 'height': meta.get('HEIGHT')})
+        if len(rows) >= MAX_WINDOWS:
+            break
     return rows, None
 
 
 def window_shots(desk, windows, ts):
     """niri 桌面用 scoped-shot 逐窗口抓图（别的工作区也抓得到，不动剪贴板）。"""
     out = {}
+    if desk['kind'] == 'xvfb':
+        # 裸 Xvfb 里没有 niri，逐窗口只能用 X 自己抓（import -window <id>）。
+        display = desk.get('x_display') or desk.get('display')
+        base, _shots, win_dir = desktop_paths(desk)
+        d = os.path.join(win_dir, stamp(ts, '%Y%m%d'))
+        try:
+            os.makedirs(d, exist_ok=True)
+        except OSError:
+            return out
+        env = {'PATH': '/usr/bin:/bin', 'HOME': HOME, 'DISPLAY': display}
+        for w in windows:
+            wid = w.get('id')
+            if wid is None or not w.get('width'):
+                continue
+            path = os.path.join(d, '%s-%s.jpg' % (stamp(ts, '%H%M%S'), wid))
+            code, out_s, err = run([MAGICK, 'import', '-display', display, '-window', str(wid),
+                                    '-resize', '50%', '-quality', SHOT_QUALITY, path],
+                                   env=env, timeout=20)
+            if code != 0 or not os.path.exists(path):
+                out[str(wid)] = {'error': (err or out_s or 'import failed').strip()[:160]}
+                continue
+            out[str(wid)] = {'path': os.path.relpath(path, WATCH), 'bytes': os.path.getsize(path)}
+        return out
     if desk['kind'] not in ('niri', 'agent') or not windows or not os.path.exists(SCOPED_SHOT):
         return out
     base, _shots, win_dir = desktop_paths(desk)
