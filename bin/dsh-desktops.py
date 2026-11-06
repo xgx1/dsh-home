@@ -358,8 +358,9 @@ def discover():
             if a == '-c' and i + 1 < len(argv):
                 config = argv[i + 1]
         agent_dir = os.path.dirname(config) if config.startswith(AGENT_DESK_ROOT + os.sep) else ''
-        if not agent_dir and os.path.normpath(rt) == os.path.normpath(PROD_RUNTIME):
-            continue                          # 既不是 agent 桌面也不是别的 runtime，跳过
+        # 回归环境（regression-visibility / regression-mpx）现在也挂在生产合成器上、共用
+        # /run/user/1000，不能再拿 runtime 目录区分；只要不是 niri.service 那个进程，
+        # 能按 pid 找到它自己的 IPC socket，就算"别的桌面"（kind=nested）。
         desc = read_json(os.path.join(agent_dir, 'desk.json'), {}) if agent_dir else {}
         key = os.path.basename(agent_dir) if agent_dir else desktop_key('niri', entry)
         socket = desc.get('niri_socket') or env.get('NIRI_SOCKET')
@@ -371,14 +372,12 @@ def discover():
                 cands = sorted(glob.glob(os.path.join(rt, 'niri.*.sock')))
                 socket = cands[0] if cands else None
         wayland = desc.get('wayland')
-        if not wayland and agent_dir and socket:
+        if not wayland and socket:
             # 嵌套 niri 自己的进程环境里 WAYLAND_DISPLAY 指向生产合成器（它是人家的客户端），
             # 绝不能拿它当这个桌面的 display；从我自己的 IPC socket 名里认。
             part = os.path.basename(socket).split('.')
             if len(part) >= 2 and part[0] == 'niri' and part[1].startswith('wayland-'):
                 wayland = part[1]
-        if not wayland and not agent_dir:
-            wayland = env.get('WAYLAND_DISPLAY')
         if not wayland:
             # 合成器自己的进程里没有 WAYLAND_DISPLAY；socket 名要从 runtime 目录里认。
             for cand in sorted(glob.glob(os.path.join(rt, 'wayland-*'))):
@@ -401,7 +400,7 @@ def discover():
             'workspace': desc.get('workspace') or '',
             'config': config,
             'label': (desc.get('workspace') or key) if agent_dir
-                     else os.path.basename(os.path.dirname(config)) or 'nested',
+                     else nested_label(config, entry),
         }
         if not desk['niri_socket']:
             continue
@@ -447,6 +446,18 @@ def desktop_paths(desk):
     return base, os.path.join(base, 'shots'), os.path.join(base, 'winshots')
 
 
+def nested_label(config, pid):
+    """给非 agent 的嵌套实例起个人看得懂的名字（回归环境叫 regression-visibility 这种）。"""
+    base = os.path.basename(os.path.dirname(config)) if config else ''
+    if base in ('', 'run', 'tmp'):
+        try:
+            cwd = os.readlink('/proc/%s/cwd' % pid)
+        except OSError:
+            cwd = ''
+        base = os.path.basename(cwd.rstrip('/')) or base
+    return base or 'nested'
+
+
 def capture_shot(desk, ts):
     base, shots_dir, _ = desktop_paths(desk)
     d = os.path.join(shots_dir, stamp(ts, '%Y%m%d'))
@@ -457,7 +468,7 @@ def capture_shot(desk, ts):
     path = os.path.join(d, stamp(ts, '%H%M%S') + '.jpg')
     if os.path.exists(path):
         path = os.path.join(d, stamp(ts, '%H%M%S-%f') + '.jpg')
-    if desk['kind'] in ('niri', 'agent'):
+    if desk['kind'] in ('niri', 'agent', 'nested'):
         env = niri_env(desk)
         env['HOME'] = HOME
         code, out, err = run([GRIM, '-s', SHOT_SCALE, '-t', 'jpeg', '-q', SHOT_QUALITY, path],
@@ -567,7 +578,7 @@ def window_shots(desk, windows, ts):
                 continue
             out[str(wid)] = {'path': os.path.relpath(path, WATCH), 'bytes': os.path.getsize(path)}
         return out
-    if desk['kind'] not in ('niri', 'agent') or not windows or not os.path.exists(SCOPED_SHOT):
+    if desk['kind'] not in ('niri', 'agent', 'nested') or not windows or not os.path.exists(SCOPED_SHOT):
         return out
     base, _shots, win_dir = desktop_paths(desk)
     d = os.path.join(win_dir, stamp(ts, '%Y%m%d'))
@@ -636,7 +647,7 @@ def cmd_snapshot(args):
     events = []
     for desk in desktops:
         shot_rel, shot_bytes, shot_err = capture_shot(desk, ts)
-        if desk['kind'] in ('niri', 'agent'):
+        if desk['kind'] in ('niri', 'agent', 'nested'):
             windows, werr = nested_windows(desk)
             workspaces, _ = niri_json(desk, 'workspaces')
         else:
@@ -705,7 +716,8 @@ def cmd_windows(args):
     if not desk:
         print('找不到桌面 %s（先 discover）' % args['key'])
         return 1
-    windows, err = (nested_windows(desk) if desk['kind'] in ('niri', 'agent') else x11_windows(desk))
+    windows, err = (nested_windows(desk) if desk['kind'] in ('niri', 'agent', 'nested')
+                    else x11_windows(desk))
     if err:
         print('错误: %s' % err)
         return 1
@@ -788,12 +800,12 @@ def cmd_action(args):
         print('找不到桌面 %s' % (key,))
         return 1
     op = args.get('op')
-    if op == 'focus-window' and desk['kind'] in ('niri', 'agent'):
+    if op == 'focus-window' and desk['kind'] in ('niri', 'agent', 'nested'):
         code, out, err = run([NIRI, 'msg', 'action', 'focus-window', '--id', str(args['window'])],
                              env=niri_env(desk), timeout=10)
         print(out.strip() or err.strip())
         return code
-    if op == 'close-window' and desk['kind'] in ('niri', 'agent'):
+    if op == 'close-window' and desk['kind'] in ('niri', 'agent', 'nested'):
         code, out, err = run([NIRI, 'msg', 'action', 'close-window', '--id', str(args['window'])],
                              env=niri_env(desk), timeout=10)
         print(out.strip() or err.strip())
@@ -813,8 +825,9 @@ def cmd_action(args):
         print((out or err or '').strip()[:300])
         return code
     display = desk.get('x_display') or desk.get('display')
-    if desk['kind'] == 'niri' and not display:
-        print('这个桌面没有 X 父显示，送不了输入（只用 niri IPC 的 focus-window）')
+    if desk['kind'] in ('niri', 'nested') and not display:
+        print('这个桌面没有可注入的 X display（回归/嵌套环境）：只能看图、聚焦、关窗口；'
+              '要操作它，它在 ue 里是一个生产窗口，Mod+U 过去直接用')
         return 1
     if op in ('type', 'key', 'click'):
         focus_x_root(display)
