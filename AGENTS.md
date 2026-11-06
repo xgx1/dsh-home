@@ -150,14 +150,22 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 
 ## agent 桌面（GUI 默认落点，2026-11-06）
 
-每个工具会话一个嵌套 niri 桌面（Xvfb 父显示 → niri fork → 首次连 X11 时 niri 自拉 xwayland-satellite），
+每个工具会话一个嵌套 niri 桌面，它是生产合成器的一个 **Wayland 客户端**（不是 X 里的窗口）：
+父表面 = 生产 niri 的 Wayland → 嵌套 niri fork → 首次连 X11 时 niri 自拉 xwayland-satellite。
 和人的桌面共用 `/run/user/1000`（DBus/Pulse/portal 不用另配）。
 
+- **走真 GPU（2026-11-06 换掉 Xvfb）**：以前父表面是 Xvfb（X 虚拟帧缓冲 = 纯内存软件光栅化、没有 DRI3），
+  Mesa 只能给 llvmpipe，所以 agent 桌面是软渲染、跑不动 UE/Unity 的 GPU 部分。改成挂在生产合成器上以后，
+  嵌套 niri 和它里面的客户端直接拿到 `/dev/dri/renderD128`（实测 3 个 fd），日志里没有 DRI3/dmabuf 告警。
+  代价：每个 agent 桌面在 `ue` 工作区是一个普通窗口（规则匹配 app-id `^niri$` → `ue` + `open-focused false`），
+  不会抢人的焦点；要看用 `Mod+U` 或仪表盘的窗口截图。
 - 机制：`~/.config/systemd/user/dsh-web.service.d/agent-desktop.conf`（和 `dsh-web-dev` 同名 drop-in）
   给服务加 `Environment=BASH_ENV=/home/sx/.dsh/bin/agent-shell-env.sh`。每条 bash 工具命令进 shell 时：
   1) 记下生产桌面的 `PROD_DISPLAY` / `PROD_WAYLAND_DISPLAY` / `PROD_NIRI_SOCKET`；
-  2) 按工作区 key（工作区根目录 md5 前 8 位，形如 `ws-6f1aa0a4`）找桌面，没有就 `systemd-run` 拉起；
+  2) 按工作区 key（工作区根目录 md5 前 8 位，形如 `ws-6f1aa0a4`）找桌面，没有就拉起；
   3) 导出 agent 桌面的 `WAYLAND_DISPLAY` / `DISPLAY`（嵌套 niri 的 X11 socket）/ `NIRI_SOCKET`。
+  拉起后 supervisor 会把嵌套桌面那个生产窗口搬到 `ue`（`move-window-to-workspace --focus false`），
+  人的视图和焦点一点不动。
 - 管理：`agent-desktop.py list | up [--key K] | down [--key K|--all] | env | run -- <命令> | prune`。
   连续 30 分钟没有命令、也没有窗口就自动收；有窗口就一直留着。
 - 人（生产）桌面：`prod-niri msg ...`、`prod-xdo ...`、`prod-grim ...`，或直接用 `PROD_*` 变量。
@@ -165,19 +173,24 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 - 观察/接手：http://127.0.0.1:8793/ 的「其他桌面」区（实时图 + 窗口按钮 + 打字/点击接管）。
 - 不经过钩子的：systemd 单元/timer、从 niri 配置 `spawn-at-startup` 拉的程序 —— 它们还在生产桌面。
 - 已经开错桌面的窗口不会自动搬家，只能关掉重开。
-- 稳定性（2026-11-06 实测后修）：嵌套 niri 只能软件渲染（Xvfb 没有 DRI3 → llvmpipe）。fork 的 winit 后端
-  现在**没有 EGL render node 就不宣告 dmabuf**（否则客户端 dmabuf 导入失败后 llvmpipe 会 SIGSEGV，整个
-  agent 桌面一起没）；agent 桌面另加 `LP_NUM_THREADS=1` / `MESA_GLTHREAD=false`（软件光栅化单线程）。
-  生产走 TTY 后端，不受影响；**新二进制要等下次桌面重启才进内存**。
-- 打字：ASCII 走 `xdotool type`；中文等非 ASCII 走 `wl-copy`（把文本放进这个桌面的 Wayland 剪贴板，
-  satellite 桥到 X11）再 `Ctrl+V`。所以中文只能打进**X11 窗口**（Wayland 原生窗口收不到 XTEST，仍不行）。
-- GPU 类负载（Vulkan / 需要真 GPU 的 UE、Unity）在软件渲染的 agent 桌面里跑不动，只能做界面/逻辑验证。
+- **接管输入只走 agent 座位**（`/home/sx/projects/agent-seat-probe/target/debug/`）：
+  `scoped-target <嵌套窗口 id>` 把生产 niri 的 `agent-0` 座位钉在这个桌面的窗口上，然后
+  `agent-seat-probe agent-0 click <x> <y>` / `agent-seat-probe agent-0 text '...'` /
+  `agent-seat-probe agent-0 keys 'ctrl+v'`；坐标是钉住表面的千分数。人的指针、键盘焦点、当前工作区都不动。
+  中文等非 ASCII：`wl-copy`（写进这个桌面自己的 Wayland 剪贴板）再 `keys 'ctrl+v'`，`dsh-desktops.py` 已自动这么干。
+  **别用 `wtype` 往生产合成器打字**：它按注册表顺序绑最后一个 seat（现在恰好是 `agent-0`，能工作纯属巧合，
+  哪天绑到 `seat0` 就直接打进了人的窗口）。
+- GPU 类负载（Vulkan / UE、Unity）现在可以直接在 agent 桌面里跑；但竞技/独占型程序如果还是想落 `ue`，
+  用 `AGENT_DESKTOP=0` 起，再按下面的规则搬。
 - **GPU 类负载不许再开在人当前的工作区**（2026-11-06 修）：生产 niri 已声明命名工作区 `workspace "ue"`
   （Mod+U 切过去，Mod+Shift+U 把当前窗口丢过去），并加了窗口规则把所有 app-id `^UnrealEditor$` 的窗口
   （含资产编辑器/VR Preview 这类子窗）投到 `ue` + `open-focused false`。其他要 GPU 的程序启动后自己搬：
   `prod-niri msg action move-window-to-workspace --window-id N --focus false ue`。
 - 坑：`open-on-workspace` 只在**目标命名工作区已声明且存在**时生效，否则退回当前工作区（niri 文档原话，
   2026-11-06 实测：没声明 `workspace "ue"` 时规则静默失效）。`Mod+U` 也一样按名字解析。
+- 坑：`open-focused false` 挡不住**客户端自己的 activation 请求**（2026-11-06：UE 新开一个子窗后
+  人的视图被拽到 `ue`）。别用它当绝对保险；发现视图被拽走用
+  `prod-niri msg action focus-window --id <原窗口>` 拉回来。
 - 看/验证 `ue` 里的窗口**不要**用整屏 grim（那会切走人的视图、也可能截到别的工作区）：用
   `NIRI_SOCKET=/run/user/1000/niri.wayland-1.<pid>.sock /home/sx/projects/agent-seat-probe/target/debug/scoped-shot <window-id> <路径>`
   —— 只抓那一个窗口，不动焦点；要整屏就先把 `ue` 聚焦再切回来（会闪一下，能不用就不用）。

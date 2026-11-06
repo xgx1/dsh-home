@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """agent-desktop.py —— 给每个 agent 会话一个自己的嵌套桌面，GUI 默认落到那里。
 
-结构（和 regression-visibility 里的嵌套环境同一套路，但不用手动起 satellite）：
-  Xvfb（父 X display）→ niri fork（winit 后端）→ 首次有 X11 客户端连接时 niri 自己拉起
-  xwayland-satellite，于是这个 niri 同时有 Wayland 和 X11 两种客户端。
+结构：
+  生产 niri（真 GPU）← 嵌套 niri fork（winit 后端，作为 Wayland 客户端）→ 首次有 X11 客户端
+  连接时自己拉起 xwayland-satellite，于是这个 niri 同时有 Wayland 和 X11 两种客户端。
+  渲染表面来自生产合成器，EGL 直接拿到 /dev/dri/renderD128（真 GPU），dmabuf 正常宣告；
+  2026-11-06 之前用 Xvfb 当父 X display，Xvfb 没有 DRI3/DRM，那条路只有 llvmpipe 软渲染。
+  嵌套 niri 自己的那个窗口会被塞进生产桌面的命名工作区 ue（Mod+U 才能看到），不抢焦点。
 
 关键点：niri 自己也会在 XDG_RUNTIME_DIR 里建 wayland-N 和 niri.wayland-N.PID.sock，
 所以嵌套桌面和生产桌面共用 /run/user/1000，DBus/Pulse/portal 都不用另外配。
@@ -37,8 +40,8 @@ DSH = os.path.join(HOME, '.dsh')
 ROOT = os.path.join(DSH, 'agent-desktops')
 RUNTIME = os.environ.get('AGENT_DESKTOP_RUNTIME') or ('/run/user/%d' % os.getuid())
 NIRI = os.environ.get('AGENT_DESKTOP_NIRI') or '/home/sx/projects/niri/target/release/niri'
-XVFB = shutil.which('Xvfb') or '/usr/bin/Xvfb'
 NIRI_MSG = NIRI
+PARENT_WORKSPACE = os.environ.get('AGENT_DESKTOP_PARENT_WS') or 'ue'
 DEFAULT_SIZE = '1920x1080'
 IDLE_TIMEOUT = float(os.environ.get('AGENT_DESKTOP_IDLE') or 1800)
 KEEP_DAYS = 7.0
@@ -129,15 +132,13 @@ def env_lines(doc):
         'export AGENT_DESKTOP_WORKSPACE=%s' % doc.get('workspace', ''),
         'export AGENT_DESKTOP_WAYLAND=%s' % doc['wayland'],
         'export AGENT_DESKTOP_DISPLAY=%s' % doc['app_display'],
-        'export AGENT_DESKTOP_XVFB=%s' % doc['xvfb_display'],
+        'export AGENT_DESKTOP_PARENT_WAYLAND=%s' % doc.get('parent_wayland', ''),
+        'export AGENT_DESKTOP_PARENT_WINDOW=%s' % (doc.get('parent_window') or ''),
         'export AGENT_DESKTOP_NIRI_SOCKET=%s' % doc['niri_socket'],
         'export AGENT_DESKTOP_NIRI_PID=%s' % doc['niri_pid'],
         'export WAYLAND_DISPLAY=%s' % doc['wayland'],
         'export DISPLAY=%s' % doc['app_display'],
         'export NIRI_SOCKET=%s' % doc['niri_socket'],
-        # 软件渲染下的稳定性开关，见 child_env() 的注释
-        'export LP_NUM_THREADS=1',
-        'export MESA_GLTHREAD=false',
     ]
     return lines
 
@@ -221,40 +222,102 @@ def prune_old():
 
 # ── supervise：真正干活的那个进程（由 systemd-run 拉起，常驻到空闲） ──────────
 
-def child_env(display):
-    # 嵌套 niri 在 Xvfb 上只能走 llvmpipe（软件光栅化）。llvmpipe 的多线程光栅化在
-    # 并发绘制下会 SIGSEGV（2026-11-06 实测：agent 桌面里开 zenity 直接带走整个 niri，
-    # 栈在 llvmpipe-9 线程）。单线程 + 关 GL 线程池换来稳定，慢一点无所谓。
+def child_env(wayland):
+    # 嵌套 niri 是生产合成器的 Wayland 客户端：EGL 拿到的是真 GPU（/dev/dri/renderD128），
+    # dmabuf 正常宣告。以前套 Xvfb 当父显示，那条路只有 llvmpipe（Xvfb 没有 DRI3/DRM），
+    # 客户端 dmabuf 导不进来，全链路退化到 wl_shm 的 CPU 拷贝。
     return {'PATH': '/usr/local/bin:/usr/bin:/bin',
             'HOME': HOME,
             'XDG_RUNTIME_DIR': RUNTIME,
-            'DISPLAY': display,
-            'WINIT_UNIX_BACKEND': 'x11',
+            'WAYLAND_DISPLAY': wayland,
             'XDG_SESSION_TYPE': 'wayland',
-            'XDG_CURRENT_DESKTOP': 'niri',
-            'LP_NUM_THREADS': '1',
-            'MESA_GLTHREAD': 'false'}
+            'XDG_CURRENT_DESKTOP': 'niri'}
 
 
-def start_xvfb(size, log):
-    width, height = size.split('x')
-    rfd, wfd = os.pipe()
-    # -displayfd 收任意 fd 号；把它 dup 成一个专门的可继承 fd 直接交给 Xvfb，
-    # 不依赖 preexec_fn（preexec 之后 subprocess 还会关一遍未在 pass_fds 里的 fd）。
-    xfd = os.dup(wfd)
-    os.set_inheritable(xfd, True)
-    proc = subprocess.Popen([XVFB, '-displayfd', str(xfd),
-                             '-screen', '0', '%sx%sx24' % (width, height),
-                             '-nolisten', 'tcp'],
-                            stdout=log, stderr=log, pass_fds=(xfd,))
-    os.close(xfd)
-    os.close(wfd)
-    line = os.read(rfd, 64).decode('utf-8', 'replace')
-    os.close(rfd)
-    num = line.strip().splitlines()[0] if line.strip() else ''
-    if not num.isdigit():
-        raise RuntimeError('Xvfb 没吐出 display 号：%r' % line)
-    return proc, ':' + num
+def prod_wayland():
+    """生产合成器的 WAYLAND_DISPLAY。合成器进程自己不设这个变量，所以问 systemd 用户环境，退回去扫 runtime。"""
+    name = ''
+    try:
+        out = subprocess.run(['systemctl', '--user', 'show-environment'],
+                             capture_output=True, text=True, timeout=10).stdout
+        for line in (out or '').splitlines():
+            if line.startswith('WAYLAND_DISPLAY='):
+                name = line.split('=', 1)[1].strip()
+                break
+    except (OSError, subprocess.SubprocessError):
+        name = ''
+    if not name:
+        for cand in sorted(glob.glob(os.path.join(RUNTIME, 'wayland-*'))):
+            base = os.path.basename(cand)
+            if base.endswith('.lock'):
+                continue
+            name = base
+            break
+    if not name or not os.path.exists(os.path.join(RUNTIME, name)):
+        raise RuntimeError('找不到生产合成器的 Wayland socket（runtime=%s）' % RUNTIME)
+    return name
+
+
+def prod_niri_socket():
+    """生产 niri 的 IPC socket：systemd 环境里的那个，退回去 glob 里 pid 还活着的那个。"""
+    try:
+        out = subprocess.run(['systemctl', '--user', 'show-environment'],
+                             capture_output=True, text=True, timeout=10).stdout
+        for line in (out or '').splitlines():
+            if line.startswith('NIRI_SOCKET='):
+                sock = line.split('=', 1)[1].strip()
+                if os.path.exists(sock):
+                    return sock
+    except (OSError, subprocess.SubprocessError):
+        pass
+    for sock in sorted(glob.glob(os.path.join(RUNTIME, 'niri.wayland-1.*.sock'))):
+        pid = sock.rsplit('.', 2)[-2]
+        try:
+            os.kill(int(pid), 0)
+        except (OSError, ValueError):
+            continue
+        return sock
+    return ''
+
+
+def prod_call(socket, *args, timeout=10):
+    env = {'PATH': '/usr/bin:/bin', 'HOME': HOME, 'XDG_RUNTIME_DIR': RUNTIME,
+           'NIRI_SOCKET': socket}
+    try:
+        res = subprocess.run([NIRI_MSG, 'msg', *args], env=env, capture_output=True,
+                             text=True, timeout=timeout)
+        return res.returncode, res.stdout or '', res.stderr or ''
+    except (OSError, subprocess.SubprocessError) as exc:
+        return 1, '', str(exc)
+
+
+def prod_json(socket, *args):
+    code, out, _err = prod_call(socket, '-j', *args)
+    if code != 0:
+        return None
+    try:
+        return json.loads(out)
+    except ValueError:
+        return None
+
+
+def park_window(socket, pid, workspace, log):
+    """把嵌套 niri 的窗口藏进生产桌面的命名工作区：窗口规则是主路径，这里是规则没命中时的兜底。"""
+    windows = prod_json(socket, 'windows') or []
+    win = next((w for w in windows if w.get('pid') == pid), None)
+    if not win:
+        return None
+    wid = win.get('id')
+    spaces = prod_json(socket, 'workspaces') or []
+    target = next((s for s in spaces if s.get('name') == workspace), None)
+    if not target:
+        print('%s 生产桌面没有命名工作区 %s，窗口留在原处' % (stamp(), workspace),
+              file=log, flush=True)
+        return wid
+    if win.get('workspace_id') != target.get('id'):
+        prod_call(socket, 'action', 'move-window-to-workspace',
+                  '--window-id', str(wid), '--focus', 'false', workspace)
+    return wid
 
 
 def wait_for(pattern, path, timeout=20.0):
@@ -291,7 +354,6 @@ def cmd_supervise(args):
     config = os.path.join(d, 'config.kdl')
     write_kdl(config)
     niri_log = open(os.path.join(d, 'niri.log'), 'w')
-    xvfb_log = open(os.path.join(d, 'xvfb.log'), 'w')
     stop = {'now': False}
 
     def _stop(_sig, _frm):
@@ -300,13 +362,13 @@ def cmd_supervise(args):
     signal.signal(signal.SIGTERM, _stop)
     signal.signal(signal.SIGINT, _stop)
 
-    xvfb = None
     niri = None
     try:
-        xvfb, parent_display = start_xvfb(size, xvfb_log)
-        env = child_env(parent_display)
-        # 别把父进程的 Wayland/IPC 带进去
-        for k in ('WAYLAND_DISPLAY', 'NIRI_SOCKET'):
+        parent_wayland = prod_wayland()
+        parent_socket = prod_niri_socket()
+        env = child_env(parent_wayland)
+        # 别把父进程的 IPC/X 带进去：嵌套 niri 自己开 socket、自己拉 Xwayland
+        for k in ('NIRI_SOCKET', 'DISPLAY'):
             env.pop(k, None)
         niri = subprocess.Popen([NIRI, '-c', config], env=env,
                                 stdout=niri_log, stderr=subprocess.STDOUT,
@@ -318,6 +380,14 @@ def cmd_supervise(args):
         missing = [n for n, v in (('wayland', wayland), ('ipc', ipc), ('x11', app_display)) if not v]
         if missing:
             raise RuntimeError('niri 没起来（缺 %s），日志见 %s/niri.log' % (','.join(missing), d))
+        parent_window = None
+        if parent_socket:
+            deadline = now() + 15
+            while now() < deadline:
+                parent_window = park_window(parent_socket, niri.pid, PARENT_WORKSPACE, niri_log)
+                if parent_window:
+                    break
+                time.sleep(0.5)
         try:
             version = subprocess.run([NIRI, '--version'], capture_output=True, text=True,
                                      timeout=10).stdout.strip()
@@ -325,21 +395,22 @@ def cmd_supervise(args):
             version = ''
         doc = {'key': key, 'workspace': args.workspace or '', 'size': size,
                'created_at': now(), 'updated_at': now(),
-               'niri_pid': niri.pid, 'xvfb_pid': xvfb.pid,
+               'niri_pid': niri.pid,
                'wayland': wayland, 'niri_socket': ipc,
-               'app_display': app_display, 'xvfb_display': parent_display,
+               'app_display': app_display,
+               'parent_wayland': parent_wayland, 'parent_socket': parent_socket,
+               'parent_workspace': PARENT_WORKSPACE, 'parent_window': parent_window,
                'config': config, 'version': version}
         write_env_files(doc)
         touch_heartbeat(key)
-        print('%s 桌面就绪 key=%s wayland=%s x11=%s parent=%s' % (
-            stamp(), key, wayland, app_display, parent_display), flush=True)
+        print('%s 桌面就绪 key=%s wayland=%s x11=%s gpu-parent=%s window=%s' % (
+            stamp(), key, wayland, app_display, parent_wayland, parent_window), flush=True)
 
         last_check = now()
         while not stop['now']:
             time.sleep(2.0)
-            if xvfb.poll() is not None or niri.poll() is not None:
-                print('%s 子进程退出（xvfb=%s niri=%s）' % (stamp(), xvfb.poll(), niri.poll()),
-                      flush=True)
+            if niri.poll() is not None:
+                print('%s niri 退出（code=%s）' % (stamp(), niri.poll()), flush=True)
                 break
             if now() - last_check < 30:
                 continue
@@ -368,15 +439,13 @@ def cmd_supervise(args):
         raise
     finally:
         stop['now'] = True
-        for proc in (niri, xvfb):
-            if proc is None or proc.poll() is not None:
-                continue
+        if niri is not None and niri.poll() is None:
             try:
-                proc.terminate()
-                proc.wait(timeout=6)
+                niri.terminate()
+                niri.wait(timeout=6)
             except (OSError, subprocess.TimeoutExpired):
                 try:
-                    proc.kill()
+                    niri.kill()
                 except OSError:
                     pass
         try:
@@ -396,7 +465,6 @@ def cmd_supervise(args):
         except OSError:
             pass
         niri_log.close()
-        xvfb_log.close()
         print('%s 监督进程结束 key=%s' % (stamp(), key), flush=True)
     return 0
 
@@ -511,7 +579,8 @@ def cmd_list(args):
     for live, doc in rows:
         print('%-4s %-12s %-28s wayland=%-9s x11=%-4s parent=%-4s' % (
             'up' if live else 'dead', doc.get('key'), (doc.get('workspace') or '')[:28],
-            doc.get('wayland'), doc.get('app_display'), doc.get('xvfb_display')))
+            doc.get('wayland'), doc.get('app_display'),
+            '%s/%s' % (doc.get('parent_wayland'), doc.get('parent_window'))))
     return 0
 
 

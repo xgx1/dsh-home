@@ -45,7 +45,11 @@ GRIM = shutil.which('grim') or '/usr/bin/grim'
 WL_COPY = shutil.which('wl-copy') or '/usr/bin/wl-copy'
 MAGICK = shutil.which('magick') or '/usr/bin/magick'
 XDOTOOL = shutil.which('xdotool') or '/usr/bin/xdotool'
-SCOPED_SHOT = os.path.join(HOME, 'projects', 'agent-seat-probe', 'target', 'debug', 'scoped-shot')
+PROBE_DIR = os.path.join(HOME, 'projects', 'agent-seat-probe', 'target', 'debug')
+SCOPED_SHOT = os.path.join(PROBE_DIR, 'scoped-shot')
+SCOPED_TARGET = os.path.join(PROBE_DIR, 'scoped-target')
+PROBE = os.path.join(PROBE_DIR, 'agent-seat-probe')
+WL_PASTE = shutil.which('wl-paste') or '/usr/bin/wl-paste'
 
 RETAIN_HOURS = 24.0
 MAX_BYTES = 1024 * 1024 * 1024
@@ -121,9 +125,10 @@ def proc_cmdline(pid):
         return []
 
 
-def run(argv, env=None, timeout=20):
+def run(argv, env=None, timeout=20, input_text=None):
     try:
-        res = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=timeout)
+        res = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=timeout,
+                             input=input_text)
         return res.returncode, res.stdout, res.stderr
     except (OSError, subprocess.SubprocessError) as exc:
         return 1, '', str(exc)
@@ -164,6 +169,161 @@ def prod_niri_pid():
     return int(out) if out.isdigit() and out != '0' else None
 
 
+def prod_wayland_display():
+    try:
+        out = subprocess.run(['systemctl', '--user', 'show-environment'], capture_output=True,
+                             text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        out = ''
+    for line in (out or '').splitlines():
+        if line.startswith('WAYLAND_DISPLAY='):
+            name = line.split('=', 1)[1].strip()
+            if os.path.exists(os.path.join(PROD_RUNTIME, name)):
+                return name
+    for cand in sorted(glob.glob(os.path.join(PROD_RUNTIME, 'wayland-*'))):
+        base = os.path.basename(cand)
+        if not base.endswith('.lock'):
+            return base
+    return ''
+
+
+def prod_niri_socket():
+    try:
+        out = subprocess.run(['systemctl', '--user', 'show-environment'], capture_output=True,
+                             text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        out = ''
+    for line in (out or '').splitlines():
+        if line.startswith('NIRI_SOCKET='):
+            sock = line.split('=', 1)[1].strip()
+            if os.path.exists(sock):
+                return sock
+    for sock in sorted(glob.glob(os.path.join(PROD_RUNTIME, 'niri.wayland-1.*.sock'))):
+        pid = sock.rsplit('.', 2)[-2]
+        try:
+            os.kill(int(pid), 0)
+        except (OSError, ValueError):
+            continue
+        return sock
+    return ''
+
+
+def prod_env():
+    """生产桌面（人的桌面）的环境：scoped 输入打到这里，但不碰人的焦点和指针。"""
+    env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': HOME, 'XDG_RUNTIME_DIR': PROD_RUNTIME}
+    wl = prod_wayland_display()
+    if wl:
+        env['WAYLAND_DISPLAY'] = wl
+    sock = prod_niri_socket()
+    if sock:
+        env['NIRI_SOCKET'] = sock
+    return env
+
+
+def nested_output_size(desk):
+    outputs, _err = niri_json(desk, 'outputs')
+    for _name, out in (outputs or {}).items():
+        logical = out.get('logical') or {}
+        try:
+            return int(logical['width']), int(logical['height'])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return 1920, 1080
+
+
+def scoped_click(desk, x, y):
+    """点 agent 桌面里的某个位置：fork 的 scoped 指针钉住在那个嵌套窗口上。
+
+    人的指针和焦点一点也不动；坐标按千分数送给 niri，它按钉住的表面等比映射。
+    """
+    wid = desk.get('parent_window')
+    if not wid or not os.path.exists(SCOPED_TARGET):
+        return 1, '', '缺 parent_window 或 scoped-target（这个桌面要先重开）'
+    env = prod_env()
+    code, out, err = run([SCOPED_TARGET, str(wid)], env=env, timeout=10)
+    if code != 0:
+        return code, out, err
+    width, height = nested_output_size(desk)
+    nx = int(round(max(0.0, min(float(x), width)) * 1000.0 / max(1, width)))
+    ny = int(round(max(0.0, min(float(y), height)) * 1000.0 / max(1, height)))
+    return run([PROBE, 'agent-0', 'click', str(nx), str(ny)], env=env, timeout=15)
+
+
+def scoped_pin(desk):
+    """把生产 niri 的 agent 座位钉到这个 agent 桌面的窗口上（键盘焦点随客户端的 seat 走）。"""
+    wid = desk.get('parent_window')
+    if not wid or not os.path.exists(SCOPED_TARGET):
+        return 1, '', '缺 parent_window 或 scoped-target（这个桌面要先重开）'
+    return run([SCOPED_TARGET, str(wid)], env=prod_env(), timeout=10)
+
+
+def probe_keys(desk, combo):
+    """单键/组合键：走 agent 座位的虚拟键盘，只可能落到钉住的窗口，人的座位碰不到。
+
+    不用 wtype：它按注册表顺序绑最后一个 seat（也就是 agent-0），能工作靠的是巧合，
+    万一哪天绑到 seat0 就会把字打进人的窗口里。probe 只显式连 agent-0。
+    """
+    code, out, err = scoped_pin(desk)
+    if code != 0:
+        return code, out, err
+    spec = (combo or 'Return').strip()
+    if not spec:
+        return 1, '', '空组合键'
+    return run([PROBE, 'agent-0', 'keys', spec], env=prod_env(), timeout=20)
+
+
+def clip_set(env, text):
+    """把文本放进目标桌面自己的剪贴板。
+
+    wl-copy 设完剪贴板会 fork 出常驻进程继续当 owner，用 subprocess.run 等它退出会
+    一直等到超时，所以这里起进程、写完 stdin 就放手。
+    """
+    try:
+        proc = subprocess.Popen([WL_COPY], env=env, stdin=subprocess.PIPE,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=True)
+        proc.stdin.write(text.encode())
+        proc.stdin.close()
+    except OSError as exc:
+        return 1, '', str(exc)
+    time.sleep(0.3)
+    return 0, '', ''
+
+
+def clipboard_paste(desk, text):
+    """非 ASCII（中文等）：塞进嵌套桌面的剪贴板，再用 agent 座位按 Ctrl+V。
+
+    probe 的 text 模式只带 US 布局；中文这类字符只能走剪贴板，而且剪贴板要放进
+    嵌套合成器自己的 wl_display，客户端才读得到。
+    """
+    wayland = desk.get('wayland')
+    if not wayland:
+        return 1, '', '这个桌面没有 Wayland socket，没法粘贴'
+    env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': HOME,
+           'XDG_RUNTIME_DIR': desk.get('runtime') or PROD_RUNTIME,
+           'WAYLAND_DISPLAY': wayland}
+    code, out, err = clip_set(env, text)
+    if code != 0:
+        return code, out, err
+    return probe_keys(desk, 'ctrl+v')
+
+
+def probe_text(desk, text):
+    """打字：ASCII 走 probe 的 text 模式，打不了的字符自动改走剪贴板粘贴。"""
+    if not text:
+        return 1, '', '空文本'
+    code, out, err = scoped_pin(desk)
+    if code != 0:
+        return code, out, err
+    code, out, err = run([PROBE, 'agent-0', 'text', text], env=prod_env(), timeout=40)
+    if code == 0:
+        return code, out, err
+    pasted = clipboard_paste(desk, text)
+    if pasted[0] == 0:
+        return 0, (out or '') + (pasted[1] or '') + '（含非 ASCII，走剪贴板粘贴）', ''
+    return code, (out or '') + (pasted[1] or ''), (err or '') + (pasted[2] or '')
+
+
 def discover():
     """扫 /proc 找"别的桌面"：agent 自己的桌面（~/.dsh/agent-desktops/）与别的嵌套环境。"""
     found = {}
@@ -197,7 +357,15 @@ def discover():
             else:
                 cands = sorted(glob.glob(os.path.join(rt, 'niri.*.sock')))
                 socket = cands[0] if cands else None
-        wayland = desc.get('wayland') or env.get('WAYLAND_DISPLAY')
+        wayland = desc.get('wayland')
+        if not wayland and agent_dir and socket:
+            # 嵌套 niri 自己的进程环境里 WAYLAND_DISPLAY 指向生产合成器（它是人家的客户端），
+            # 绝不能拿它当这个桌面的 display；从我自己的 IPC socket 名里认。
+            part = os.path.basename(socket).split('.')
+            if len(part) >= 2 and part[0] == 'niri' and part[1].startswith('wayland-'):
+                wayland = part[1]
+        if not wayland and not agent_dir:
+            wayland = env.get('WAYLAND_DISPLAY')
         if not wayland:
             # 合成器自己的进程里没有 WAYLAND_DISPLAY；socket 名要从 runtime 目录里认。
             for cand in sorted(glob.glob(os.path.join(rt, 'wayland-*'))):
@@ -213,8 +381,10 @@ def discover():
             'runtime': rt,
             'wayland': wayland,
             'niri_socket': socket,
-            'x_display': desc.get('xvfb_display') or env.get('DISPLAY'),
+            'x_display': desc.get('app_display') or desc.get('xvfb_display') or env.get('DISPLAY'),
             'app_display': desc.get('app_display'),
+            'parent_window': desc.get('parent_window'),
+            'parent_wayland': desc.get('parent_wayland') or '',
             'workspace': desc.get('workspace') or '',
             'config': config,
             'label': (desc.get('workspace') or key) if agent_dir
@@ -473,6 +643,7 @@ def desk_wayland_env(desk):
 def type_text(desk, display, text):
     """打字：ASCII 走 xdotool；中文等非 ASCII 走这个桌面的 Wayland 剪贴板 + Ctrl+V。
 
+    （agent 桌面已经改走 agent 座位了，这条只留给 X 父显示的嵌套环境。）
     xdotool type 只认 X keysym，中文会直接报 "Invalid multi-byte sequence"。wl-copy 把文本
     放进嵌套 niri 的剪贴板，xwayland-satellite 会在 X11 侧同步选区，X11 窗口 Ctrl+V 就能拿到；
     Wayland 原生窗口收不到 XTEST，这条路对它们无效（见文末限制）。
@@ -540,6 +711,20 @@ def cmd_action(args):
         code, out, err = run([NIRI, 'msg', 'action', 'close-window', '--id', str(args['window'])],
                              env=niri_env(desk), timeout=10)
         print(out.strip() or err.strip())
+        return code
+    if desk['kind'] == 'agent':
+        # 键盘、指针都走生产 niri 的 agent 座位（钉在这个嵌套窗口上）：Wayland 原生窗口
+        # 收得到，人的座位和指针一点不动。中文走嵌套桌面的剪贴板 + Ctrl+V。
+        if op == 'type':
+            code, out, err = probe_text(desk, args.get('text') or '')
+        elif op == 'key':
+            code, out, err = probe_keys(desk, args.get('combo') or 'Return')
+        elif op == 'click':
+            code, out, err = scoped_click(desk, args.get('x') or 0, args.get('y') or 0)
+        else:
+            print('未知操作 %s' % (op,))
+            return 2
+        print((out or err or '').strip()[:300])
         return code
     display = desk.get('x_display') or desk.get('display')
     if desk['kind'] == 'niri' and not display:
