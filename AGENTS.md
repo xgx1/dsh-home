@@ -188,9 +188,11 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
   `prod-niri msg action move-window-to-workspace --window-id N --focus false ue`。
 - 坑：`open-on-workspace` 只在**目标命名工作区已声明且存在**时生效，否则退回当前工作区（niri 文档原话，
   2026-11-06 实测：没声明 `workspace "ue"` 时规则静默失效）。`Mod+U` 也一样按名字解析。
-- 坑：`open-focused false` 挡不住**客户端自己的 activation 请求**（2026-11-06：UE 新开一个子窗后
-  人的视图被拽到 `ue`）。别用它当绝对保险；发现视图被拽走用
-  `prod-niri msg action focus-window --id <原窗口>` 拉回来。
+- 已修（niri fork `1e7a8e6f`）：`open-focused false` 现在**也压掉客户端自己的 activation 请求**
+  ——以前 UE 新开一个子窗就能把人的视图拽到 `ue`。命中时 niri 打一条
+  `ignoring activation request: window rules say open-focused false`。新起的嵌套/agent 桌面已经用上，
+  生产桌面要等下次**桌面会话重启**才换到新二进制；没命中规则的窗口照旧按 xdg-activation 抢焦点
+  （实测另一窗口仍能抢回来），所以别以为全局禁用了。
 - 看/验证 `ue` 里的窗口**不要**用整屏 grim（那会切走人的视图、也可能截到别的工作区）：用
   `NIRI_SOCKET=/run/user/1000/niri.wayland-1.<pid>.sock /home/sx/projects/agent-seat-probe/target/debug/scoped-shot <window-id> <路径>`
   —— 只抓那一个窗口，不动焦点；要整屏就先把 `ue` 聚焦再切回来（会闪一下，能不用就不用）。
