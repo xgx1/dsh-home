@@ -172,3 +172,12 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
 - 打字：ASCII 走 `xdotool type`；中文等非 ASCII 走 `wl-copy`（把文本放进这个桌面的 Wayland 剪贴板，
   satellite 桥到 X11）再 `Ctrl+V`。所以中文只能打进**X11 窗口**（Wayland 原生窗口收不到 XTEST，仍不行）。
 - GPU 类负载（Vulkan / 需要真 GPU 的 UE、Unity）在软件渲染的 agent 桌面里跑不动，只能做界面/逻辑验证。
+- **GPU 类负载不许再开在人当前的工作区**（2026-11-06 修）：生产 niri 已声明命名工作区 `workspace "ue"`
+  （Mod+U 切过去，Mod+Shift+U 把当前窗口丢过去），并加了窗口规则把所有 app-id `^UnrealEditor$` 的窗口
+  （含资产编辑器/VR Preview 这类子窗）投到 `ue` + `open-focused false`。其他要 GPU 的程序启动后自己搬：
+  `prod-niri msg action move-window-to-workspace --window-id N --focus false ue`。
+- 坑：`open-on-workspace` 只在**目标命名工作区已声明且存在**时生效，否则退回当前工作区（niri 文档原话，
+  2026-11-06 实测：没声明 `workspace "ue"` 时规则静默失效）。`Mod+U` 也一样按名字解析。
+- 看/验证 `ue` 里的窗口**不要**用整屏 grim（那会切走人的视图、也可能截到别的工作区）：用
+  `NIRI_SOCKET=/run/user/1000/niri.wayland-1.<pid>.sock /home/sx/projects/agent-seat-probe/target/debug/scoped-shot <window-id> <路径>`
+  —— 只抓那一个窗口，不动焦点；要整屏就先把 `ue` 聚焦再切回来（会闪一下，能不用就不用）。
