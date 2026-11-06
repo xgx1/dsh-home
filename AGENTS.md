@@ -127,7 +127,8 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 
 ## 其他桌面观察（dsh-desktops + dsh-view，2026-11-05）
 
-agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-satellite），那些程序在我的屏幕上看不到。
+agent 默认在自己的 agent 桌面里干活（生产合成器上的嵌套 niri，走真 GPU），那些程序在我的屏幕上看不到
+（它们只以 `niri` 窗口的形式在 `ue` 工作区里）。Xvfb 父显示那套现在只用于**可随时重建的回归环境**，不是日常落点。
 `~/.dsh/bin/dsh-desktops.py` 负责发现并盯着它们，`dsh-view.py` 在 http://127.0.0.1:8793/ 的「其他桌面」区展示，
 可以看进度，也可以直接接手。
 
