@@ -13,15 +13,24 @@
 [ -n "${_DSH_AGENT_SHELL_ENV:-}" ] && return 0
 _DSH_AGENT_SHELL_ENV=1
 
-# 记下生产桌面的值（只记一次，后面命令里也一直有效）
-: "${PROD_DISPLAY:=${DISPLAY:-:0}}"; export PROD_DISPLAY
-: "${PROD_WAYLAND_DISPLAY:=${WAYLAND_DISPLAY:-wayland-1}}"; export PROD_WAYLAND_DISPLAY
+# 记下生产桌面的值。**不要从当前环境继承着算**：这层 shell 可能已经被钩子改成了
+# agent 桌面（WAYLAND_DISPLAY=wayland-3、DISPLAY=:9），继承下来就把"生产"记错了。
+# 本机生产桌面固定是 wayland-1 / :0，niri socket 用活着的那个 glob 出来。
+PROD_DISPLAY="${PROD_DISPLAY:-}"
+if [ -z "$PROD_DISPLAY" ] || [ ! -S "/tmp/.X11-unix/X${PROD_DISPLAY#:}" ]; then
+  PROD_DISPLAY=":0"
+fi
+if [ -S /run/user/1000/wayland-1 ]; then
+  PROD_WAYLAND_DISPLAY="wayland-1"
+else
+  PROD_WAYLAND_DISPLAY="${PROD_WAYLAND_DISPLAY:-${WAYLAND_DISPLAY:-wayland-1}}"
+fi
 if [ -z "${PROD_NIRI_SOCKET:-}" ] || [ ! -S "${PROD_NIRI_SOCKET}" ]; then
   for _s in /run/user/1000/niri.wayland-1.*.sock; do
     [ -S "$_s" ] && PROD_NIRI_SOCKET="$_s"
   done
 fi
-export PROD_NIRI_SOCKET
+export PROD_DISPLAY PROD_WAYLAND_DISPLAY PROD_NIRI_SOCKET
 
 case "${AGENT_DESKTOP:-1}" in
   0|no|off|false) return 0 ;;
@@ -50,20 +59,37 @@ _adesk_ws="$(_adesk_root)"
 _adesk_key="ws-$(printf '%s' "$_adesk_ws" | md5sum | cut -c1-8)"
 _adesk_dir="$HOME/.dsh/agent-desktops/$_adesk_key"
 
-[ -r "$_adesk_dir/env.sh" ] && . "$_adesk_dir/env.sh"
+_adesk_load_env() {
+  [ -r "$_adesk_dir/env.sh" ] && . "$_adesk_dir/env.sh"
+}
 
-if [ -z "${AGENT_DESKTOP_NIRI_PID:-}" ] || ! kill -0 "$AGENT_DESKTOP_NIRI_PID" 2>/dev/null; then
+# 桌面进程还活着才算数：env.sh 是上次写下的，里面的 socket 可能早就死了。
+_adesk_alive() {
+  [ -n "${AGENT_DESKTOP_NIRI_PID:-}" ] && kill -0 "$AGENT_DESKTOP_NIRI_PID" 2>/dev/null
+}
+
+_adesk_load_env
+if ! _adesk_alive; then
   if command -v python3 >/dev/null 2>&1; then
     python3 "$_adesk_bin" up --key "$_adesk_key" --workspace "$_adesk_ws" --quiet >/dev/null 2>&1
-    [ -r "$_adesk_dir/env.sh" ] && . "$_adesk_dir/env.sh"
+    _adesk_load_env
   fi
 fi
 
-if [ -n "${AGENT_DESKTOP_NIRI_PID:-}" ] && kill -0 "$AGENT_DESKTOP_NIRI_PID" 2>/dev/null; then
+if _adesk_alive; then
   export AGENT_DESKTOP=1 AGENT_DESKTOP_KEY="$_adesk_key" \
          AGENT_DESKTOP_WORKSPACE="$_adesk_ws"
   mkdir -p "$_adesk_dir" 2>/dev/null
   date +%s > "$_adesk_dir/heartbeat" 2>/dev/null
+else
+  # 拉不起来就把死 socket 从环境里摘掉——留着它，GUI 会连一个已经不存在的 wayland 显示。
+  # 退回生产桌面并告警：这时窗口会出现在人的屏幕上，宁可吵也不静默失败。
+  unset WAYLAND_DISPLAY DISPLAY NIRI_SOCKET
+  [ -n "${PROD_DISPLAY:-}" ] && export DISPLAY="$PROD_DISPLAY"
+  [ -n "${PROD_WAYLAND_DISPLAY:-}" ] && export WAYLAND_DISPLAY="$PROD_WAYLAND_DISPLAY"
+  [ -n "${PROD_NIRI_SOCKET:-}" ] && export NIRI_SOCKET="$PROD_NIRI_SOCKET"
+  export AGENT_DESKTOP=0
+  printf 'agent-shell-env: agent 桌面（%s）没起来，已退回生产桌面——GUI 会落在人的屏幕上\n' "$_adesk_key" >&2
 fi
 
 return 0

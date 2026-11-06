@@ -180,8 +180,14 @@ agent 默认在嵌套环境里干活（Xvfb 父显示 → niri → xwayland-sate
   中文等非 ASCII：`wl-copy`（写进这个桌面自己的 Wayland 剪贴板）再 `keys 'ctrl+v'`，`dsh-desktops.py` 已自动这么干。
   **别用 `wtype` 往生产合成器打字**：它按注册表顺序绑最后一个 seat（现在恰好是 `agent-0`，能工作纯属巧合，
   哪天绑到 `seat0` 就直接打进了人的窗口）。
-- GPU 类负载（Vulkan / UE、Unity）现在可以直接在 agent 桌面里跑；但竞技/独占型程序如果还是想落 `ue`，
-  用 `AGENT_DESKTOP=0` 起，再按下面的规则搬。
+- **GUI 默认就在 agent 桌面里起，UE/Unity 这类 GPU 负载也一样**（agent 桌面已经是真 GPU）。
+  不要用 `NIRI_SOCKET=$PROD_NIRI_SOCKET niri msg action spawn -- ...` 把程序塞进生产桌面——
+  2026-11-06 12:12 就是这么把 UnrealEditor 开到 `ue`（生产合成器的工作区）而不是 agent 桌面里的。
+  照常跑（`./UnrealEditor ...`、`niri msg action spawn -- ...` 都行，钩子已经把环境指过去了）就落在自己的桌面。
+- 只有**必须碰物理 GPU 会话**的才回生产桌面：VR/OpenXR 预览（monado 要独占设备）、独占全屏、GPU 基准。
+  用 `AGENT_DESKTOP=0 <命令>` 起，窗口规则会把 `^UnrealEditor$` 投到 `ue`（`Mod+U` 看）。
+- 兜底：钩子拉不起 agent 桌面时会**退回生产桌面**（`AGENT_DESKTOP=0`）并在 stderr 告警，不再把死 socket 留在环境里
+  （2026-11-06 修：之前 env.sh 里的 WAYLAND_DISPLAY 可能是上次回收掉的桌面的）。
 - **GPU 类负载不许再开在人当前的工作区**（2026-11-06 修）：生产 niri 已声明命名工作区 `workspace "ue"`
   （Mod+U 切过去，Mod+Shift+U 把当前窗口丢过去），并加了窗口规则把所有 app-id `^UnrealEditor$` 的窗口
   （含资产编辑器/VR Preview 这类子窗）投到 `ue` + `open-focused false`。其他要 GPU 的程序启动后自己搬：
