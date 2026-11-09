@@ -51,9 +51,8 @@
 - id: agent-default-model
   name: '@deepseek-ai/dsh-agent-default-model'
   config:
-    provider: step
-    model: step-5-preview
-    reasoningEffort: high
+    provider: opencode-go
+    model: deepseek-v4.1-flash
 - id: jobs
   name: '@deepseek-ai/dsh-jobs-local'
 - id: llm-retry
@@ -78,6 +77,39 @@
   name: '@deepseek-ai/dsh-llm-pi-ai'
   config:
     providers:
+      opencode-go:
+        displayName: OpenCode Go
+        apiKeyEnv: OPENCODE_API_KEY
+        api: openai-completions
+        baseURL: https://opencode.ai/inference/go/openai/v1
+        reasoning: max
+        compat:
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: beam-free
+            name: Beam Free
+            contextWindow: 1048576
+            maxTokens: 131072
+            input:
+              - text
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 1000000
+            maxTokens: 384000
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
       md:
         apiKeyEnv: MD_API_KEY
         api: openai-completions
@@ -105,7 +137,7 @@
           supportsStrictMode: true
         models:
           - id: deepseek-flash
-            name: DeepSeek V4.1 Flash
+            name: DeepSeek
             contextWindow: 1000000
             maxTokens: 65536
             input:
@@ -117,8 +149,8 @@
               medium: medium
               high: high
               xhigh: xhigh
-          - id: sensenova-6.8-flash-lite
-            name: sensenova-6.8-flash-lite
+          - id: sensenova-6.8-flash
+            name: sensenova
             contextWindow: 262144
             maxTokens: 65536
             input:
@@ -186,6 +218,29 @@
               low: low
               medium: medium
               high: high
+      qwen:
+        displayName: Qwen token plan (DeepSeek V4.1 Flash)
+        apiKeyEnv: QWEN_API_KEY
+        api: openai-completions
+        baseURL: https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1
+        reasoning: high
+        compat:
+          supportsReasoningEffort: true
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+          thinkingFormat: qwen
+        models:
+          - id: deepseek-v4.1-flash-1017
+            name: deepseek-v4.1-flash-1017
+            contextWindow: 1048576
+            maxTokens: 393216
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
@@ -555,6 +610,10 @@
     allowedModels:
       - provider: deepseek-official
         model: deepseek-flash
+      - provider: opencode-go
+        model: beam-free
+      - provider: opencode-go
+        model: deepseek-v4.1-flash
 - id: message-feedback
   name: '@deepseek-ai/dsh-message-feedback'
   disabled: true
@@ -1558,15 +1617,6 @@
       - stdio
     toolCallTimeoutMs: 180000
     failOnStartupError: false
-- id: browser-use
-  name: '@deepseek-ai/dsh-browser-use'
-- id: browser-use-playwright
-  name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
-  disabled: true
-  config:
-    mode: attach
-    endpoint: http://127.0.0.1:9222
-    exclusive: false
 - id: computer-use
   name: '@deepseek-ai/dsh-computer-use'
 - id: computer-use-cua-native
@@ -1590,6 +1640,8 @@
       - '--stdio'
       - '--mcp-toolset'
       - full
+- id: opencode-go-headers
+  name: /home/sx/.dsh/profiles/web/opencode-go-headers.mjs
 - id: mcp-rea
   name: '@deepseek-ai/dsh-mcp-client'
   disabled: true
@@ -1659,7 +1711,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -1876,7 +1933,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2102,7 +2164,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2328,7 +2395,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2559,7 +2631,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -2790,7 +2867,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -3009,7 +3091,12 @@
         disabled: true
       - id: skill-filesystem
         name: '@deepseek-ai/dsh-skill-filesystem'
-        disabled: true
+        config:
+          includeDefaultRoots: false
+          customSkillDirs:
+            - !!js >-
+              process.getBuiltinModule('node:url').fileURLToPath(new
+              URL('skills/', baseUrl))
       - id: skill-filter
         name: '@deepseek-ai/dsh-skill-filter'
         config:
@@ -3171,12 +3258,6 @@
           mode: ptc
       - id: cua
         name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'
-      - id: playwright
-        name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
-        config:
-          mode: attach
-          endpoint: http://127.0.0.1:9222
-          exclusive: false
 - id: hooks-claude-code
   name: '@deepseek-ai/dsh-hooks-claude-code'
   config:
