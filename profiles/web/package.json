@@ -23,7 +23,6 @@
         "@deepseek-ai/dsh-web-app",
         "dsh-task-manager",
         "dsh-sidebar-taskbar",
-        "@deepseek-ai/dsh-experimental-agent-team-profile",
         "dsh-llm-retry-schedule",
         "billion-context",
         "dsh-dracula-theme",

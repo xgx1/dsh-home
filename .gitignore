@@ -87,3 +87,6 @@ settings.yaml.imported
 settings.yaml.bak-*
 speech-to-text/
 *.bak-*
+
+# session-manager 运行时问答台账（纯本机状态）
+manager-questions/
