@@ -1432,19 +1432,13 @@
 - id: dsh-sidebar-taskbar
   name: dsh-sidebar-taskbar
 - id: agent-team
-  name: '@deepseek-ai/dsh-experimental-agent-team'
+  name: '@deepseek-ai/dsh-agent-team'
   config:
-    maxMembers: 8
     maxTasks: 256
-    maxMessageBytes: 65536
-    disposalTimeoutMs: 5000
 - id: tool-agent-team
-  name: '@deepseek-ai/dsh-experimental-tool-agent-team'
-  config:
-    freshProvider: spawn
-    forkProvider: fork
+  name: '@deepseek-ai/dsh-tool-agent-team'
 - id: ui-agent-team
-  name: '@deepseek-ai/dsh-experimental-client-ui-agent-team'
+  name: '@deepseek-ai/dsh-client-ui-agent-team'
 - id: llm-retry-schedule
   name: dsh-llm-retry-schedule
   config:
