@@ -6,10 +6,14 @@
  * 索引，未建时 daemon 抛 INDEX_MISSING，模型只能退到 rg。可用的 `zg index` 手建索引
  * 从来没人触发过，于是每个新仓库都白瞎一轮。用户 2026-10-23 授权：调用时自动建。
  *
- * 做法：本进程原样转发 dsh ⇄ `zg server --stdio` 的全部 JSON-RPC 行；只在
- * **响应**里看到 INDEX_MISSING 时拦一下：解析出工作区根，后台起 `zg index`
- * （同一根单飞行、带锁、日志入 /tmp/zvec-autoidx.log），最多等 AUTOIDX_WAIT_MS，
- * 然后在返回给模型的文本里追加一句「索引已建好，重试本查询」/「索引构建中」。
+ * 做法：本进程原样转发 dsh ⇄ `zg --server --stdio` 的全部 JSON-RPC 行；只在
+ * **响应**里看到缺索引/索引版本过旧时拦一下：解析出工作区根，后台起
+ * `zg --index [--rebuild] <root>`（同一根单飞行、带锁、日志入 /tmp/zvec-autoidx.log），
+ * 最多等 AUTOIDX_WAIT_MS，然后在返回给模型的文本里追加一句「索引已建好，重试本查询」/「索引构建中」。
+ *
+ * 2026-11-10 适配 zvec-grep 0.3.0：CLI 换成原生二进制 `~/.npm-global/bin/zg`（dist/cli/index.js
+ * 已不存在），子命令改成 flag 形式（`--server` / `--index`），错误码从 INDEX_MISSING 变成
+ * `ZG.ENGINE.NOT_FOUND`，旧版本索引报 "incompatible with the current version of zg"。
  *
  * 不改 npm 包、不 fork daemon，改一行 MCP command 即可启用/回滚。
  */
@@ -18,7 +22,7 @@ import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const ZG_CLI = '/home/sx/.npm-global/lib/node_modules/@zvec/zvec-grep/dist/cli/index.js'
+const ZG_BIN = '/home/sx/.npm-global/bin/zg'
 const LOG_PATH = '/tmp/zvec-autoidx.log'
 const LOCK_DIR = '/tmp/zvec-autoidx-locks'
 const EMBEDDING = 'local/potion-code-16m-v2'
@@ -37,9 +41,10 @@ const inflight = new Map()
 /**
  * 后台为一个工作区建索引（同根单飞行 + 跨进程锁）。
  * @param {string} root 工作区绝对路径
+ * @param {boolean} rebuild 旧版本索引需要 --rebuild 才会重建
  * @returns {Promise<'built'|'failed'|'busy'>} 本次是否等到构建结束
  */
-function buildIndex(root) {
+function buildIndex(root, rebuild = false) {
   const existing = inflight.get(root)
   if (existing) return existing
 
@@ -69,7 +74,7 @@ function buildIndex(root) {
     // 追加进日志 —— 代理退出后没人能替它记录结果。nice/ionice 让索引构建不跟 UE 构建、
     // 编译抢 CPU/IO。
     const script = [
-      'nice -n 10 ionice -c2 -n7 "$ZG_NODE" "$ZG_CLI" index "$ZG_ROOT" --embedding "$ZG_EMBEDDING" --device "$ZG_DEVICE"',
+      'nice -n 10 ionice -c2 -n7 "$ZG_BIN" --index "$ZG_ROOT" $ZG_REBUILD --embedding "$ZG_EMBEDDING" --device "$ZG_DEVICE"',
       'code=$?',
       'printf "%s build exit %s code=%s elapsed=%ss\\n" "$(date -Is)" "$ZG_ROOT" "$code" "$SECONDS" >> "$ZG_LOG"',
     ].join('\n')
@@ -77,8 +82,8 @@ function buildIndex(root) {
       cwd: root,
       env: {
         ...process.env,
-        ZG_NODE: process.execPath,
-        ZG_CLI,
+        ZG_BIN,
+        ZG_REBUILD: rebuild ? '--rebuild' : '',
         ZG_ROOT: root,
         ZG_EMBEDDING: EMBEDDING,
         ZG_DEVICE: DEFAULT_DEVICE,
@@ -106,7 +111,10 @@ function buildIndex(root) {
 
 /** @param {string} text */
 function extractRoot(text) {
-  const match = /built zvec-grep index for (.+?)\. (?:Use|Creating)/s.exec(text)
+  const match = /No index found in ([^\s]+)/.exec(text)
+    ?? /([^\s']+)\/\.zvec-grep\/manifest\.json/.exec(text)
+    ?? /--index --rebuild\s+([^\s`]+)/.exec(text)
+    ?? /built zvec-grep index for (.+?)\. (?:Use|Creating)/s.exec(text)
   if (!match) return undefined
   const root = match[1].trim()
   if (!root.startsWith('/') || root === '/' || root === '/home/sx') return undefined
@@ -116,15 +124,14 @@ function extractRoot(text) {
 
 /** 一行一条 JSON-RPC；返回改写后的行（未命中则原样）。 */
 async function rewriteResponseLine(line) {
-  if (!line.includes('INDEX_MISSING')) return line
+  if (!line.includes('ZG.ENGINE.NOT_FOUND') && !line.includes('incompatible with the current version') && !line.includes('INDEX_MISSING')) return line
   let message
   try { message = JSON.parse(line) } catch { return line }
   const raw = JSON.stringify(message)
-  if (!raw.includes('INDEX_MISSING')) return line
   const root = extractRoot(raw)
   if (root === undefined) return line
 
-  const build = buildIndex(root)
+  const build = buildIndex(root, raw.includes('incompatible with the current version') || raw.includes('INDEX_INCOMPATIBLE'))
   const settled = await Promise.race([
     build,
     new Promise((resolve) => setTimeout(() => resolve('timeout'), AUTOIDX_WAIT_MS)),
@@ -153,7 +160,7 @@ async function rewriteResponseLine(line) {
   return line
 }
 
-const child = spawn(process.execPath, [ZG_CLI, ...process.argv.slice(2)], {
+const child = spawn(ZG_BIN, process.argv.slice(2), {
   env: process.env,
   stdio: ['pipe', 'pipe', 'inherit'],
 })
