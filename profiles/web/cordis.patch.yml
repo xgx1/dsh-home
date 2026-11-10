@@ -650,7 +650,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -663,7 +663,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -811,7 +810,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -824,7 +823,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -981,7 +979,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -994,7 +992,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -1151,7 +1148,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1164,7 +1161,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -1326,7 +1322,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1339,7 +1335,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -1501,7 +1496,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1514,7 +1509,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
@@ -1664,7 +1658,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1677,7 +1671,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           - id: skill-filesystem
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:

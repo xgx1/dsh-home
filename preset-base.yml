@@ -70,10 +70,9 @@
           # host-plane too.
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            # 2026-10-16 用户要求关掉宿主 bash（当时统一走 dsh-ops 的 ops_bash）；
-            # dsh-ops 2026-11-10 已卸载，本行仍保持关闭——shell 由 profile 的 terminal_* 工具提供。
-            # 要换回宿主 bash：删掉下面这行 disabled。
-            disabled: true
+            # 2026-10-16 曾关掉宿主 bash（当时统一走 dsh-ops 的 ops_bash）；dsh-ops 2026-11-10
+            # 卸载后按用户要求恢复宿主 bash，Windows 上仍关（与 omni/manager 预设同一写法）。
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             # 2026-10-16 用户要求关掉宿主 pwsh（当时只留 dsh-ops 的 PowerShell 7）；
@@ -100,10 +99,8 @@
           # chooses is whether its agent can collect and stop background work at all.
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            # 2026-10-16 用户要求关掉宿主 job_* 三件套（当时后台任务走 dsh-ops）；
-            # dsh-ops 2026-11-10 已卸载，保持关闭。任务 REGISTRY 仍在宿主，上面注释描述的
-            # 可用性语义不变。
-            disabled: true
+            # 2026-10-16 曾关掉宿主 job_* 三件套（当时后台任务走 dsh-ops）；dsh-ops 2026-11-10
+            # 卸载后按用户要求恢复。任务 REGISTRY 仍在宿主，上面注释描述的可用性语义不变。
           # ── skills ──────────────────────────────────────────────────────────────────
           # The skill REGISTRY lives in the host composition and is layered per scope:
           # these rows register into THIS preset's layer of it, so they need no realm.
