@@ -609,54 +609,6 @@
           GHIDRA_INSTALL_DIR: /opt/ghidra
         toolCallTimeoutMs: 600000
 
-# ── dsh-ops（0.5.1：单行组合根）──────────────────────────────────────────
-# 上游 0.5.1 把 7 个组件行合并成一行 `dsh-ops`：config 只接受 global / minimal /
-# standard / ptc / cordis / discovery / download-guard / resultCache / panel /
-# tui / disk / other 这些**分节**；行级核心键（bashPath / extraGuidance /
-# publishBashTool …）已下沉进各模式分节（校验器原话：unknown section
-# "promptPolicy"；accepted keys 列表里才有 bashPath）。旧的 dsh-ops-shell /
-# -background / -file / -ptc 四行在组合树里已不存在，保留只会是空匹配。
-#  · Linux 无随包 bash/pwsh 载荷：0.5.1 原生支持 linux，宿主 bash 用 bashPath
-#    在四个模式分节里显式钉住（上游默认走 PATH → /bin/bash，钉死更确定）。
-#  · file 组件（2026-10-16 D1 决策）无需再单独关行：MODE_PLANS 里 ptc 与
-#    minimal 模式 nativeFiles=false，本 profile 的 agent 都是 ptc 呈现。
-#  · PTC worker 仍是 runtime/linux-x64/dsh-ops-worker（npm run build:ptc 产出）。
-- id: dsh-ops
-  disabled: false
-  config:
-    minimal:
-      bashPath: /usr/bin/bash
-    standard:
-      bashPath: /usr/bin/bash
-      extraGuidance: |-
-        文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
-        - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
-        - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
-        - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
-          且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
-          zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
-        - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
-    ptc:
-      bashPath: /usr/bin/bash
-      extraGuidance: |-
-        文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
-        - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
-        - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
-        - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
-          且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
-          zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
-        - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
-    cordis:
-      bashPath: /usr/bin/bash
-      extraGuidance: |-
-        文件与检索路由（本部署的文件工具面只有宿主的 read/write/edit/read_image + zvecgrep）：
-        - 新建或整篇覆盖 → write；改一处精确文本或清点 → edit；看内容先 read。
-        - 穷尽精确检索（字面、正则、文件名）→ zvec_grep_rg（真 ripgrep，尊重 .gitignore）。
-        - 语义/跨文件理解类检索 → zvec_grep_search。该工作区未建索引时会返回 INDEX_MISSING，
-          且 zg-autoidx 代理已自动在后台建索引：此时立刻改用 zvec_grep_rg，不要反复重试
-          zvec_grep_search，也不要自己去跑 zg index；等工具结果里出现「已自动为该工作区建好索引」再回去用语义检索。
-        - 裸 grep / glob 在本部署不存在；不要找它们，也不要改用 shell 里的 grep 绕开。
-
 # ── 用户要求（2026-10-17）：工具按需加载 ────────────────────────────────────
 # 400+ 枚注册工具的目录成本（PTC 下生成 SDK 段 267,755 字符，占系统提示 94%）
 # 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
