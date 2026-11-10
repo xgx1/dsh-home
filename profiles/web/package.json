@@ -13,7 +13,6 @@
     "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
-    "dsh-ops": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-ops",
     "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
@@ -29,7 +28,6 @@
         "billion-context",
         "dsh-dracula-theme",
         "@openviking/dsh-memory-plugin",
-        "dsh-ops",
         "@dsh-external/dsh-blender-plugin",
         "dsh-ego-browser",
         "dsh-perf-mode",
