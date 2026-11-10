@@ -655,7 +655,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -668,7 +668,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -817,7 +816,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -830,7 +829,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -988,7 +986,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1001,7 +999,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -1159,7 +1156,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1172,7 +1169,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -1335,7 +1331,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1348,7 +1344,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -1511,7 +1506,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1524,7 +1519,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
@@ -1675,7 +1669,7 @@
               maxBytes: 65536
           - id: tool-bash
             name: '@deepseek-ai/dsh-tool-bash'
-            disabled: true
+            disabled: !!js process.platform === 'win32'
           - id: tool-pwsh
             name: '@deepseek-ai/dsh-tool-pwsh'
             disabled: true
@@ -1688,7 +1682,6 @@
               sampleOverCapGlobResults: false
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
-            disabled: true
           # 2026-10-27：skill-filesystem 与 skill-filter 同挂一个 fiber 时，白名单会整体失效——
           # 两者扫同一目录、rank 相同（custom 300），按名去重先注册的 filesystem 赢，
           # filter 的 modelInvocable=false 被直接覆盖（实测 catalog 仍是全量 349 条）。
