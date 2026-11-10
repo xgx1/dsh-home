@@ -278,9 +278,9 @@
 # 代价：agent 由此获得改索引的能力（index/drop），且工具目录多 5 项。
 #
 # 前置条件（新设备部署时）：
-#   1. npm i -g @zvec/zvec-grep && ln -sfn ~/.npm-global/lib/node_modules/@zvec/zvec-grep/dist/cli/index.js ~/.local/bin/zg
-#   2. zg config model set local/potion-code-16m-v2 --device cpu --default
-#   3. 每个要检索的工作区需**工作区级**索引：cd <root> && zg index --device cpu
+#   1. npm i -g --allow-scripts=@zvec/zvec-grep @zvec/zvec-grep && ln -sfn ~/.npm-global/bin/zg ~/.local/bin/zg
+#   2. zg --config model set local/potion-code-16m-v2 --device cpu --default
+#   3. 每个要检索的工作区需**工作区级**索引：zg --index <root> --device cpu
 #      （不给 root 只建子目录索引的话，工作区根上查不到，会报
 #        ZVEC_GREP.ENGINE.SERVICE.WORKSPACE_INDEX_NOT_FOUND）
 #   4. 索引落在 <root>/.zvec-grep/（已在各仓 .gitignore 排除）
@@ -294,10 +294,10 @@
         # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
         # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
         # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
-        # 代理内部用 `server --stdio` 拉起真 zg，参数原样透传。
+        # 代理内部用 `--server --stdio` 拉起真 zg，参数原样透传（0.3.0 起子命令改成 flag）。
         command: /home/sx/.dsh/bin/zg-autoidx.mjs
         args:
-          - server
+          - --server
           - '--stdio'
           - '--mcp-toolset'
           - full
