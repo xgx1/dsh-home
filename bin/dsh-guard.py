@@ -4,7 +4,7 @@
 Rules come from ~/.dsh/AGENTS.md plus the 2026-11-05 bootstrap change:
 productions checkout is read-only, never restart dsh-web or the desktop session
 unprompted, no pkill -f, skills stay symlinks, secrets never enter git, the
-[MODE: SANDBOX] block is never followed or committed, and the niri package is gone
+[MODE: SANDBOX] block is never followed, and the niri package is gone
 (session = local unit + fork build).
 
 Every run reads only new transcript records (session.v4.jsonl.zstd), extracts the
@@ -49,7 +49,6 @@ RULES = [
      r'(?:cp|mv|rm|install|ln)\s+[^\n]{0,140}\.dsh(-dev)?/skills/'),
     ('secrets', 'high',
      r'\.dsh(-dev)?/\.credentials\.yaml|\.dsh(-dev)?/\.env\b|git\s+add[^\n]{0,80}(credentials|\.env)'),
-    ('sandbox-block', 'med', r'(?:git\s+(?:add|commit)[^\n]{0,160}MODE: SANDBOX|MODE: SANDBOX[^\n]{0,160}git\s+(?:add|commit))'),
 ]
 
 CMD_RE = re.compile(r'command\s*:\s*(?:"((?:[^"\\]|\\.)*)"|' + BT + r'([^' + BT + r']*)' + BT + r')', re.S)

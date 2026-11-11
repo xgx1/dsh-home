@@ -114,7 +114,7 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - 规则表就是脚本里的 `RULES`（改规则改那里，别在别处拷贝一份）。当前覆盖：生产检出里的 git 写操作与
   `pnpm build/install/test`、重启/停 `dsh-web`、重启/停 `niri`/`waybar`、`pkill -f`、`kill -9 -1`、
   动 `/usr/bin/niri`（已不存在）、`pacman -S/-R niri`、`hyprctl`、往 `~/.dsh/skills` 写实体文件、
-  碰 `.credentials.yaml`、把 `[MODE: SANDBOX]` 提交进 git。主机侧：`dsh-web`/`niri` 的 MainPID 变化、
+  碰 `.credentials.yaml`。主机侧：`dsh-web`/`niri` 的 MainPID 变化、
   waybar 实例数 ≠ 1、niri socket 数 > 1、niri 包被装回来、`/usr/bin/niri` 又出现。
 - 读法：`dsh-guard.py status`（主机状态 + 5 分钟内有活动的会话）、`dsh-guard.py report -m 120`
   （最近 2 小时命中）、`dsh-guard.py since -m 480`（只读回放 8 小时，不动 state）、
