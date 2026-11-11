@@ -90,3 +90,11 @@ speech-to-text/
 
 # session-manager 运行时问答台账（纯本机状态）
 manager-questions/
+
+# ── Windows 本机（windows 分支专用） ──────────────────────────────────────
+# 本机备份目录与运行时小状态
+backups/
+pet.json
+# 从 Linux home 拷来的遗留 unit：本机没有 systemd，别入库
+deploy/systemd-user/headroom-*.service
+*.bak
