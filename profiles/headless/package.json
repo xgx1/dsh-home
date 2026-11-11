@@ -2,7 +2,8 @@
   "name": "dsh-profile-headless",
   "private": true,
   "dependencies": {
-    "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context"
+    "@deepseek-ai/dsh-hooks-claude-code": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code",
+    "billion-context": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context"
   },
   "dsh": {
     "profile": {

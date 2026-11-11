@@ -2,18 +2,22 @@
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
-    "@deepseek-ai/dsh-browser-use": "link:/home/sx/projects/MyAI/deepseek-harness/packages/browser-use/browser-use",
-    "@deepseek-ai/dsh-computer-use": "link:/home/sx/projects/MyAI/deepseek-harness/packages/computer-use/computer-use",
-    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:/home/sx/projects/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native",
-    "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
-    "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
-    "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
-    "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
-    "dsh-ego-browser": "^0.8.6",
-    "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
-    "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
-    "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
-    "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
+    "@deepseek-ai/dsh-browser-use": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/browser-use/browser-use",
+    "@deepseek-ai/dsh-computer-use": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/computer-use/computer-use",
+    "@deepseek-ai/dsh-experimental-browser-use-playwright-mcp": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/browser-use-playwright-mcp",
+    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native",
+    "@deepseek-ai/dsh-hook-protocol": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hook-protocol",
+    "@deepseek-ai/dsh-hooks-claude-code": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code",
+    "@dsh-external/dsh-blender-plugin": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
+    "@openviking/dsh-memory-plugin": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
+    "billion-context": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context",
+    "dsh-dracula-theme": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
+    "dsh-ego-local-browser": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/dsh-ego-local-browser",
+    "dsh-llm-retry-schedule": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
+    "dsh-ops": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/dsh-ops",
+    "dsh-perf-mode": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-perf-mode",
+    "dsh-sidebar-taskbar": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
+    "dsh-task-manager": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-task-manager"
   },
   "dsh": {
     "profile": {
@@ -25,14 +29,11 @@
         "dsh-llm-retry-schedule",
         "billion-context",
         "dsh-dracula-theme",
-        "@openviking/dsh-memory-plugin",
-        "@dsh-external/dsh-blender-plugin",
-        "dsh-ego-browser",
         "dsh-perf-mode",
-        "@deepseek-ai/dsh-experimental-voice-input-bundle",
-        "@deepseek-ai/dsh-experimental-tool-worktree",
-        "@deepseek-ai/dsh-experimental-terminal-bundle",
-        "@deepseek-ai/dsh-experimental-session-titles-bundle"
+        "dsh-ops",
+        "@dsh-external/dsh-blender-plugin",
+        "@openviking/dsh-memory-plugin",
+        "dsh-ego-local-browser"
       ]
     }
   }

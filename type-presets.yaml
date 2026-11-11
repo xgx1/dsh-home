@@ -1,4 +1,5 @@
-# 类型预设清单 — 生成器的唯一输入。
+# 类型预设清单 — 生成器的唯一输入（本机 Windows 版，源自 dsh-home 的 Arch 版，
+# 差异只在于本机路径：unity 用 scoop 的 uvx.exe，rea 用 npm 全局的 rea.cmd）。
 # 改这里，然后跑 ~/.dsh/bin/gen-project-presets.py，它会重写
 # ~/.dsh/profiles/web/cordis.patch.yml 里的 generated 区块。
 #
@@ -7,18 +8,19 @@
 # types: 每种项目类型一个预设；mcp / plugins 列出该类型要的 key
 # order: 类型预设从 20 起
 
-# 宿主层统一关掉的行：改为按类型预设挂载，避免所有会话都吃它们的成本
+# 宿主层统一关掉的行：改为按类型预设挂载，避免所有会话都吃它们的成本。
 disable_host:
   - mcp-unity
   - mcp-ue
   - computer-use-cua-native
   - dsh-blender-plugin
+  - browser-use-playwright
 
 mcps:
   unity:
     serverName: unity
     transport: stdio
-    command: /home/sx/.local/bin/uvx-no-proxy
+    command: C:\Users\Admin\scoop\shims\uvx.exe
     args:
       - '--from'
       - 'mcpforunityserver==10.3.0'
@@ -37,12 +39,11 @@ mcps:
   rea:
     serverName: rea
     transport: stdio
-    command: rea
+    command: C:\Users\Admin\scoop\persist\nodejs-lts\bin\rea.cmd
     args:
       - mcp
-    env:
-      GHIDRA_INSTALL_DIR: /opt/ghidra
     toolCallTimeoutMs: 600000
+    failOnStartupError: false
 
 plugins:
   cua:
@@ -51,6 +52,12 @@ plugins:
   blender:
     name: '@dsh-external/dsh-blender-plugin'
     config: {}
+  playwright:
+    name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+    config:
+      mode: attach
+      endpoint: http://127.0.0.1:9222
+      exclusive: false
 
 types:
   - id: js
@@ -82,4 +89,4 @@ types:
     name: 电脑与网页操作
     order: 26
     mcp: []
-    plugins: [cua]
+    plugins: [cua, playwright]

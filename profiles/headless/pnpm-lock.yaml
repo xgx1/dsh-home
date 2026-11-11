@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@deepseek-ai/dsh-hooks-claude-code':
+        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
+        version: link:../../../Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
       billion-context:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
-        version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
+        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context
+        version: link:../../../Project/MyAI/dsh-extensions/vendor/billion-context

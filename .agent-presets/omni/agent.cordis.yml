@@ -45,12 +45,13 @@
 # paragraph for the dual presentation (`mode: both`), and a skill-call index
 # that points agents to the on-demand skills below instead of inlining the
 # two-plane and plugin-authoring rules into every session's first prompt.
-# `{{model}}` and `{{cwd}}` resolve from the agent's own route and workspace.
+# `{{model}}` resolves from the agent's own route; the working directory arrives
+# via the working-directory runtime-context snapshot, not a prompt variable.
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
     prefix: |-
-      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness. Your working directory is {{cwd}}.
+      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
 
       You can read and modify the harness you run on; its composition is Cordis. Never edit the shipped preset install — copy its composition and edit the copy.
 
@@ -248,9 +249,6 @@
     - id: tool-subagent-control
       name: '@deepseek-ai/dsh-tool-subagent-control'
 
-    - id: tool-subagent-list-agents
-      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-
     - id: tool-subagent
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
@@ -264,6 +262,27 @@
         provider: fork
         toolName: subagent_fork
         backgroundMode: continuable
+
+    # Product providers are host-plane singletons. Copy this preset, then
+    # remove `disabled` from either ordinary tool row to expose that product
+    # only to agents composed from the copy.
+    - id: tool-subagent-codex
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: codex
+        toolName: subagent_codex
+        enableRunInBackground: false
+        maxDepth: provider-managed
+
+    - id: tool-subagent-claude-code
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: claude-code
+        toolName: subagent_claude_code
+        enableRunInBackground: false
+        maxDepth: provider-managed
 
     - id: workflow-ptc
       name: '@deepseek-ai/dsh-workflow-ptc'
@@ -320,10 +339,4 @@
     # 代价（源码 packages/core/tools/src/index.ts:906-911 确认）：run_code
     # transport 只呈现给「mode actually presents it」的 scope，native 下它从
     # 目录里消失，失去「5 次往返折叠成 1 次」的能力。
-    #
-    # 2026-10-16 用户决策：改回纯 PTC（mode: ptc），当初是为 dsh-ops 的 PTC 组件
-    # （其 ops_batch / ops_result 只在**纯 PTC 呈现**的 scope 里注册；mode: both
-    # 下 tools 多于一个，工具不会出现）。dsh-ops 已于 2026-11-10 卸载，本行保持
-    # ptc（PTC 呈现本身仍是想要的）。
-    # 回退：把下一行改回 mode: native 并重开会话（预设按 agent 生效，不用重启）。
-    mode: ptc
+    mode: native

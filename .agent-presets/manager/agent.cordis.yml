@@ -1,4 +1,4 @@
-# The `manager` agent preset: 标准模式 + PTC 模式 + 创造模式 combined
+# The `omni` agent preset (全能模式): 标准模式 + PTC 模式 + 创造模式 combined
 # into one composition. Everything in `standard` is here unchanged; on top of
 # it this preset adds exactly what each other shipped mode contributes, and
 # nothing else:
@@ -8,7 +8,9 @@
 #   schema AND `run_code` with the generated SDK, instead of trading one form
 #   away for the other.
 # - From `cordis` (创造模式): the persona paragraphs that teach the two-plane
-#   rule, and the `tool-cordis` runtime-inspection toolset.
+#   rule, the `tool-cordis` runtime-inspection toolset, and the two
+#   preset-traveling authoring skills (`editing-cordis-compositions`,
+#   `cordis-plugin-development`) via `skill-filesystem.customSkillDirs`.
 #
 # TRUST: the cordis toolset evaluates model-written JavaScript against the
 # live runtime, and a composition this agent writes becomes a preset other
@@ -40,12 +42,13 @@
 # paragraph for the dual presentation (`mode: both`), and a skill-call index
 # that points agents to the on-demand skills below instead of inlining the
 # two-plane and plugin-authoring rules into every session's first prompt.
-# `{{model}}` and `{{cwd}}` resolve from the agent's own route and workspace.
+# `{{model}}` resolves from the agent's own route; the working directory arrives
+# via the working-directory runtime-context snapshot, not a prompt variable.
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
     prefix: |-
-      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness. Your working directory is {{cwd}}.
+      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness.
 
       Your tool catalog is presented twice: every tool keeps its native schema, and the same catalog is reachable as Code Mode — write one TypeScript program against the generated SDK and `run_code` executes its steps in order. Use plain single calls for one-step actions; fold chained steps (edit → run → read output → edit again) into one program when an intermediate result matters only to the next step.
 
@@ -245,9 +248,6 @@
     - id: tool-subagent-control
       name: '@deepseek-ai/dsh-tool-subagent-control'
 
-    - id: tool-subagent-list-agents
-      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-
     - id: tool-subagent
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
@@ -261,6 +261,27 @@
         provider: fork
         toolName: subagent_fork
         backgroundMode: continuable
+
+    # Product providers are host-plane singletons. Copy this preset, then
+    # remove `disabled` from either ordinary tool row to expose that product
+    # only to agents composed from the copy.
+    - id: tool-subagent-codex
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: codex
+        toolName: subagent_codex
+        enableRunInBackground: false
+        maxDepth: provider-managed
+
+    - id: tool-subagent-claude-code
+      name: '@deepseek-ai/dsh-tool-subagent'
+      disabled: true
+      config:
+        provider: claude-code
+        toolName: subagent_claude_code
+        enableRunInBackground: false
+        maxDepth: provider-managed
 
     - id: workflow-ptc
       name: '@deepseek-ai/dsh-workflow-ptc'
@@ -311,11 +332,9 @@
 - id: tool-presentation
   name: '@deepseek-ai/dsh-agent-tool-presentation'
   config:
-    # 2026-10-16 用户决策：与 omni 一致切纯 PTC（当初为 dsh-ops 的 ops_batch /
-    # ops_result 只在纯 PTC 呈现的 scope 注册）。dsh-ops 2026-11-10 已卸载，
-    # 本行保持 ptc。
-    # 回退：改回 mode: both 或 native，重开会话（预设按 agent 生效）。
-    mode: ptc
+    # 2026-10-13（0.2.1）：schema 只接受 native|ptc，原 both 已非法。
+    # 与 omni 的 2026-09-20 决策对齐：只留原生 schema，run_code 不进目录。
+    mode: native
 
 # ── manager orchestration tools（M3，t13/t14 落地）──────────────────────────
 # The seven dsh-task-manager model tools (management ×5: task_assign/

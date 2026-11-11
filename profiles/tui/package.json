@@ -2,6 +2,7 @@
   "name": "dsh-profile-tui",
   "private": true,
   "dependencies": {
+    "@deepseek-ai/dsh-hooks-claude-code": "link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code",
     "@deepseek-ai/dsh-tui": "git+https://github.com/dsh-external/turtle-ui.git"
   },
   "dsh": {

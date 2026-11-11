@@ -1,4 +1,5 @@
 {
+  "_comment": "Cross-platform: commands only reference ${CLAUDE_PLUGIN_ROOT} (resolved by the hooks-claude-code plugin from the pluginRoot set in ~/.dsh/cordis.patch.yml). All OS-specific paths and env vars live inside dsh-skill-hooks.mjs. Do not reintroduce `VAR=value` prefixes or absolute paths here.",
   "hooks": {
     "SessionStart": [
       {
@@ -6,9 +7,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PONYTAIL_DEFAULT_MODE=ultra PLUGIN_DATA=/tmp/ponytail-state node /home/sx/projects/MyAI/dsh-extensions/skills/dietrichgebert-ponytail/hooks/ponytail-activate.js",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" ponytail-activate",
             "timeout": 10,
             "statusMessage": "Loading ponytail (ultra)..."
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" caveman-session-context",
+            "timeout": 30,
+            "statusMessage": "Loading caveman (wenyan-ultra)..."
           }
         ]
       }
@@ -18,9 +25,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PONYTAIL_DEFAULT_MODE=ultra PLUGIN_DATA=/tmp/ponytail-state node /home/sx/projects/MyAI/dsh-extensions/skills/dietrichgebert-ponytail/hooks/ponytail-mode-tracker.js",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" ponytail-mode-tracker",
             "timeout": 10,
             "statusMessage": "Tracking ponytail mode..."
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" caveman-mode-tracker",
+            "timeout": 30,
+            "statusMessage": "Tracking caveman mode..."
           }
         ]
       }

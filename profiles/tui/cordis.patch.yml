@@ -1,4 +1,13 @@
-# Your patch layer for this dsh profile, applied after every bundle layer:
-# a top-level YAML array of loader patch entries (id-targeted config
-# overrides, disables, and insert lists; `!!js` expressions allowed).
-[]
+# tui profile 的 user patch 层（在 bundle 层之后应用）。
+#
+# 用户修复（2026-11-10）：turtle-ui 的 bundle patch 里 `- id: tools / config:
+# mode: native` 是旧版 dsh 的写法；0.2.2-rc.1 的 @deepseek-ai/dsh-tools 已把
+# mode 改成 `z.never()`（"Removed. Mount a native or PTC tool executor
+# instead."），于是启动即报
+#   ValidationError: invalid config: $.mode expected nullable but got native
+# 并让必需插件 `tools` 挂载失败（dsh tui 起不来）。patch 整行替换 config，
+# 所以这里用空 config 清掉那个过期字段；执行器由 dsh-base 的
+# tool-executor-native / tool-executor-ptc 提供，不需要 tools.mode。
+# 若 turtle-ui 上游改了 cordis.patch.yml，可以删掉这一条。
+- id: tools
+  config: {}

@@ -126,3 +126,39 @@ unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`�
   检出。改 `~/.dsh` 里的 composition 会被 DSH 热加载，改代码则可能影响正在运行的会话。
 - 提交前自查：`git status --short` 与 `git diff --cached --stat` 里不应出现 `.credentials.yaml`、
   `.env`、任何 `sessions/` 路径。
+
+## 多机：分支约定（Linux 权威 / `windows` 分支）
+
+两台机器共用本仓库，但**只有 Linux（Arch）机器推进 `main`**。Windows 机器的检出常驻 `windows` 分支，
+只承载平台差异：PowerShell 启动器、`link:` 绝对路径、`type-presets.yaml` 的本机命令、profile lock、
+按平台切换的工具行。
+
+**更新方向一：Linux → Windows**（每次同步都从这里开始）
+
+```powershell
+cd "$env:USERPROFILE\.dsh"
+git checkout main; git pull
+git checkout windows; git merge main
+```
+
+**更新方向二：Windows → main**（Windows 上做出的通用改动必须回流，否则下次合并会把它当冲突）
+
+```powershell
+cd "$env:USERPROFILE\.dsh"
+git checkout windows; git commit -am "…"; git push -u origin windows
+git checkout main; git merge --no-ff windows; git push
+```
+
+判断标准：**只有「换平台就该不一样」的才留在 `windows`**；跨平台解析（`dshHomePath()`）、hook 分发器、
+文档修正这类通用改动直接进 `main`。
+
+**不要另建 `~/.dsh`**：新设备直接 `git clone https://github.com/xgx1/dsh-home.git ~/.dsh`，
+或 clone 到别处再把 `DSH_HOME` 指过去。不要让 agent 自己建一个空 home、也不要手工拷一份配置——
+两份 home 会各自漂移，合并时会丢凭据引用与 session 布局。
+
+### Windows 侧恢复顺序
+
+1. `git clone` 到 `%USERPROFILE%\.dsh`，`git checkout windows`。
+2. 放 `.credentials.yaml`（不在仓库里；格式见 `keys.example.yaml`）。
+3. `dsh plugin --profile web install`（`profiles/web` 的 `link:` 依赖需要 `dsh-extensions` 先 checkout）。
+4. 计划任务指向 `%USERPROFILE%\.dsh\dsh-web-launch.ps1`，日志落在同目录 `dsh-web.log`。

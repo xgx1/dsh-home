@@ -8,14 +8,17 @@ importers:
 
   .:
     dependencies:
+      '@deepseek-ai/dsh-hooks-claude-code':
+        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
+        version: link:../../../Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
       '@deepseek-ai/dsh-tui':
         specifier: git+https://github.com/dsh-external/turtle-ui.git
-        version: git+https://github.com/dsh-external/turtle-ui.git#b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2
+        version: https://codeload.github.com/dsh-external/turtle-ui/tar.gz/b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2
 
 packages:
 
-  '@deepseek-ai/dsh-tui@git+https://github.com/dsh-external/turtle-ui.git#b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2':
-    resolution: {commit: b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2, repo: https://github.com/dsh-external/turtle-ui.git, type: git}
+  '@deepseek-ai/dsh-tui@https://codeload.github.com/dsh-external/turtle-ui/tar.gz/b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2':
+    resolution: {gitHosted: true, integrity: sha512-Pr6m/9J2WdBb2FHdLr732HKrv0GrhlLfx0UkQN+rYYgynziCMM1WblY9LVCOSECsDSJsq9SRlHQ2fOdarzk04g==, tarball: https://codeload.github.com/dsh-external/turtle-ui/tar.gz/b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2}
     version: 0.0.1
     engines: {node: ^22.19.0 || >=24.0.0}
     peerDependencies:
@@ -77,7 +80,7 @@ packages:
 
 snapshots:
 
-  '@deepseek-ai/dsh-tui@git+https://github.com/dsh-external/turtle-ui.git#b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2':
+  '@deepseek-ai/dsh-tui@https://codeload.github.com/dsh-external/turtle-ui/tar.gz/b08ed69e4c4edbd0dcaba556fa7b5ea6cd0f91e2':
     dependencies:
       commander: 15.0.0
       diff: 9.0.0
