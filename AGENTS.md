@@ -1,76 +1,12 @@
 # AGENTS.md — DSH 全局规则（用户级）
 
-本文件由 dsh-agent-instructions 在启动时注入到每个新会话。保持精简，不要稀释系统提示词。
 只放**任何工作区都成立**的规则；工作区特有的路径与仓库事实（DSH 检出在哪、dsh-extensions 的 submodule、install-skill.sh 用法）落在各自工作区的 AGENTS.md。
 
 ## 修改位置
 
-- **DSH 本体的生产检出默认只读**：`~/projects/MyAI/deepseek-harness`（分支 `master`，`dsh-web.service` 的 3080 就跑在它上）。DSH 的功能开发只改同层级的 worktree `~/projects/MyAI/deepseek-harness-dev`（分支 `dev`，dev 实例 `dsh-web-dev.service` → `:3081`，`DSH_HOME=~/.dsh-dev`）；**除非用户在当次需求里主动点名要改生产检出**。细节与禁止清单见 `~/projects/MyAI/AGENTS.md`「DSH 改动落点」。
-- 需要重启 `dsh-web.service`（会中断当前对话）或可能影响其他会话的改动，动手前先确认；纯代码/文档提交可直接做。
 - **改动默认提交并推送**：`~/.dsh`、`dsh-extensions` 与其 submodule 提交后直接推 origin（submodule 先推，再推上级），不必每次再问。（2026-10-17 用户指示）
 - 改任何 git submodule 要在**各自目录里**提交、推送，再回上层仓库更新指针；上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——改完要提交并推送，新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
-
-## DSH 开发红线
-
-以下几条都是崩过生产换来的，别删、别绕：
-
-- **不许删 `packages/llm/llm/src/index.ts` 里的 `assertNever` 兼容导出**（L54-57，注释写明了保留条件）：外部 turtle-ui TUI 还在从这个包 import；删掉再重建，`dsh tui` 的 import 必挂。等 turtle-ui 迁完再删。
-- **新增插件包必须走完五件套**，漏一步 preset 就起不来：① 包内 `tsconfig.json`（extends 根 `tsconfig.base.json`、`rootDir: src`、`outDir: lib/types`、references 声明依赖）→ ② 根 `tsconfig.host.json` 的 `references` 加引用 → ③ `pnpm run gen-tsconfig-paths` 重生成包别名 → ④ `apps/cli/package.json` 加依赖 + `pnpm install` → ⑤ 全量 `pnpm run build:lib:host` 通过且该包测试通过。**preset 引用了未构建好的包 = 所有用该 preset 的新会话起不来**，而 `omni` 是默认 preset。
-- **包装 provider 时，候选技能上的 `provider` 必须等于外层注册名**：别让内层 provider 顶着旧名字返回数据——名字不匹配会解析到错误的 provider。
-- **更新 CBM（`codebase-memory-mcp`）二进制后必须重启 `codebase-memory.service`**，否则常驻 daemon 握着旧 inode，全线 MCP 请求超时。该 unit 是**用户级**：`systemctl --user restart codebase-memory.service`。
-- **改完 `~/.dsh/.agent-presets/` 或 `profiles/` 后，先确认能加载，再重启 `dsh-web.service`**：顺序反了就是先断了当前对话、再发现 preset 加载不了。
-
-## 技能
-
-- 运行时技能目录 `~/.dsh/skills/` 里**受管技能全是软链，不是副本**；**不要手工往里面复制技能**——副本会与仓库漂移。
-- 技能按上游仓库分组：`<技能源仓>/skills/<上游仓库名>/`。**组内目录与上游一一对应**——组树 = 上游树 + 本地改动移植到对应文件，上游各层级（`skills/<名>/`、`.agents/skills/<名>/`、`plugins/<插件>/skills/<名>/`）原样保留，**不拍平到组根**；分组 README 叫 `README.dsh-local.md`。本地改名只写在 frontmatter 的 `name:` 上，所以技能名不随上游目录名变。
-- **项目专用技能不放主库**：落在各项目自己的 `<项目根>/.dsh/skills/`。
-- **命令的平台约定**：技能里的命令按平台分节——Linux（本机 Arch）用 `bash`、Windows 用 `PowerShell`，代码块语言标记即平台归属，两者不混写在同一段里。只给 PowerShell 的方案一律补 bash 等价（补不了就写明「Linux 上无对应方案＋原因＋可替代做法」，不许编造跑不通的命令）；只有 bash 的方案不必再写 PowerShell 版本。
-
-## 调用语法
-
-- 选工具先宽后窄：先枚举候选工具再落选，不要默认只挑最常用的那个。
-- 信息不全时先用只读工具铺开再动手，不猜测文件名与路径。
-- 长任务分步提交，每步先验证再继续；失败时先看错误原文再换方案。
-
-## GUI 窗口
-
-- 助手拉起的 GUI 进程**会在 DSH 命令 scope 拆除时被回收**——要长驻就自己 `setsid` / systemd 管，别指望命令返回后窗口还在。（2026-10-05 已拆「AI 窗口隔离」：不再自动搬 workspace 10，`aiw` / `AIW_SHOW` / `AIW_WS` 全部废止。）
-- **纯 Wayland**：三个引擎检出（`ue6` / `ue5.8` / `pico-5.6-sdk3.4.0`）的 `LinuxPlatformApplicationMisc.cpp` 已改源码强制 Wayland（`WAYLAND_DISPLAY` 存在就用 `SDL_HINT_OVERRIDE`/`setenv` 压过一切环境变量与 `DISPLAY`），UE 从任何 shell 启动都是原生 Wayland。**其他 SDL 程序仍要从 `niri msg action spawn -- <命令>` 启动**：DSH 跑在 systemd 用户服务里，不继承 niri config 的 `environment` 块（`SDL_VIDEO_DRIVER`/`SDL_VIDEODRIVER`、fcitx 等），SDL3 见到 `DISPLAY=:0` 就回落 XWayland。验收：日志 `Using SDL video driver 'wayland'`，或 `xdotool search --name <标题>` 在 XWayland 里搜不到该窗口。
-- **本机桌面只有 niri**（Hyprland 已于 2026-11-05 连同配置/数据彻底卸载删除）。窗口与工作区操作走 niri IPC：`niri msg action <名字>`、`niri msg -j windows`（JSON，配 jq 取 id/app_id）、`niri msg -j outputs` / `workspaces`；现场校验配置用 `niri validate -c ~/.config/niri/config.kdl`。不要再找 `hyprctl`（命令已不存在）。
-
-- **GUI 默认落点是会话自己的 agent 桌面**（2026-11-06 起）：`dsh-web` 的 bash 工具命令启动时
-  会 source `~/.dsh/bin/agent-shell-env.sh`，按当前工作区（向上找 `.git` / `AGENTS.md` / `.dsh`）
-  找或拉起一个嵌套 niri 桌面，并导出 `WAYLAND_DISPLAY` / `DISPLAY` / `NIRI_SOCKET`。
-  所以直接跑 Electron / Unity / Unreal / GTK 程序**默认就落在你自己的桌面里**，不会糊到人的桌面上；
-  `niri msg ...` 也指向你自己的桌面。人的桌面用 `prod-niri` / `prod-xdo` / `prod-grim`（见文末「agent 桌面」节）。
-  单个命令想留在生产桌面：`AGENT_DESKTOP=0 <命令>`。
-
-## 代码检索
-
-- `zvec_grep_search`（语义检索）要求工作区已建索引，未建会返回 `INDEX_MISSING`。**这时不要反复重试、也不要自己跑 `zg index`**：立刻改用 `zvec_grep_rg` 做精确检索；索引由 `zg-autoidx` 代理在后台自动构建，工具结果里出现「已自动为该工作区建好索引」后再回去用语义检索。（2026-10-23 事故：0.2.2 的 `zg` 索引没人建，每次 `zvec_grep_search` 都白跑一轮。）
-
-omni preset 的 persona 已写完整检索优先级，这里只留判据：图查不到 ≠ 代码不存在——先 `check_index_coverage` / `query_graph(graph="missed")` 核覆盖，再回退文本搜索并标注「图未覆盖」；未索引的仓库先 `index_repository` 再查图。详见技能 `cbm-graph-first`。
-
-## 逆向证据层（REA）
-
-看闭源产物（二进制 / APK / Electron-JS / ELF / 固件 / 进程行为）时先想 REA（`morluto/rea`），别手搓 `strings` / `objdump`。MCP 已注册在生产 web profile（`~/.dsh/profiles/web/cordis.patch.yml` 的 `mcp-rea`，热加载，不用重启），工具命名空间 `mcp__rea__*`（170 个）；技能 `reverse-engineer-anything` 已装，分组仓 `dsh-extensions/skills/rea`（fork `xgx1/rea`，与 CLI 同钉 tag `rea-agents-6.4.0`）。
-
-- CLI 是 `rea`（`~/.npm-global/bin/rea`，`~/.local/bin/rea` 软链指过去）：`rea doctor --json` 查引擎就绪，`rea analyze-*` / `inspect-artifact` 直接干活。
-- 已装引擎：Ghidra 12.1.2（`/opt/ghidra`）、JADX、apktool、binwalk、pwntools + pwndbg + gdb、mitmproxy、adb、完整 JDK、.NET SDK。**Hopper / IDA / JEB 是付费软件或自带服务，对应 provider 报 unavailable 属预期**，不是配置坏。
-- **Ghidra 必须显式给 `GHIDRA_INSTALL_DIR=/opt/ghidra`**（已写进 MCP 条目的 `env`）：REA 的 PATH 发现要求 `ghidra`/`ghidraRun` 的真实路径落在 Ghidra 树内，而 Arch 的 `/usr/bin/ghidra` 只是包装脚本，走 PATH 必然失败。
-- **`toolCallTimeoutMs` 别调回默认**（现为 600000）：REA 侧 Ghidra 冷启动默认允许 330 s，客户端默认 60 s 就会中途取消，首次查询白跑。
-- 升级时 CLI 与技能一起动——技能比 npm 包新会描述服务端不存在的工具。`rea doctor` 的「Installed REA skill identity is missing」只因它只认自家客户端目录（claude/codex/omp/pi），不认 `~/.dsh/skills`，可忽略。
-
-## 模型目录
-
-- **所有模型（任何项目/工具加载的）一律存放在 `~/.model/`**，按工具或项目分子目录；项目或工具原本的模型位置**只保留软链接**指回 `~/.model`，模型实体不随项目目录移动、不入库、不重复拷贝。
-- 约定：`~/.model/<工具或项目名>/<模型文件>`；原位置用 `ln -s ~/.model/... <原路径>` 恢复引用。
-- 同一模型的不同量化/版本视为重复，只保留**实际在用**的一份；判断"在用"以运行进程与配置文件的**实际引用**为准（`ps` 命令行、`/proc/<pid>/cwd`、配置文件里的 `model` 字段），不靠猜。
-- 2026-10-12 实况：`~/.model/` 目前**只有 `laya/`**。约定的两个例外（迁不动，别当成没做）：zvec-grep 的嵌入模型在 `~/.zvec-grep/models/`（工具自管，CPU 小模型）；fcitx vinput 的 sherpa-onnx ASR 在 `~/.local/share/vinput/models/`。
-- **本机当前没有本地大模型**（2026-10-15 用户确认弃用并清空配置：权重、systemd 单元、profile 里的 provider 条目都已删）。要重新用本地模型得先重下权重并按上面约定落 `~/.model/`，再往 profile 的 `llm-pi-ai` provider 表里加条目。
-- Laya 决策模型在 `~/.model/laya/hf`（用 `HF_HOME` 指过去）；推理环境在 `~/.local/share/laya/venv`（torch ROCm / gfx1100），由用户级 `laya-sidecar.service` 在 `:8083` 常驻服务（约 5.5 GB 显存）。
 
 ## 浏览器
 
@@ -78,31 +14,15 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
 - **ego 不许抢用户前台**（2026-11-04 用户要求）：共享 profile 下 ego 每次 `ego_*` 调用都会激活 tab（`focusSpace`/`switchTab`/`createTab` 全走 `Target.activateTarget`，新建 tab 还被 Chromium 默认激活），把用户当前 tab 顶掉并抢窗口焦点。修法是在 CDP 传输层 `transport.mjs` 的 `call()`/`sendRaw()` 里丢弃 `Target.activateTarget` 的实际发送（记账保留，`activeHint` 不受影响），两处 `Target.createTarget` 加 `background: true`；`EGO_ALLOW_ACTIVATE=1` 放行（观察窗「弹出为真实窗口」`ego-browser --open` 是显式用户动作，由 `ego-shared-bili.mjs` 在 argv 含 `--open` 时设置）。两棵树都打了：`~/.local/share/ego-lite-runtime/runtime/`（egoBin 实际指向）与插件副本 `~/.dsh/profiles/web/node_modules/dsh-ego-browser/runtime/`，改动清单记在插件 runtime 的 `PATCHES.md`。**ego 运行时重装 / 插件更新后补丁会丢，要重打**；验收方法：`niri msg focused-window` 记标题 → 跑一次 `ego_navigate`/`ego_snapshot` → 标题应不变。
 - **访问网页优先用 ego**：能开页面就先用 `ego_*` 工具（`ego_navigate` → `ego_snapshot` → `ego_click`/`ego_fill`）在 ego 浏览器里真开一次，登录态、Cookie、人机验证都在用户自己的窗口里。`web_search` 只做找线索与摘要；`curl`/`webshare` 抓页面、Playwright/CUA 驱浏览器都退居备选——只有 ego 起不来（`ego_doctor` 报错）或任务本就不需要浏览器时才换。
 
-## 长驻进程与 scope 卫生（2026-10-23）
-
-- 经 dsh 跑 UE 构建时带 `-nodeReuse:false`（或 `/nodeReuse:false`）；跑过 `adb start-server` 的要在收尾 `adb kill-server`。这两类常驻子进程会让 `dsh-subprocess-*.scope` 永不退出（实测有 scope 从 00:01 挂到 16:18），累积后拖死整机。
-- `~/.dsh/bin/dsh-janitor.sh` 每 15 分钟由 `dsh-janitor.timer` 清一次：停掉空 `dsh-subprocess` scope、杀 MSBuild node-reuse 残留、截断超 100MB 的 zvec daemon 日志。手工排查先看 `/tmp/dsh-janitor.log`。
-- 2026-10-23 起 dsh 自己会回收 scope 里的孤儿：载荷退出后等 3s，若 cgroup 里只剩「沿用载荷会话号」的进程（MSBuild node-reuse 那种）就 `systemctl --user stop` 收掉整个 scope 并打一条 `reaped inherited stragglers`；**`setsid` 起来的进程自成一个会话，会被保留** —— 所以「要长驻就自己 setsid / 交给 systemd」这条依然成立。
-- bili 的「request sent DIRECT (uncompressed)」现在只对「远端 + 有 wire 尺寸请求体」上报；本机 loopback（dsh↔openviking、MCP health）不再刷屏。若真有自定义 wire 的**模型**端点要过代理压缩，用 `BILI_EXTRA_MODEL_PATHS=/api/llm/generate,...`（逗号分隔路径子串）声明后重启 dsh。
-- `run_code` 的失败现在带 `[diagnostic] code/errno/syscall`，宿主日志同时有 `ptc-runtime-node: worker <stage> failed: …`；scope 启动路径整体坏掉时可用 `DSH_SUBPROCESS_CONTAINMENT=direct` 临时回到直连进程树。
-- 抓 HTTP/JSON 用 `web_fetch`（`tool-web` 已开 `fetch`）；ego-browser 只用于需要登录态或真实交互的页面。在页面上下文里 `fetch` 跨站 API 会被 CORS 挡死（2026-10-23 共 39 次 `TypeError: Failed to fetch`）。
-
 ## 后台窗口控制（本机能力）
 
-要在不打断当前工作的前提下显示或操作另一批 GUI 应用（Unity、Unreal、浏览器、.NET 等），
-或改动这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里，
-这里只留硬约束。
+要在不打断当前工作的前提下操作另一批 GUI 应用（Unity、Unreal、浏览器、.NET 等），或改这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里。
 
-- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里。生产桌面自
-  2026-11-05 起跑 fork，且**上游 `niri` 包已彻底卸载**（`pacman -Q niri` 查不到，`/usr/bin/niri` 不存在）：
-  - 单元：`~/.config/systemd/user/niri.service`（整份本地 unit，`ExecStart=/home/sx/projects/niri/target/release/niri --session`）
-  - 入口链：greetd `/etc/greetd/config.toml` → `/usr/local/bin/start-desktop` → `/usr/local/bin/niri-session`（本地 systemd 分支）→ `systemctl --user start niri.service`
-  - `niri` 命令：`/usr/local/bin/niri` 包装脚本 → fork release；`niri msg` / `niri validate` 都走它
-  - 门户与关闭链：`~/.config/xdg-desktop-portal/niri-portals.conf`、`~/.config/systemd/user/niri-shutdown.target`
-  - 重建即生效：`cd /home/sx/projects/niri && cargo build --release --bin niri`，重启桌面会话后才用上新二进制
-  - **重启 niri.service 等于重启整个桌面会话，动手前先问用户**
-  - 救急（fork 起不来）：`sudo pacman -U /var/cache/pacman/pkg/niri-26.04-1-x86_64.pkg.tar.zst` → `systemctl --user daemon-reload` → `systemctl --user start niri-fallback.service`（该 unit 用 `/usr/bin/niri`，仅恢复用）
-- waybar 由 `waybar.service`（用户单元，`Restart=always`）托管，日志 `journalctl --user -u waybar -f`；niri 自启只跑 `systemctl --user start waybar.service`。不要改回 while 循环：它会被 reparent 到 systemd --user、桌面重启后不退出，每个会话多出一个 bar（2026-11-05 实测）。
+- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）起的实例里；上游 `niri` 包已彻底卸载，生产桌面自 2026-11-05 起跑 fork。
+- **重启 `niri.service` 等于重启整个桌面会话，动手前先问用户**；救急用 `niri-fallback.service`（走 `/usr/bin/niri`，仅恢复用）。
+- waybar 由 `waybar.service`（用户单元，`Restart=always`）托管；不要改回 while 循环（会被 reparent 到 systemd --user，桌面重启后不退出，每会话多一个 bar）。
+- 回归夹具在 `~/projects/MyAI/.scratch/background-window-control/regression-visibility`（`python3 cycle.py 1 smoke.py` 自检）。
+- 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
 
 ## 会话监察（dsh-guard，2026-11-05）
 
@@ -120,10 +40,6 @@ omni preset 的 persona 已写完整检索优先级，这里只留判据：图�
   （最近 2 小时命中）、`dsh-guard.py since -m 480`（只读回放 8 小时，不动 state）、
   `journalctl --user -u dsh-guard -f`（每轮跑批日志）。命中 ≠ 违规，按 severity 人判。
 - 我自己（用户明确批准的动作）也会被记进去：日志里带 session id，别把它当别人的错。
-
-- 默认在嵌套环境干活：`/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility`；
-  `python3 cycle.py 1 smoke.py` 验证可用，`cycle.py 2 suite.py` / `suite2.py` 跑回归，每轮重建环境。
-- 红线：只清理自己起的进程；禁止 `pkill -f`；不读剪贴板；不把未定向的键鼠发进当前会话。
 
 ## 其他桌面观察（dsh-desktops + dsh-view，2026-11-05）
 
