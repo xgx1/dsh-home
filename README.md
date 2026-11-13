@@ -11,11 +11,10 @@
 |---|---|
 | `AGENTS.md` | 用户级全局规则，每个新会话启动时注入 |
 | `settings.yaml` | 模型路由、权限预设、压缩策略等全局设置 |
-| `.agent-presets/` | 自建 agent preset（`omni` / `manager` / `simple`）及其携带的技能 |
+| `.agent-presets/` | 自建 agent preset 文件（只剩 `simple`；当前 harness 已不再加载该目录，只作存档） |
 | `profiles/{web,tui,headless}/` | 各 profile 的 composition：`cordis.yml` + `cordis.patch.yml` + `pnpm-workspace.yaml` + `package.json` + lock |
 | `dsh-env.sh` / `dsh-web-launch.sh` | 启动脚本，被 `dsh-web.service` 调用 |
 | `bin/opencode-zen-bridge.py` | `:8790` 本地 OpenAI 兼容桥（opencode-zen provider 的前置，被 `opencode-zen-bridge.service` 拉起） |
-| `bin/gen-project-presets.py` | 用 `preset-base.yml` + `type-presets.yaml` 重写 `profiles/web/cordis.patch.yml` 的 generated 区块 |
 | `keys.example.yaml` | 凭据模板（**只有键名与格式说明，没有值**） |
 
 不跟踪、且**永远不该**进仓库的：
@@ -130,7 +129,7 @@ unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`�
 ## 多机：分支约定（Linux 权威 / `windows` 分支）
 
 两台机器共用本仓库，但**只有 Linux（Arch）机器推进 `main`**。Windows 机器的检出常驻 `windows` 分支，
-只承载平台差异：PowerShell 启动器、`link:` 绝对路径、`type-presets.yaml` 的本机命令、profile lock、
+只承载平台差异：PowerShell 启动器、`link:` 绝对路径、profile lock、
 按平台切换的工具行。
 
 **更新方向一：Linux → Windows**（每次同步都从这里开始）
