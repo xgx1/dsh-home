@@ -654,8 +654,11 @@
 # 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
 # 运行期 set_plugin 关/开整族 MCP（如 mcp-rea），不必改文件重启。
 # 代价：多 1 枚工具；每次调用需 danger-full-access 审批（本 profile 全权限常开）。
+# 2026-11-13：全能模式（preset-all）不再要 plugin_manager；创造模式（preset-cordis）自带一行，仍然可用。
 - id: tool-plugin-manager
-  disabled: false
+  disabled: true
+- id: tool-worktree
+  disabled: true
 - id: mcp-rea
   disabled: true
 
@@ -782,8 +785,6 @@
             config:
               fetch: false
               searchTimeoutMs: 60000
-          - id: tool-cordis
-            name: '@deepseek-ai/dsh-tool-cordis'
           - id: tool-presentation
             name: '@deepseek-ai/dsh-agent-tool-presentation'
             config:
