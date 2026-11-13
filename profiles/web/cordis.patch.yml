@@ -680,7 +680,10 @@
             name: '@deepseek-ai/dsh-persona'
             config:
               prefix: |-
-                取码优先级：找符号、调用方、调用链、架构、复杂度热点、改动影响面时，先查 codebase-memory MCP（`search_graph` / `trace_path` / `get_architecture` / `search_code`），grep/glob 只用于字面量、文件名和原始计数；图里查不到先验覆盖再断言“没找到”，未索引仓库先 `index_repository`。细则见 `cbm-graph-first` 技能。
+                工具偏好（补充；与后文英文段冲突时以本段为准）：
+                - 代码检索：先查代码知识图谱 MCP `mcp__cbm__*`（search_graph / trace_path / get_architecture / search_code），再查工作区语义检索 `mcp__zvecgrep__*`（zvec_grep_search 做语义/跨文件检索，zvec_grep_rg 做精确或穷举匹配）；grep/glob 只用于字面量、文件名和原始计数。图里查不到先验覆盖（check_index_coverage / query_graph(graph="missed")）再断言“没找到”，未索引仓库先 index_repository。
+                - run_code：它是唯一能直接调用的工具，其他工具都在程序内 `await tools.name(args)` 调用；能一起做的调用尽量塞进同一个程序批量发起（只读调用可 Promise.all 并发），省 token 和上下文，不要一个调用跑一次程序。
+                - 编排：按任务复杂度自行判断——复杂任务（跨文件、跨子系统、需要多路并行或对抗验证）用 workflow 编排；需要多轮迭代逼近目标用 ralph；简单或单点任务用 subagent 或自己直接做。后文英文段的“仅在用户明确要求时使用”不适用，按这条判断。
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
