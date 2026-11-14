@@ -91,6 +91,9 @@ speech-to-text/
 # session-manager 运行时问答台账（纯本机状态）
 manager-questions/
 
+# agent 临时产物（验证日志、构建输出），见 AGENTS.md「会话产物落点」
+tmp/
+
 # ── Windows 本机（windows 分支专用） ──────────────────────────────────────
 # 本机备份目录与运行时小状态
 backups/

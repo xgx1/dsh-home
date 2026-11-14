@@ -7,6 +7,15 @@
 - **改动默认提交并推送**：`~/.dsh`、`dsh-extensions` 与其 submodule 提交后直接推 origin（submodule 先推，再推上级），不必每次再问。（2026-10-17 用户指示）submodule 改动在各自目录里提交，上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
 
+## 会话产物落点（临时文件）
+
+验证 / 构建 / 抓日志的**重定向一律写绝对路径**，产物落 `~/.dsh/tmp/` 或 `/tmp/`，禁止裸文件名：
+
+- 对：`pnpm run test > ~/.dsh/tmp/snap-verify.log 2>&1`
+- 错：`pnpm run test > snap-verify.log` —— shell 的 cwd 若是 `$HOME`，文件就落在用户根目录（2026-11-14 首面上堆了 9 个 gate 日志，就是这么来的）
+
+`TMPDIR` 只管程序自己调 `mktemp`，管不了 shell 的 `>`。`~/.dsh/tmp/` 用完自己清。
+
 ## 浏览器
 
 - **ego 跑共享 profile**：挂用户日常 Helium 的同一个进程（`--remote-debugging-port=9222`，故 Helium 须经桌面图标 / `helium-browser` 启动）；`egoBin` = `~/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs`（探 9224，该端口是 socat 转发到 9222）。**不要**跑 `ego-browser --stop`、也不要把插件的 `idleTimeoutMin` 打开——共享模式下两者都会关掉用户自己的浏览器。
