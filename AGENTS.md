@@ -12,6 +12,12 @@
   3. **装依赖 + 重启验证**：在 `~/.dsh-dev/profiles/web`（和 `headless`）里 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`，`systemctl --user restart dsh-web-dev.service`，刷新 3081 确认能起、能建会话。
   4. **提交 dev**：`~/.dsh-dev` 里再 `git commit` + push。判断是否落后：orphan 分支没有共同祖先，`rev-list` 计数无意义——直接比内容：`git -C ~/.dsh diff --stat main dev -- profiles/ cordis.patch.yml`，剩下的差异应只有 `link:` 里的 `-dev/` 那几行与 dev 独有的 `dsh-web-dev-launch.sh`。
 
+## 每个工作区能看到什么（agent-configs）
+
+**技能、MCP 服务器、工具三样可见性 2026-11-15 起全由 `~/.dsh/agent-configs.yaml` 决定**，三份都是白名单：`configs.<名>.skills`（技能 glob）、`configs.<名>.mcp`（serverName）、`configs.<名>.tools`（工具名 glob，MCP 工具也可由 server 放行）；`projects.<绝对路径>` 选配置，键是 GUI 记录的真实 cwd，软链与真实路径两套都要写。
+
+**未列入 `projects` 的目录 = 三样都不给**（工具与 MCP 默认拒绝，连 bash/read 都没有）；个人层/项目层 `skill-filter.yaml` 已全部删除，别再造。改完两个 home（`~/.dsh`、`~/.dsh-dev`）一起提交，重启会话生效。
+
 ## 会话产物落点（临时文件）
 
 验证 / 构建 / 抓日志的**重定向一律写绝对路径**，产物落 `~/.dsh/tmp/` 或 `/tmp/`，禁止裸文件名：
@@ -31,7 +37,7 @@
 
 操作另一批 GUI 应用（Unity、Unreal、浏览器、.NET）或改这套 scoped 输入能力时，先加载技能 `background-window-control`；命令、坑与证据都在技能里。硬约束：
 
-- 能力只存在于 niri fork（`/home/sx/projects/niri`，分支 `scoped-input-poc`）；上游 `niri` 包已卸载，生产桌面自 2026-11-05 起跑 fork。
+- 能力只存在于 niri fork（`/mnt/Video2/System/repos/niri`，分支 `scoped-input-poc`）；上游 `niri` 包已卸载，生产桌面自 2026-11-05 起跑 fork。
 - **重启 `niri.service` 等于重启整个桌面会话，动手前先问用户**；救急用 `niri-fallback.service`（`/usr/bin/niri`，仅恢复用）。
 - waybar 由 `waybar.service`（`Restart=always`）托管；不要改回 while 循环（会被 reparent 到 systemd --user，桌面重启后不退出，每会话多一个 bar）。
 - 回归夹具在 `~/projects/MyAI/.scratch/background-window-control/regression-visibility`（`python3 cycle.py 1 smoke.py` 自检）。
