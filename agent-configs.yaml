@@ -1,6 +1,8 @@
-# 技能 / MCP 的按项目选择。未列入此处的项目 = 空选择 = 不加载任何技能与 MCP。
+# 技能 / MCP / 工具 的按项目选择。未列入此处的项目 = 空选择 = 不加载任何技能与 MCP，且一个工具都不允许。
 # 依据 ~/.dsh/storages/workspace.json 的 24 个工作区 + 各自工程标记（*.uproject / ProjectSettings / *.sln|csproj / package.json）。
 # selectionOf() 是精确字符串匹配：同一项目既有软链键又有真实路径键时，两套都要写。
+# tools 是白名单 glob：一条都不匹配的工具被屏蔽；MCP 工具也可由其 server（mcp 字段）放行。
+# /mnt/Video2/empty 故意不列：它是「什么都不给」的验证工作区。
 
 configs:
   core:
@@ -13,10 +15,35 @@ configs:
       - "using-git-worktrees"
     mcp:
       - "cbm"
+    tools:
+      - "run_code"
+      - "read"
+      - "write"
+      - "edit"
+      - "bash"
+      - "present"
+      - "todo_write"
+      - "ask_user_question"
+      - "job_*"
+      - "terminal_*"
+      - "user_terminal_*"
+      - "skill"
+      - "search_context"
+      - "compress"
+      - "decompress"
+      - "absorb"
+      - "acp_*"
+      - "read_image"
+      - "working_directory"
+      - "web_search"
+      - "list_mcp_resources"
+      - "list_mcp_resource_templates"
+      - "read_mcp_resource"
   search:
     skills: []
     mcp:
       - "zvecgrep"
+    tools: []
   unity:
     skills:
       - "csharp-scripts"
@@ -24,6 +51,7 @@ configs:
       - "code-testing"
     mcp:
       - "unity"
+    tools: []
   unreal:
     skills:
       - "unreal-*"
@@ -37,6 +65,7 @@ configs:
       - "renderdoc-gpu-debug"
     mcp:
       - "ue"
+    tools: []
   dotnet:
     skills:
       - "dotnet-*"
@@ -71,6 +100,7 @@ configs:
       - "use-js-interop"
       - "winforms-expert"
     mcp: []
+    tools: []
   js:
     skills:
       - "setup-ts-deep-modules"
@@ -79,16 +109,20 @@ configs:
       - "wakaru"
       - "authoring-github-workflows"
     mcp: []
+    tools: []
   ende:
     skills:
       - "setup-ts-deep-modules"
       - "wakaru"
       - "authoring-github-workflows"
     mcp: []
+    tools: []
   blender:
     skills:
       - "blender-*"
     mcp: []
+    tools:
+      - "blender_*"
   rea:
     skills:
       - "rea-*"
@@ -102,6 +136,7 @@ configs:
       - "scanned-doc-ocr-extraction"
     mcp:
       - "rea"
+    tools: []
   agent:
     skills:
       - "create-skill"
@@ -127,6 +162,9 @@ configs:
       - "meeting"
       - "wait-what"
     mcp: []
+    tools:
+      - "ego_*"
+      - "cua_driver_native__*"
   obsidian:
     skills:
       - "obsidian-*"
@@ -136,6 +174,7 @@ configs:
       - "scanned-doc-ocr-extraction"
       - "meeting"
     mcp: []
+    tools: []
   wf-plan:
     skills:
       - "grill-with-docs"
@@ -145,6 +184,14 @@ configs:
       - "to-spec"
       - "feature-inventory-docs-first"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-build:
     skills:
       - "execute-feature-plan"
@@ -155,6 +202,14 @@ configs:
       - "implement-spec"
       - "add-software-feature"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-verify:
     skills:
       - "verification-before-completion"
@@ -163,6 +218,14 @@ configs:
       - "requesting-code-review"
       - "test-gap-analysis"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-ship:
     skills:
       - "finishing-a-development-branch"
@@ -171,6 +234,14 @@ configs:
       - "retro"
       - "write-feature-docs"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
 projects:
   "/mnt/Video2/System":
     - "core"
@@ -301,11 +372,16 @@ projects:
   "/mnt/Video2/Moon_VR_TCP":
     - "core"
     - "unreal"
-  "/mnt/Video2/empty":
-    - "core"
   "/home/sx":
     - "core"
     - "search"
+  "/tmp":
+    - "core"
+    - "search"
+  "/home/sx/projects/test":
+    - "core"
+  "/mnt/Video/test":
+    - "core"
   "/home/sx/projects/MyAI/deepseek-harness":
     - "core"
     - "search"
