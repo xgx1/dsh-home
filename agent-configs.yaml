@@ -212,10 +212,14 @@ configs:
   js:
     skills:
       - "setup-ts-deep-modules"
-      - "ui-styling"
-      - "ui-ux-pro-max"
       - "wakaru"
       - "authoring-github-workflows"
+    mcp: []
+    tools: []
+  ui-design:
+    skills:
+      - "ui-styling"
+      - "ui-ux-pro-max"
     mcp: []
     tools: []
   ende:
@@ -231,6 +235,7 @@ configs:
     mcp:
       - "unity"
     tools:
+      - "blender_*"
       - "mcp__unity__blender_bridge"
   rea:
     skills:
@@ -274,6 +279,7 @@ configs:
     tools:
       - "ego_*"
       - "cua_driver_native__*"
+      - "team_task_*"
   obsidian:
     skills:
       - "obsidian-*"
@@ -376,6 +382,7 @@ projects:
     - "blender"
     - "search"
     - "dotnet-build"
+    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -387,6 +394,7 @@ projects:
     - "js"
     - "search"
     - "agent"
+    - "ui-design"
     - "testing"
     - "test-audit"
     - "dsh-dev"
@@ -450,6 +458,7 @@ projects:
     - "js"
     - "search"
     - "dotnet-build"
+    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -504,6 +513,7 @@ projects:
     - "rea"
     - "search"
     - "dotnet-build"
+    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -536,6 +546,7 @@ projects:
     - "core"
     - "search"
     - "js"
+    - "ui-design"
     - "agent"
     - "testing"
     - "test-audit"
@@ -550,6 +561,7 @@ projects:
     - "core"
     - "search"
     - "js"
+    - "ui-design"
     - "agent"
     - "testing"
     - "test-audit"
