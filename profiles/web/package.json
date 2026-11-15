@@ -4,8 +4,6 @@
   "dependencies": {
     "@deepseek-ai/dsh-browser-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use",
     "@deepseek-ai/dsh-computer-use": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use",
-    "@deepseek-ai/dsh-hooks-claude-code": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/hooks-claude-code",
-    "@deepseek-ai/dsh-session-manager": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/session/session-manager",
     "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native",
     "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
@@ -31,7 +29,6 @@
         "@dsh-external/dsh-blender-plugin",
         "dsh-ego-browser",
         "dsh-perf-mode",
-        "@deepseek-ai/dsh-experimental-voice-input-bundle",
         "@deepseek-ai/dsh-experimental-tool-worktree",
         "@deepseek-ai/dsh-experimental-terminal-bundle",
         "@deepseek-ai/dsh-experimental-session-titles-bundle"
