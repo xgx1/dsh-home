@@ -654,7 +654,7 @@
 # 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
 # 运行期 set_plugin 关/开整族 MCP（如 mcp-rea），不必改文件重启。
 # 代价：多 1 枚工具；每次调用需 danger-full-access 审批（本 profile 全权限常开）。
-# 2026-11-13：全能模式（preset-all）不再要 plugin_manager；创造模式（preset-cordis）自带一行，仍然可用。
+# 2026-11-13：基础模式（preset-all）不再要 plugin_manager；创造模式（preset-cordis）自带一行，仍然可用。
 - id: tool-plugin-manager
   disabled: true
 - id: tool-worktree
@@ -676,7 +676,7 @@
       name: '@deepseek-ai/dsh-agent-preset'
       config:
         id: all
-        name: 全能项目
+        name: 基础模式
         order: 20
         plugins:
           - id: persona

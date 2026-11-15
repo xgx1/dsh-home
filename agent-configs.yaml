@@ -102,6 +102,10 @@ configs:
       - "use-js-interop"
       - "winforms-expert"
       - "process-api-net11"
+    mcp: []
+    tools: []
+  dotnet-build:
+    skills:
       - "binlog-*"
       - "build-parallelism"
       - "build-perf-*"
@@ -122,6 +126,24 @@ configs:
     tools: []
   testing:
     skills:
+      - "writing-mstest-tests"
+      - "run-tests"
+      - "tdd"
+      - "tdd-fanout"
+      - "tdd-write-feature"
+      - "test-driven-development"
+      - "testability-obstacle"
+      - "generate-testability-wrappers"
+      - "scaffold-dotnet-test-project"
+      - "code-testing-agent"
+      - "code-testing-extensions"
+      - "filter-syntax"
+      - "platform-detection"
+      - "microbenchmarking"
+    mcp: []
+    tools: []
+  test-audit:
+    skills:
       - "assertion-quality"
       - "coverage-analysis"
       - "crap-score"
@@ -129,14 +151,13 @@ configs:
       - "exp-*"
       - "find-untested-sources"
       - "grade-tests"
-      - "microbenchmarking"
-      - "run-tests"
-      - "scaffold-dotnet-test-project"
-      - "test-*"
-      - "testability-obstacle"
-      - "generate-testability-wrappers"
+      - "test-analysis-extensions"
+      - "test-anti-patterns"
+      - "test-gap-analysis"
+      - "test-smell-detection"
+      - "test-tagging"
+      - "test-value-evidence"
       - "vectorization"
-      - "code-testing-*"
     mcp: []
     tools: []
   dsh-dev:
@@ -158,24 +179,31 @@ configs:
       - "sdd-no-git-adaptation"
       - "setup-matt-pocock-skills"
       - "software-factory"
-    mcp: []
+    mcp:
+      - "cbm"
     tools: []
-  ops:
+  ops-desktop:
     skills:
       - "background-window-control"
       - "batch-file-organizing"
       - "baidupcs-download-pipeline"
       - "cache-notes"
       - "fcitx-voice-input"
-      - "local-git-archive-server"
-      - "local-llm-amd"
       - "media-convert-defaults"
       - "modelscope-daily"
       - "obs-studio-locale-cwd-fix"
+      - "video-transcribe-cn-env"
+    mcp: []
+    tools:
+      - "ego_*"
+      - "cua_driver_native__*"
+  ops-infra:
+    skills:
+      - "local-git-archive-server"
+      - "local-llm-amd"
       - "platform-detection"
       - "qmd"
       - "setup-local-sdk"
-      - "video-transcribe-cn-env"
       - "vr-and-aliyunpan-setup"
       - "win-headless-edge-browser-check"
       - "win-install-vs2022-ue"
@@ -200,9 +228,10 @@ configs:
   blender:
     skills:
       - "blender-*"
-    mcp: []
+    mcp:
+      - "unity"
     tools:
-      - "blender_*"
+      - "mcp__unity__blender_bridge"
   rea:
     skills:
       - "rea-*"
@@ -346,7 +375,9 @@ projects:
     - "js"
     - "blender"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -357,8 +388,10 @@ projects:
     - "search"
     - "agent"
     - "testing"
+    - "test-audit"
     - "dsh-dev"
-    - "ops"
+    - "ops-desktop"
+    - "ops-infra"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -372,7 +405,9 @@ projects:
     - "unreal"
     - "dotnet"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -381,7 +416,9 @@ projects:
     - "core"
     - "dotnet"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -391,7 +428,9 @@ projects:
     - "unreal"
     - "dotnet"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -400,6 +439,7 @@ projects:
     - "core"
     - "unreal"
     - "testing"
+    - "test-audit"
   "/mnt/Storage/归档/min/资料/法律":
     - "core"
     - "search"
@@ -409,7 +449,9 @@ projects:
     - "dotnet"
     - "js"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -418,12 +460,14 @@ projects:
     - "core"
     - "unreal"
     - "testing"
+    - "test-audit"
   "/mnt/Video/PsShowcase":
     - "core"
     - "unity"
     - "unreal"
     - "search"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -440,7 +484,9 @@ projects:
     - "unity"
     - "dotnet"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -450,13 +496,16 @@ projects:
     - "unity"
     - "unreal"
     - "testing"
+    - "test-audit"
   "/home/sx/projects/hgame":
     - "core"
     - "dotnet"
     - "js"
     - "rea"
     - "search"
+    - "dotnet-build"
     - "testing"
+    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -468,25 +517,31 @@ projects:
   "/home/sx":
     - "core"
     - "search"
-    - "ops"
+    - "ops-desktop"
+    - "ops-infra"
   "/tmp":
     - "core"
     - "search"
-    - "ops"
+    - "ops-desktop"
+    - "ops-infra"
   "/home/sx/projects/test":
     - "core"
     - "testing"
+    - "test-audit"
   "/mnt/Video/test":
     - "core"
     - "testing"
+    - "test-audit"
   "/home/sx/projects/MyAI/deepseek-harness":
     - "core"
     - "search"
     - "js"
     - "agent"
     - "testing"
+    - "test-audit"
     - "dsh-dev"
-    - "ops"
+    - "ops-desktop"
+    - "ops-infra"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -497,8 +552,10 @@ projects:
     - "js"
     - "agent"
     - "testing"
+    - "test-audit"
     - "dsh-dev"
-    - "ops"
+    - "ops-desktop"
+    - "ops-infra"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -510,6 +567,9 @@ projects:
     - "search"
     - "unreal"
     - "dotnet"
+    - "dotnet-build"
+    - "testing"
+    - "test-audit"
     - "rea"
     - "wf-plan"
     - "wf-build"
