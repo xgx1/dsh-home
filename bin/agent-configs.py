@@ -47,6 +47,8 @@ configs = {
   'ops-infra': {'skills': OPS_INFRA, 'mcp': [], 'tools': []},
   'js': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
   'ui-design': {'skills': ['ui-styling','ui-ux-pro-max'], 'mcp': [], 'tools': []},
+  'design-brand': {'skills': ['design','design-system','brand','banner-design'], 'mcp': [], 'tools': []},
+  'proj-find-work': {'skills': ['find-work','find-work-image','taobao-web-ops','xhs-web-ops'], 'mcp': [], 'tools': []},
   'ende': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
   'blender': {'skills': ['blender-*'], 'mcp': ['unity'], 'tools': ['blender_*','mcp__unity__blender_bridge']},
   'rea': {'skills': ['rea-*','reverse-engineer-anything','open-apk','wakaru','read-uasset','android-tombstone-symbolication','apple-crash-symbolication','image-author-reverse-search','scanned-doc-ocr-extraction'], 'mcp': ['rea'], 'tools': []},
@@ -102,7 +104,6 @@ for wid, v in ws.items():
         sel.append('search')
     if title == 'MyAI': sel.append('agent')
     if 'dotnet' in sel: sel.append('dotnet-build')
-    if 'js' in sel: sel.append('ui-design')
     if any(s in sel for s in ('dotnet', 'js', 'unity', 'unreal')): sel += ['testing', 'test-audit']
     if title == 'MyAI': sel += ['dsh-dev', 'ops-desktop', 'ops-infra']
     if coding: sel += WFD
@@ -122,8 +123,18 @@ for extra, sel in {
     '/home/sx/projects/MyAI/.scratch/mgr-ws-demo': ['core'],
     '/home/sx/projects/ps-tool': ['core','search','unreal','dotnet','dotnet-build','testing','test-audit','rea']+WFD,
     '/home/sx/projects/hgame': ['core','dotnet','dotnet-build','testing','test-audit','js','rea'],
+    '/home/sx/projects/find-work': ['core','search','dotnet','dotnet-build','testing','test-audit','proj-find-work']+WFD,
 }.items():
     projects.setdefault(extra, sel)
+
+# 用户要求（2026-11-15）：UI 设计与设计品牌对每个项目都生效。
+UNIVERSAL = ['ui-design', 'design-brand']
+for key, sel in projects.items():
+    projects[key] = list(dict.fromkeys(UNIVERSAL + sel))
+# find-work 自己的四个技能只在这个项目里可见。
+if '/home/sx/projects/find-work' in projects:
+    projects['/home/sx/projects/find-work'] = list(dict.fromkeys(
+        projects['/home/sx/projects/find-work'] + ['proj-find-work']))
 
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()
