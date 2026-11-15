@@ -8,36 +8,46 @@ CORE_TOOLS = ["run_code","read","write","edit","bash","present","todo_write","as
 WF_TOOLS = ["subagent","subagent_fork","workflow","ralph","create_goal","get_goal","update_goal"]
 
 
-# 补进去的五组：dotnet 构建/性能 → dotnet；测试/质量 → testing；DSH 插件开发 → dsh-dev；本机运维 → ops；工作流收尾拆进 wf-*。
+# 22 组：2026-11-15 用户要求「再细一点」——dotnet 拆构建/应用，testing 拆写测试/审计，ops 拆桌面/基础设施。
 DOTNET_BUILD = ['binlog-*','build-parallelism','build-perf-*','check-bin-obj-clash','compile-feature',
                 'copy-to-output-directory','detect-static-dependencies','directory-build-organization',
                 'eliminate-redundant-restores','find-repeated-work-within-one-build','including-generated-files',
                 'incremental-build','mtp-hot-reload','resolve-project-references','troubleshoot-binlog-mcp',
                 'dump-collect']
-TESTING = ['assertion-quality','coverage-analysis','crap-score','eval-performance','exp-*','find-untested-sources',
-           'grade-tests','microbenchmarking','run-tests','scaffold-dotnet-test-project','test-*','testability-obstacle',
-           'generate-testability-wrappers','vectorization','code-testing-*']
 DSHDEV = ['agentic-workflows','codebase-design','create-custom-agent','dsh-extension-dev','enable-project-skills',
           'extension-points','filter-syntax','graph-query-first-prompt','headroom-provider-onboard',
           'improve-codebase-architecture','installing-dsh-extensions','navigating-code','role-templates',
           'scaffold-exercises','sdd-no-git-adaptation','setup-matt-pocock-skills','software-factory']
-OPS = ['background-window-control','batch-file-organizing','baidupcs-download-pipeline','cache-notes',
-       'fcitx-voice-input','local-git-archive-server','local-llm-amd','media-convert-defaults','modelscope-daily',
-       'obs-studio-locale-cwd-fix','platform-detection','qmd','setup-local-sdk','video-transcribe-cn-env',
-       'vr-and-aliyunpan-setup','win-headless-edge-browser-check','win-install-vs2022-ue']
+
+TEST_WRITE = ['writing-mstest-tests','run-tests','tdd','tdd-fanout','tdd-write-feature','test-driven-development',
+              'testability-obstacle','generate-testability-wrappers','scaffold-dotnet-test-project',
+              'code-testing-agent','code-testing-extensions','filter-syntax','platform-detection','microbenchmarking']
+TEST_AUDIT = ['assertion-quality','coverage-analysis','crap-score','eval-performance','exp-*','find-untested-sources',
+              'grade-tests','test-analysis-extensions','test-anti-patterns','test-gap-analysis','test-smell-detection',
+              'test-tagging','test-value-evidence','vectorization']
+OPS_DESKTOP = ['background-window-control','batch-file-organizing','baidupcs-download-pipeline','cache-notes',
+               'fcitx-voice-input','media-convert-defaults','modelscope-daily','obs-studio-locale-cwd-fix',
+               'video-transcribe-cn-env']
+OPS_INFRA = ['local-git-archive-server','local-llm-amd','platform-detection','qmd','setup-local-sdk',
+             'vr-and-aliyunpan-setup','win-headless-edge-browser-check','win-install-vs2022-ue']
+
+DOTNET_APP = ['dotnet-*','maui-*','msbuild*','migrate-*','mcp-csharp-*','nuget-*','analyzing-dotnet-performance','author-component','collect-user-input','configure-auth','convert-blazor-server-to-webapp','convert-to-cpm','coordinate-components','create-blazor-project','create-datadriven-aspnetcore','csharp-refactoring','clr-activation-debugging','debugging-code','fetch-and-send-data','finding-tests','optimizing-ef-core-queries','plan-ui-change','property-patterns','refactoring-code','support-prerendering','system-text-json-net11','technology-selection','thread-abort-migration','use-igniteui-blazor','use-js-interop','winforms-expert','process-api-net11']
 
 configs = {
   'core': {'skills': ['cbm-graph-first','ponytail','ponytail-*','git-pull-commit-push','git-merge-cleanup','using-git-worktrees','git-guardrails-claude-code'], 'mcp': ['cbm'], 'tools': CORE_TOOLS},
   'search': {'skills': [], 'mcp': ['zvecgrep'], 'tools': []},
   'unity': {'skills': ['csharp-scripts','csharp-expert','code-testing'], 'mcp': ['unity'], 'tools': []},
   'unreal': {'skills': ['unreal-*','ue-*','ue5-*','create-editor-plugin','create-toolset','plugin-documenter','read-uasset','graphics-debug','renderdoc-gpu-debug','strip-cpp-comments'], 'mcp': ['ue'], 'tools': []},
-  'dotnet': {'skills': ['dotnet-*','maui-*','msbuild*','migrate-*','mcp-csharp-*','nuget-*','analyzing-dotnet-performance','author-component','collect-user-input','configure-auth','convert-blazor-server-to-webapp','convert-to-cpm','coordinate-components','create-blazor-project','create-datadriven-aspnetcore','csharp-refactoring','clr-activation-debugging','debugging-code','fetch-and-send-data','finding-tests','optimizing-ef-core-queries','plan-ui-change','property-patterns','refactoring-code','support-prerendering','system-text-json-net11','technology-selection','thread-abort-migration','use-igniteui-blazor','use-js-interop','winforms-expert','process-api-net11'] + DOTNET_BUILD, 'mcp': [], 'tools': []},
-  'testing': {'skills': TESTING, 'mcp': [], 'tools': []},
-  'dsh-dev': {'skills': DSHDEV, 'mcp': [], 'tools': []},
-  'ops': {'skills': OPS, 'mcp': [], 'tools': []},
+  'dotnet': {'skills': DOTNET_APP, 'mcp': [], 'tools': []},
+  'dotnet-build': {'skills': DOTNET_BUILD, 'mcp': [], 'tools': []},
+  'testing': {'skills': TEST_WRITE, 'mcp': [], 'tools': []},
+  'test-audit': {'skills': TEST_AUDIT, 'mcp': [], 'tools': []},
+  'dsh-dev': {'skills': DSHDEV, 'mcp': ['cbm'], 'tools': []},
+  'ops-desktop': {'skills': OPS_DESKTOP, 'mcp': [], 'tools': ['ego_*','cua_driver_native__*']},
+  'ops-infra': {'skills': OPS_INFRA, 'mcp': [], 'tools': []},
   'js': {'skills': ['setup-ts-deep-modules','ui-styling','ui-ux-pro-max','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
   'ende': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
-  'blender': {'skills': ['blender-*'], 'mcp': [], 'tools': ['blender_*']},
+  'blender': {'skills': ['blender-*'], 'mcp': ['unity'], 'tools': ['mcp__unity__blender_bridge']},
   'rea': {'skills': ['rea-*','reverse-engineer-anything','open-apk','wakaru','read-uasset','android-tombstone-symbolication','apple-crash-symbolication','image-author-reverse-search','scanned-doc-ocr-extraction'], 'mcp': ['rea'], 'tools': []},
   'agent': {'skills': ['create-skill','create-skill-test','improve-skill-quality','writing-*','using-superpowers','brainstorming','grill-me','systematic-debugging','recap','wizard','wayfinder','loop-me','handoff','claude-handoff','ask-matt','chief-of-staff','triage','implement','research','teach','meeting','wait-what'], 'mcp': [], 'tools': ['ego_*','cua_driver_native__*']},
   'obsidian': {'skills': ['obsidian-*','json-canvas','pdf','slides','scanned-doc-ocr-extraction','meeting'], 'mcp': [], 'tools': []},
@@ -46,6 +56,7 @@ configs = {
   'wf-verify': {'skills': ['verification-before-completion','code-review','review-feature-code','requesting-code-review','test-gap-analysis','receiving-code-review','write-manual-test-doc','diagnosing-bugs','diagnosing-superpowers'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-ship': {'skills': ['finishing-a-development-branch','summarize-feature-work','solidify-feature-lessons','retro','write-feature-docs','cleanup-worktrees','setup-pre-commit','pr','dev-docs'], 'mcp': [], 'tools': WF_TOOLS},
 }
+
 WFD = ['wf-plan','wf-build','wf-verify','wf-ship']
 
 def probe(p):
@@ -89,8 +100,9 @@ for wid, v in ws.items():
     if 'search' not in sel and (coding or title in ('计划','ps','法律','被骗')):
         sel.append('search')
     if title == 'MyAI': sel.append('agent')
-    if any(s in sel for s in ('dotnet', 'js', 'unity', 'unreal')): sel.append('testing')
-    if title == 'MyAI': sel += ['dsh-dev', 'ops']
+    if 'dotnet' in sel: sel.append('dotnet-build')
+    if any(s in sel for s in ('dotnet', 'js', 'unity', 'unreal')): sel += ['testing', 'test-audit']
+    if title == 'MyAI': sel += ['dsh-dev', 'ops-desktop', 'ops-infra']
     if coding: sel += WFD
     sel = list(dict.fromkeys(sel))
     if title == 'empty':
@@ -99,15 +111,15 @@ for wid, v in ws.items():
     projects[p] = sel
     report.append((title, p, exists, ','.join(sel)))
 
-projects.setdefault('/home/sx', ['core','search','ops'])
+projects.setdefault('/home/sx', ['core','search','ops-desktop','ops-infra'])
 for scratch in ('/tmp', '/home/sx/projects/test', '/mnt/Video/test'):
-    projects.setdefault(scratch, ['core','search','ops'] if scratch == '/tmp' else ['core','testing'])
+    projects.setdefault(scratch, ['core','search','ops-desktop','ops-infra'] if scratch == '/tmp' else ['core','testing','test-audit'])
 for extra, sel in {
-    '/home/sx/projects/MyAI/deepseek-harness': ['core','search','js','agent','testing','dsh-dev','ops']+WFD,
-    '/home/sx/projects/MyAI/deepseek-harness-dev': ['core','search','js','agent','testing','dsh-dev','ops']+WFD,
+    '/home/sx/projects/MyAI/deepseek-harness': ['core','search','js','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
+    '/home/sx/projects/MyAI/deepseek-harness-dev': ['core','search','js','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
     '/home/sx/projects/MyAI/.scratch/mgr-ws-demo': ['core'],
-    '/home/sx/projects/ps-tool': ['core','search','unreal','dotnet','rea']+WFD,
-    '/home/sx/projects/hgame': ['core','dotnet','js','rea'],
+    '/home/sx/projects/ps-tool': ['core','search','unreal','dotnet','dotnet-build','testing','test-audit','rea']+WFD,
+    '/home/sx/projects/hgame': ['core','dotnet','dotnet-build','testing','test-audit','js','rea'],
 }.items():
     projects.setdefault(extra, sel)
 
