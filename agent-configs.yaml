@@ -1,0 +1,232 @@
+configs:
+  core:
+    skills:
+      - cbm-graph-first
+      - ponytail
+      - git-pull-commit-push
+      - git-merge-cleanup
+      - using-git-worktrees
+    mcp:
+      - cbm
+  search:
+    skills: []
+    mcp:
+      - zvecgrep
+  unity:
+    skills:
+      - csharp-scripts
+      - csharp-expert
+      - code-testing
+    mcp:
+      - unity
+  unreal:
+    skills:
+      - unreal-module-router
+      - unreal-mcp
+      - unreal-dev
+      - unreal-code-authoring
+      - unreal-python
+      - unreal-cmd
+      - unreal-test-authoring
+      - unreal-uasset-ref-scan
+    mcp:
+      - ue
+  dotnet:
+    skills:
+      - csharp-expert
+      - dotnet-webapi
+      - dotnet-backend-tdd
+      - writing-mstest-tests
+      - run-tests
+      - msbuild-antipatterns
+      - binlog-generation
+      - binlog-failure-analysis
+    mcp: []
+  js:
+    skills:
+      - setup-ts-deep-modules
+      - ui-styling
+      - ui-ux-pro-max
+      - wakaru
+      - authoring-github-workflows
+    mcp: []
+  ende:
+    skills:
+      - setup-ts-deep-modules
+      - wakaru
+      - authoring-github-workflows
+    mcp: []
+  blender:
+    skills:
+      - blender-modeling
+    mcp: []
+  wf-plan:
+    skills:
+      - grill-with-docs
+      - grilling
+      - writing-plans
+      - make-feature-plan
+      - to-spec
+      - feature-inventory-docs-first
+    mcp: []
+  wf-build:
+    skills:
+      - execute-feature-plan
+      - executing-plans
+      - subagent-driven-development
+      - tdd
+      - tdd-write-feature
+      - implement-spec
+      - add-software-feature
+    mcp: []
+  wf-verify:
+    skills:
+      - verification-before-completion
+      - code-review
+      - review-feature-code
+      - requesting-code-review
+      - test-gap-analysis
+    mcp: []
+  wf-ship:
+    skills:
+      - finishing-a-development-branch
+      - summarize-feature-work
+      - solidify-feature-lessons
+      - retro
+      - write-feature-docs
+    mcp: []
+projects:
+  /home/sx/projects/MyAI:
+    - core
+    - search
+    - js
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/MyAI/deepseek-harness:
+    - core
+    - search
+    - js
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/MyAI/deepseek-harness-dev:
+    - core
+    - search
+    - js
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/MyAI/.scratch/mgr-ws-demo:
+    - core
+  /home/sx/projects/find-work:
+    - core
+    - search
+    - dotnet
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/ps-tool:
+    - core
+    - search
+    - dotnet
+    - unreal
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/System:
+    - core
+    - search
+    - unreal
+    - dotnet
+    - js
+    - blender
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/PsShowcase:
+    - core
+    - search
+    - unity
+    - unreal
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/PsShowcaseWeb:
+    - core
+    - search
+    - dotnet
+    - js
+    - wf-plan
+    - wf-build
+  /home/sx/projects/XianXia:
+    - core
+    - search
+    - unreal
+    - wf-plan
+    - wf-build
+    - wf-verify
+    - wf-ship
+  /home/sx/projects/SxGame:
+    - core
+    - unreal
+  /home/sx/projects/vr-quiz:
+    - core
+    - search
+    - unity
+    - dotnet
+    - js
+    - wf-plan
+    - wf-build
+  /home/sx/projects/hgame:
+    - core
+    - dotnet
+    - js
+  /home/sx/projects/template:
+    - core
+    - unity
+    - unreal
+  /home/sx/projects/unrealengine/ue5.8:
+    - core
+    - unreal
+  /home/sx/projects/计划:
+    - core
+    - wf-plan
+    - wf-ship
+  /home/sx/projects/0526:
+    - core
+  /home/sx/projects/anim:
+    - core
+  /home/sx/projects/dd:
+    - core
+  /home/sx/projects/hitman47584:
+    - core
+  /home/sx/projects/li-dfy:
+    - core
+  /home/sx/projects/VR_92_2:
+    - core
+  /home/sx/projects/cave:
+    - core
+  /home/sx/projects/HoloLensView:
+    - core
+  /home/sx/projects/Moon_VR_TCP:
+    - core
+  /home/sx/projects/solar_system_ios:
+    - core
+  /home/sx/projects/test:
+    - core
+  /home/sx/projects/法律:
+    - core
+  /home/sx/projects/被骗:
+    - core
+  /mnt/Video/PsShowcase:
+    - core
+  /mnt/Video2/HoloLensView:
+    - search
