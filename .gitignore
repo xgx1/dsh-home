@@ -52,6 +52,8 @@ bin/*
 !bin/dsh-observe.py
 !bin/dsh-desktops.py
 !bin/dsh-view.py
+!bin/agent-configs.py
+!bin/audit-agent-configs.py
 # 2026-11-06：agent 桌面（GUI 默认落点）+ 生产桌面包装脚本
 !bin/agent-desktop.py
 !bin/agent-shell-env.sh
