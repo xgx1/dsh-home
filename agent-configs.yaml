@@ -1,346 +1,422 @@
+# 技能 / MCP / 工具 的按项目选择。未列入此处的项目 = 空选择 = 不加载任何技能与 MCP，且一个工具都不允许。
+# 依据 ~/.dsh/storages/workspace.json 的 24 个工作区 + 各自工程标记（*.uproject / ProjectSettings / *.sln|csproj / package.json）。
+# selectionOf() 是精确字符串匹配：同一项目既有软链键又有真实路径键时，两套都要写。
+# tools 是白名单 glob：一条都不匹配的工具被屏蔽；MCP 工具也可由其 server（mcp 字段）放行。
+# /mnt/Video2/empty 故意不列：它是「什么都不给」的验证工作区。
+
 configs:
   core:
     skills:
-      - cbm-graph-first
-      - ponytail
-      - ponytail-*
-      - git-pull-commit-push
-      - git-merge-cleanup
-      - using-git-worktrees
+      - "cbm-graph-first"
+      - "ponytail"
+      - "ponytail-*"
+      - "git-pull-commit-push"
+      - "git-merge-cleanup"
+      - "using-git-worktrees"
     mcp:
-      - cbm
+      - "cbm"
+    tools:
+      - "run_code"
+      - "read"
+      - "write"
+      - "edit"
+      - "bash"
+      - "present"
+      - "todo_write"
+      - "ask_user_question"
+      - "job_*"
+      - "terminal_*"
+      - "user_terminal_*"
+      - "skill"
+      - "search_context"
+      - "compress"
+      - "decompress"
+      - "absorb"
+      - "acp_*"
+      - "read_image"
+      - "working_directory"
+      - "web_search"
+      - "list_mcp_resources"
+      - "list_mcp_resource_templates"
+      - "read_mcp_resource"
   search:
     skills: []
     mcp:
-      - zvecgrep
+      - "zvecgrep"
+    tools: []
   unity:
     skills:
-      - csharp-scripts
-      - csharp-expert
-      - code-testing
+      - "csharp-scripts"
+      - "csharp-expert"
+      - "code-testing"
     mcp:
-      - unity
+      - "unity"
+    tools: []
   unreal:
     skills:
-      - unreal-*
-      - ue-*
-      - ue5-*
-      - create-editor-plugin
-      - create-toolset
-      - plugin-documenter
-      - read-uasset
-      - graphics-debug
-      - renderdoc-gpu-debug
+      - "unreal-*"
+      - "ue-*"
+      - "ue5-*"
+      - "create-editor-plugin"
+      - "create-toolset"
+      - "plugin-documenter"
+      - "read-uasset"
+      - "graphics-debug"
+      - "renderdoc-gpu-debug"
     mcp:
-      - ue
+      - "ue"
+    tools: []
   dotnet:
     skills:
-      - dotnet-*
-      - maui-*
-      - msbuild*
-      - migrate-*
-      - mcp-csharp-*
-      - nuget-*
-      - analyzing-dotnet-performance
-      - author-component
-      - collect-user-input
-      - configure-auth
-      - convert-blazor-server-to-webapp
-      - convert-to-cpm
-      - coordinate-components
-      - create-blazor-project
-      - create-datadriven-aspnetcore
-      - csharp-refactoring
-      - clr-activation-debugging
-      - debugging-code
-      - fetch-and-send-data
-      - finding-tests
-      - optimizing-ef-core-queries
-      - plan-ui-change
-      - property-patterns
-      - refactoring-code
-      - support-prerendering
-      - system-text-json-net11
-      - technology-selection
-      - thread-abort-migration
-      - use-igniteui-blazor
-      - use-js-interop
-      - winforms-expert
+      - "dotnet-*"
+      - "maui-*"
+      - "msbuild*"
+      - "migrate-*"
+      - "mcp-csharp-*"
+      - "nuget-*"
+      - "analyzing-dotnet-performance"
+      - "author-component"
+      - "collect-user-input"
+      - "configure-auth"
+      - "convert-blazor-server-to-webapp"
+      - "convert-to-cpm"
+      - "coordinate-components"
+      - "create-blazor-project"
+      - "create-datadriven-aspnetcore"
+      - "csharp-refactoring"
+      - "clr-activation-debugging"
+      - "debugging-code"
+      - "fetch-and-send-data"
+      - "finding-tests"
+      - "optimizing-ef-core-queries"
+      - "plan-ui-change"
+      - "property-patterns"
+      - "refactoring-code"
+      - "support-prerendering"
+      - "system-text-json-net11"
+      - "technology-selection"
+      - "thread-abort-migration"
+      - "use-igniteui-blazor"
+      - "use-js-interop"
+      - "winforms-expert"
     mcp: []
+    tools: []
   js:
     skills:
-      - setup-ts-deep-modules
-      - ui-styling
-      - ui-ux-pro-max
-      - wakaru
-      - authoring-github-workflows
+      - "setup-ts-deep-modules"
+      - "ui-styling"
+      - "ui-ux-pro-max"
+      - "wakaru"
+      - "authoring-github-workflows"
     mcp: []
+    tools: []
   ende:
     skills:
-      - setup-ts-deep-modules
-      - wakaru
-      - authoring-github-workflows
+      - "setup-ts-deep-modules"
+      - "wakaru"
+      - "authoring-github-workflows"
     mcp: []
+    tools: []
   blender:
     skills:
-      - blender-*
+      - "blender-*"
     mcp: []
+    tools:
+      - "blender_*"
   rea:
     skills:
-      - rea-*
-      - reverse-engineer-anything
-      - open-apk
-      - wakaru
-      - read-uasset
-      - android-tombstone-symbolication
-      - apple-crash-symbolication
-      - image-author-reverse-search
-      - scanned-doc-ocr-extraction
+      - "rea-*"
+      - "reverse-engineer-anything"
+      - "open-apk"
+      - "wakaru"
+      - "read-uasset"
+      - "android-tombstone-symbolication"
+      - "apple-crash-symbolication"
+      - "image-author-reverse-search"
+      - "scanned-doc-ocr-extraction"
     mcp:
-      - rea
+      - "rea"
+    tools: []
   agent:
     skills:
-      - create-skill
-      - create-skill-test
-      - improve-skill-quality
-      - writing-*
-      - using-superpowers
-      - brainstorming
-      - grill-me
-      - systematic-debugging
-      - recap
-      - wizard
-      - wayfinder
-      - loop-me
-      - handoff
-      - claude-handoff
-      - ask-matt
-      - chief-of-staff
-      - triage
-      - implement
-      - research
-      - teach
-      - meeting
-      - wait-what
+      - "create-skill"
+      - "create-skill-test"
+      - "improve-skill-quality"
+      - "writing-*"
+      - "using-superpowers"
+      - "brainstorming"
+      - "grill-me"
+      - "systematic-debugging"
+      - "recap"
+      - "wizard"
+      - "wayfinder"
+      - "loop-me"
+      - "handoff"
+      - "claude-handoff"
+      - "ask-matt"
+      - "chief-of-staff"
+      - "triage"
+      - "implement"
+      - "research"
+      - "teach"
+      - "meeting"
+      - "wait-what"
     mcp: []
+    tools:
+      - "ego_*"
+      - "cua_driver_native__*"
   obsidian:
     skills:
-      - obsidian-*
-      - json-canvas
-      - pdf
-      - slides
-      - scanned-doc-ocr-extraction
-      - meeting
+      - "obsidian-*"
+      - "json-canvas"
+      - "pdf"
+      - "slides"
+      - "scanned-doc-ocr-extraction"
+      - "meeting"
     mcp: []
+    tools: []
   wf-plan:
     skills:
-      - grill-with-docs
-      - grilling
-      - writing-plans
-      - make-feature-plan
-      - to-spec
-      - feature-inventory-docs-first
+      - "grill-with-docs"
+      - "grilling"
+      - "writing-plans"
+      - "make-feature-plan"
+      - "to-spec"
+      - "feature-inventory-docs-first"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-build:
     skills:
-      - execute-feature-plan
-      - executing-plans
-      - subagent-driven-development
-      - tdd
-      - tdd-write-feature
-      - implement-spec
-      - add-software-feature
+      - "execute-feature-plan"
+      - "executing-plans"
+      - "subagent-driven-development"
+      - "tdd"
+      - "tdd-write-feature"
+      - "implement-spec"
+      - "add-software-feature"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-verify:
     skills:
-      - verification-before-completion
-      - code-review
-      - review-feature-code
-      - requesting-code-review
-      - test-gap-analysis
+      - "verification-before-completion"
+      - "code-review"
+      - "review-feature-code"
+      - "requesting-code-review"
+      - "test-gap-analysis"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
   wf-ship:
     skills:
-      - finishing-a-development-branch
-      - summarize-feature-work
-      - solidify-feature-lessons
-      - retro
-      - write-feature-docs
+      - "finishing-a-development-branch"
+      - "summarize-feature-work"
+      - "solidify-feature-lessons"
+      - "retro"
+      - "write-feature-docs"
     mcp: []
+    tools:
+      - "subagent"
+      - "subagent_fork"
+      - "workflow"
+      - "ralph"
+      - "create_goal"
+      - "get_goal"
+      - "update_goal"
 projects:
-  /mnt/Video2/System:
-    - core
-    - unreal
-    - dotnet
-    - js
-    - blender
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/MyAI:
-    - core
-    - js
-    - search
-    - agent
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Video/YellowRiverSluice:
-    - core
-    - unreal
-  /mnt/Video2/计划:
-    - core
-    - obsidian
-    - search
-  /mnt/Video2/ps-tool:
-    - core
-    - unreal
-    - dotnet
-    - rea
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/find-work:
-    - core
-    - dotnet
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/unrealengine/ue5.8:
-    - core
-    - unreal
-    - dotnet
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Video2/SxGame:
-    - core
-    - unreal
-  /mnt/Video2/法律:
-    - core
-    - search
-  /mnt/Video2/PsShowcaseWeb:
-    - core
-    - dotnet
-    - js
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Video2/XianXia:
-    - core
-    - unreal
-  /mnt/Video2/HoloLensView:
-    - core
-    - unity
-    - dotnet
-  /mnt/Video2/solar_system_ios:
-    - core
-    - unity
-    - dotnet
-  /mnt/Video/PsShowcase:
-    - core
-    - unity
-    - unreal
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Video2/被骗:
-    - core
-    - search
-  /mnt/Video2/ps:
-    - core
-    - obsidian
-    - search
-  /mnt/Video2/cave:
-    - core
-    - unreal
-  /mnt/Video/vr-quiz:
-    - core
-    - unity
-    - dotnet
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Projects/vr-quiz:
-    - core
-    - unity
-    - dotnet
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /mnt/Video2/template:
-    - core
-    - unity
-    - unreal
-  /mnt/Video/VR_92_2:
-    - core
-    - unreal
-  /mnt/Video2/hgame:
-    - core
-    - dotnet
-    - js
-    - rea
-    - search
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/0526:
-    - core
-  /mnt/Video2/Moon_VR_TCP:
-    - core
-    - unreal
-  /home/sx:
-    - core
-    - search
-  /tmp:
-    - core
-    - search
-  /mnt/Video/test:
-    - core
-  /mnt/Video2/test:
-    - core
-  /home/sx/projects/MyAI/deepseek-harness:
-    - core
-    - search
-    - js
-    - agent
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/MyAI/deepseek-harness-dev:
-    - core
-    - search
-    - js
-    - agent
-    - wf-plan
-    - wf-build
-    - wf-verify
-    - wf-ship
-  /home/sx/projects/MyAI/.scratch/mgr-ws-demo:
-    - core
-  /home/sx/projects/hgame:
-    - core
-    - dotnet
-    - js
-    - rea
-  /home/sx/projects/gitserver:
-    - core
+  "/mnt/Video2/System":
+    - "core"
+    - "unreal"
+    - "dotnet"
+    - "js"
+    - "blender"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/MyAI":
+    - "core"
+    - "js"
+    - "search"
+    - "agent"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/mnt/Video/YellowRiverSluice":
+    - "core"
+    - "unreal"
+  "/mnt/Video2/计划":
+    - "core"
+    - "obsidian"
+    - "search"
+  "/mnt/Video2/ps-tool":
+    - "core"
+    - "unreal"
+    - "dotnet"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/find-work":
+    - "core"
+    - "dotnet"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/unrealengine/ue5.8":
+    - "core"
+    - "unreal"
+    - "dotnet"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/mnt/Video2/SxGame":
+    - "core"
+    - "unreal"
+  "/mnt/Video2/法律":
+    - "core"
+    - "search"
+  "/mnt/Video2/PsShowcaseWeb":
+    - "core"
+    - "unreal"
+    - "dotnet"
+    - "js"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/mnt/Video2/XianXia":
+    - "core"
+    - "unreal"
+  "/mnt/Video2/HoloLensView":
+    - "core"
+    - "unity"
+    - "dotnet"
+  "/mnt/Video2/solar_system_ios":
+    - "core"
+    - "unity"
+    - "dotnet"
+  "/mnt/Video/PsShowcase":
+    - "core"
+    - "unity"
+    - "unreal"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/mnt/Video2/被骗":
+    - "core"
+    - "search"
+  "/mnt/Video2/ps":
+    - "core"
+    - "obsidian"
+    - "search"
+  "/mnt/Video2/cave":
+    - "core"
+    - "unreal"
+  "/mnt/Video/vr-quiz":
+    - "core"
+    - "unity"
+    - "dotnet"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/mnt/Video2/template":
+    - "core"
+    - "unity"
+    - "unreal"
+  "/mnt/Video/VR_92_2":
+    - "core"
+    - "unreal"
+  "/mnt/Video2/hgame":
+    - "core"
+    - "dotnet"
+    - "js"
+    - "rea"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/0526":
+    - "core"
+  "/mnt/Video2/Moon_VR_TCP":
+    - "core"
+    - "unreal"
+  "/home/sx/projects/gitserver":
+    - "core"
+  "/home/sx":
+    - "core"
+    - "search"
+  "/tmp":
+    - "core"
+    - "search"
+  "/home/sx/projects/test":
+    - "core"
+  "/mnt/Video/test":
+    - "core"
+  "/home/sx/projects/MyAI/deepseek-harness":
+    - "core"
+    - "search"
+    - "js"
+    - "agent"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/MyAI/deepseek-harness-dev":
+    - "core"
+    - "search"
+    - "js"
+    - "agent"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/MyAI/.scratch/mgr-ws-demo":
+    - "core"
+  "/home/sx/projects/ps-tool":
+    - "core"
+    - "search"
+    - "unreal"
+    - "dotnet"
+    - "rea"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+  "/home/sx/projects/hgame":
+    - "core"
+    - "dotnet"
+    - "js"
+    - "rea"
