@@ -13,6 +13,7 @@ configs:
       - "git-pull-commit-push"
       - "git-merge-cleanup"
       - "using-git-worktrees"
+      - "git-guardrails-claude-code"
     mcp:
       - "cbm"
     tools:
@@ -63,6 +64,7 @@ configs:
       - "read-uasset"
       - "graphics-debug"
       - "renderdoc-gpu-debug"
+      - "strip-cpp-comments"
     mcp:
       - "ue"
     tools: []
@@ -99,6 +101,84 @@ configs:
       - "use-igniteui-blazor"
       - "use-js-interop"
       - "winforms-expert"
+      - "process-api-net11"
+      - "binlog-*"
+      - "build-parallelism"
+      - "build-perf-*"
+      - "check-bin-obj-clash"
+      - "compile-feature"
+      - "copy-to-output-directory"
+      - "detect-static-dependencies"
+      - "directory-build-organization"
+      - "eliminate-redundant-restores"
+      - "find-repeated-work-within-one-build"
+      - "including-generated-files"
+      - "incremental-build"
+      - "mtp-hot-reload"
+      - "resolve-project-references"
+      - "troubleshoot-binlog-mcp"
+      - "dump-collect"
+    mcp: []
+    tools: []
+  testing:
+    skills:
+      - "assertion-quality"
+      - "coverage-analysis"
+      - "crap-score"
+      - "eval-performance"
+      - "exp-*"
+      - "find-untested-sources"
+      - "grade-tests"
+      - "microbenchmarking"
+      - "run-tests"
+      - "scaffold-dotnet-test-project"
+      - "test-*"
+      - "testability-obstacle"
+      - "generate-testability-wrappers"
+      - "vectorization"
+      - "code-testing-*"
+    mcp: []
+    tools: []
+  dsh-dev:
+    skills:
+      - "agentic-workflows"
+      - "codebase-design"
+      - "create-custom-agent"
+      - "dsh-extension-dev"
+      - "enable-project-skills"
+      - "extension-points"
+      - "filter-syntax"
+      - "graph-query-first-prompt"
+      - "headroom-provider-onboard"
+      - "improve-codebase-architecture"
+      - "installing-dsh-extensions"
+      - "navigating-code"
+      - "role-templates"
+      - "scaffold-exercises"
+      - "sdd-no-git-adaptation"
+      - "setup-matt-pocock-skills"
+      - "software-factory"
+    mcp: []
+    tools: []
+  ops:
+    skills:
+      - "background-window-control"
+      - "batch-file-organizing"
+      - "baidupcs-download-pipeline"
+      - "cache-notes"
+      - "fcitx-voice-input"
+      - "local-git-archive-server"
+      - "local-llm-amd"
+      - "media-convert-defaults"
+      - "modelscope-daily"
+      - "obs-studio-locale-cwd-fix"
+      - "platform-detection"
+      - "qmd"
+      - "setup-local-sdk"
+      - "video-transcribe-cn-env"
+      - "vr-and-aliyunpan-setup"
+      - "win-headless-edge-browser-check"
+      - "win-install-vs2022-ue"
     mcp: []
     tools: []
   js:
@@ -183,6 +263,8 @@ configs:
       - "make-feature-plan"
       - "to-spec"
       - "feature-inventory-docs-first"
+      - "to-questionnaire"
+      - "to-tickets"
     mcp: []
     tools:
       - "subagent"
@@ -201,6 +283,12 @@ configs:
       - "tdd-write-feature"
       - "implement-spec"
       - "add-software-feature"
+      - "init-feature-dev"
+      - "prototype"
+      - "tdd-fanout"
+      - "fix-feature-issues"
+      - "dispatching-parallel-agents"
+      - "optimize-feature-code"
     mcp: []
     tools:
       - "subagent"
@@ -217,6 +305,10 @@ configs:
       - "review-feature-code"
       - "requesting-code-review"
       - "test-gap-analysis"
+      - "receiving-code-review"
+      - "write-manual-test-doc"
+      - "diagnosing-bugs"
+      - "diagnosing-superpowers"
     mcp: []
     tools:
       - "subagent"
@@ -233,6 +325,10 @@ configs:
       - "solidify-feature-lessons"
       - "retro"
       - "write-feature-docs"
+      - "cleanup-worktrees"
+      - "setup-pre-commit"
+      - "pr"
+      - "dev-docs"
     mcp: []
     tools:
       - "subagent"
@@ -250,6 +346,7 @@ projects:
     - "js"
     - "blender"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -259,13 +356,13 @@ projects:
     - "js"
     - "search"
     - "agent"
+    - "testing"
+    - "dsh-dev"
+    - "ops"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/mnt/Video/YellowRiverSluice":
-    - "core"
-    - "unreal"
   "/mnt/Video2/计划":
     - "core"
     - "obsidian"
@@ -275,6 +372,7 @@ projects:
     - "unreal"
     - "dotnet"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -283,6 +381,7 @@ projects:
     - "core"
     - "dotnet"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -292,14 +391,16 @@ projects:
     - "unreal"
     - "dotnet"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/mnt/Video2/SxGame":
+  "/mnt/Video2/PsShowcaseWeb/client-deliverables/SxGame":
     - "core"
     - "unreal"
-  "/mnt/Video2/法律":
+    - "testing"
+  "/mnt/Storage/归档/min/资料/法律":
     - "core"
     - "search"
   "/mnt/Video2/PsShowcaseWeb":
@@ -308,6 +409,7 @@ projects:
     - "dotnet"
     - "js"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -315,38 +417,35 @@ projects:
   "/mnt/Video2/XianXia":
     - "core"
     - "unreal"
-  "/mnt/Video2/HoloLensView":
+    - "testing"
+  "/mnt/Video/PsShowcase/unity/projects/solar_system_ios":
     - "core"
     - "unity"
     - "dotnet"
-  "/mnt/Video2/solar_system_ios":
-    - "core"
-    - "unity"
-    - "dotnet"
+    - "testing"
   "/mnt/Video/PsShowcase":
     - "core"
     - "unity"
     - "unreal"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/mnt/Video2/被骗":
+  "/mnt/Storage/归档/min/资料/被骗":
     - "core"
     - "search"
   "/mnt/Video2/ps":
     - "core"
     - "obsidian"
     - "search"
-  "/mnt/Video2/cave":
-    - "core"
-    - "unreal"
   "/mnt/Video/vr-quiz":
     - "core"
     - "unity"
     - "dotnet"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -355,41 +454,49 @@ projects:
     - "core"
     - "unity"
     - "unreal"
-  "/mnt/Video/VR_92_2":
-    - "core"
-    - "unreal"
-  "/mnt/Video2/hgame":
+    - "testing"
+  "/home/sx/projects/hgame":
     - "core"
     - "dotnet"
     - "js"
     - "rea"
     - "search"
+    - "testing"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/0526":
     - "core"
-  "/mnt/Video2/Moon_VR_TCP":
+  "/mnt/Video/PsShowcase/unity/projects/Moon_VR_TCP":
     - "core"
+    - "unity"
     - "unreal"
+    - "testing"
   "/home/sx/projects/gitserver":
     - "core"
   "/home/sx":
     - "core"
     - "search"
+    - "ops"
   "/tmp":
     - "core"
     - "search"
+    - "ops"
   "/home/sx/projects/test":
     - "core"
+    - "testing"
   "/mnt/Video/test":
     - "core"
+    - "testing"
   "/home/sx/projects/MyAI/deepseek-harness":
     - "core"
     - "search"
     - "js"
     - "agent"
+    - "testing"
+    - "dsh-dev"
+    - "ops"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -399,6 +506,9 @@ projects:
     - "search"
     - "js"
     - "agent"
+    - "testing"
+    - "dsh-dev"
+    - "ops"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -415,8 +525,3 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/home/sx/projects/hgame":
-    - "core"
-    - "dotnet"
-    - "js"
-    - "rea"
