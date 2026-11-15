@@ -6,6 +6,11 @@
 
 - **改动默认提交并推送**：`~/.dsh`、`dsh-extensions` 与其 submodule 提交后直接推 origin（submodule 先推，再推上级），不必每次再问。（2026-10-17 用户指示）submodule 改动在各自目录里提交，上层只保存指针。
 - **`~/.dsh` 本身是 git 仓库**（`main` → `xgx1/dsh-home`，公开），只跟踪配置层：`AGENTS.md`、`settings.yaml`、`.agent-presets/`、`profiles/*/` 的 composition 与 lock、启动脚本。**密钥（`.credentials.yaml`/`.env`）与运行时数据（`sessions/`、`storages/`、根 `skills/` 软链）永不入库**——新增跟踪内容前先读 `~/.dsh/README.md` 的排除清单与「只锚根目录」陷阱。
+- **`~/.dsh`（main）与 `~/.dsh-dev`（dev，同一仓库的另一个 worktree / orphan 分支）是两个要一起维护的配置层，git 无法 merge 无关历史——同步靠搬文件，不靠 git merge**。（2026-11-15 用户指示：这两个也要提交、合并同步，更新 MyAI 时要一起做）改任一边的配置层都要走完这四步：
+  1. **提交**：两边各自 `git commit`（`~/.dsh` → main，`~/.dsh-dev` → dev），各自 push origin。
+  2. **搬到 dev**：把生产的 `profiles/web|headless/{cordis.yml,cordis.patch.yml,package.json,pnpm-lock.yaml,pnpm-workspace.yaml}`、`skill-filter.yaml`、home 级 `cordis.patch.yml` 拷到 `~/.dsh-dev` 同名路径，再把 `link:/home/sx/projects/MyAI/deepseek-harness/` 全部改成 `deepseek-harness-dev/`（`sed -i 's#MyAI/deepseek-harness/#MyAI/deepseek-harness-dev/#g'`）。
+  3. **装依赖 + 重启验证**：在 `~/.dsh-dev/profiles/web`（和 `headless`）里 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`，`systemctl --user restart dsh-web-dev.service`，刷新 3081 确认能起、能建会话。
+  4. **提交 dev**：`~/.dsh-dev` 里再 `git commit` + push。判断是否落后：`git -C ~/.dsh log --oneline main..dev` 与 `dev..main`（`~/.dsh-dev` 用 `git -C ~/.dsh` 看同一仓库）。
 
 ## 会话产物落点（临时文件）
 
