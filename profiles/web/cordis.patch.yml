@@ -111,13 +111,12 @@
 # - approval 固定 never：无 permission 服务驱动会话策略后，保持当前
 #   无审批弹窗行为
 
+# 2026-11-15 用户要求：沙箱全部禁止挂载（消费者已改为容忍缺席）。
 - id: sandbox
-  disabled: false
+  disabled: true
 
 - id: sandbox-policy
-  config:
-    mode: danger-full-access
-    workspaceRoot: !!js process.cwd()
+  disabled: true
 
 - id: bash-sandbox
   disabled: true

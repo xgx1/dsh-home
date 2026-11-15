@@ -45,11 +45,12 @@ configs = {
   'dsh-dev': {'skills': DSHDEV, 'mcp': ['cbm'], 'tools': []},
   'ops-desktop': {'skills': OPS_DESKTOP, 'mcp': [], 'tools': ['ego_*','cua_driver_native__*']},
   'ops-infra': {'skills': OPS_INFRA, 'mcp': [], 'tools': []},
-  'js': {'skills': ['setup-ts-deep-modules','ui-styling','ui-ux-pro-max','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
+  'js': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
+  'ui-design': {'skills': ['ui-styling','ui-ux-pro-max'], 'mcp': [], 'tools': []},
   'ende': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
-  'blender': {'skills': ['blender-*'], 'mcp': ['unity'], 'tools': ['mcp__unity__blender_bridge']},
+  'blender': {'skills': ['blender-*'], 'mcp': ['unity'], 'tools': ['blender_*','mcp__unity__blender_bridge']},
   'rea': {'skills': ['rea-*','reverse-engineer-anything','open-apk','wakaru','read-uasset','android-tombstone-symbolication','apple-crash-symbolication','image-author-reverse-search','scanned-doc-ocr-extraction'], 'mcp': ['rea'], 'tools': []},
-  'agent': {'skills': ['create-skill','create-skill-test','improve-skill-quality','writing-*','using-superpowers','brainstorming','grill-me','systematic-debugging','recap','wizard','wayfinder','loop-me','handoff','claude-handoff','ask-matt','chief-of-staff','triage','implement','research','teach','meeting','wait-what'], 'mcp': [], 'tools': ['ego_*','cua_driver_native__*']},
+  'agent': {'skills': ['create-skill','create-skill-test','improve-skill-quality','writing-*','using-superpowers','brainstorming','grill-me','systematic-debugging','recap','wizard','wayfinder','loop-me','handoff','claude-handoff','ask-matt','chief-of-staff','triage','implement','research','teach','meeting','wait-what'], 'mcp': [], 'tools': ['ego_*','cua_driver_native__*','team_task_*']},
   'obsidian': {'skills': ['obsidian-*','json-canvas','pdf','slides','scanned-doc-ocr-extraction','meeting'], 'mcp': [], 'tools': []},
   'wf-plan': {'skills': ['grill-with-docs','grilling','writing-plans','make-feature-plan','to-spec','feature-inventory-docs-first','to-questionnaire','to-tickets'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-build': {'skills': ['execute-feature-plan','executing-plans','subagent-driven-development','tdd','tdd-write-feature','implement-spec','add-software-feature','init-feature-dev','prototype','tdd-fanout','fix-feature-issues','dispatching-parallel-agents','optimize-feature-code'], 'mcp': [], 'tools': WF_TOOLS},
@@ -101,6 +102,7 @@ for wid, v in ws.items():
         sel.append('search')
     if title == 'MyAI': sel.append('agent')
     if 'dotnet' in sel: sel.append('dotnet-build')
+    if 'js' in sel: sel.append('ui-design')
     if any(s in sel for s in ('dotnet', 'js', 'unity', 'unreal')): sel += ['testing', 'test-audit']
     if title == 'MyAI': sel += ['dsh-dev', 'ops-desktop', 'ops-infra']
     if coding: sel += WFD
@@ -115,8 +117,8 @@ projects.setdefault('/home/sx', ['core','search','ops-desktop','ops-infra'])
 for scratch in ('/tmp', '/home/sx/projects/test', '/mnt/Video/test'):
     projects.setdefault(scratch, ['core','search','ops-desktop','ops-infra'] if scratch == '/tmp' else ['core','testing','test-audit'])
 for extra, sel in {
-    '/home/sx/projects/MyAI/deepseek-harness': ['core','search','js','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
-    '/home/sx/projects/MyAI/deepseek-harness-dev': ['core','search','js','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
+    '/home/sx/projects/MyAI/deepseek-harness': ['core','search','js','ui-design','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
+    '/home/sx/projects/MyAI/deepseek-harness-dev': ['core','search','js','ui-design','agent','testing','test-audit','dsh-dev','ops-desktop','ops-infra']+WFD,
     '/home/sx/projects/MyAI/.scratch/mgr-ws-demo': ['core'],
     '/home/sx/projects/ps-tool': ['core','search','unreal','dotnet','dotnet-build','testing','test-audit','rea']+WFD,
     '/home/sx/projects/hgame': ['core','dotnet','dotnet-build','testing','test-audit','js','rea'],
