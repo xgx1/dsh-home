@@ -683,7 +683,7 @@
             name: '@deepseek-ai/dsh-persona'
             config:
               prefix: |-
-                代码检索顺序：先查代码知识图谱 MCP `mcp__cbm__*`（search_graph / trace_path / get_architecture / search_code），再查工作区语义检索 `mcp__zvecgrep__*`（zvec_grep_search 做语义/跨文件检索，zvec_grep_rg 做精确或穷举匹配）；grep/glob 只用于字面量、文件名和原始计数。图里查不到先验覆盖（check_index_coverage / query_graph(graph="missed")）再断言“没找到”，未索引仓库先 index_repository。
+                只使用当前会话工具目录里列出的工具：没列出的（包括任何 MCP 工具）就不要假设它存在。
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
