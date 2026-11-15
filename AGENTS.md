@@ -16,7 +16,9 @@
 
 **技能、MCP 服务器、工具三样可见性 2026-11-15 起全由 `~/.dsh/agent-configs.yaml` 决定**，三份都是白名单：`configs.<名>.skills`（技能 glob）、`configs.<名>.mcp`（serverName）、`configs.<名>.tools`（工具名 glob，MCP 工具也可由 server 放行）；`projects.<绝对路径>` 选配置，键是 GUI 记录的真实 cwd，软链与真实路径两套都要写。
 
-**未列入 `projects` 的目录 = 三样都不给**（工具与 MCP 默认拒绝，连 bash/read 都没有）；个人层/项目层 `skill-filter.yaml` 已全部删除，别再造。改完两个 home（`~/.dsh`、`~/.dsh-dev`）一起提交，重启会话生效。
+**未列入 `projects` 的目录 = 三样都不给**（工具与 MCP 默认拒绝，连 bash/read 都没有；会话启动时 journal 里会有 `is not listed under projects` 警告）。个人层/项目层 `skill-filter.yaml` 已全部删除，别再造。改完两个 home（`~/.dsh`、`~/.dsh-dev`）一起提交，重启会话生效。
+
+生成与审计：`~/.dsh/bin/agent-configs.py` 按 `storages/workspace.json` 重写两个 home 的文档（**新建工作区后必须重跑**，否则该目录一个工具都没有），`~/.dsh/bin/audit-agent-configs.py` 打印覆盖率与未挂清单。
 
 ## 会话产物落点（临时文件）
 
