@@ -10,7 +10,7 @@
   1. **提交**：两边各自 `git commit`（`~/.dsh` → main，`~/.dsh-dev` → dev），各自 push origin。
   2. **搬到 dev**：把生产的 `profiles/web|headless/{cordis.yml,cordis.patch.yml,package.json,pnpm-lock.yaml,pnpm-workspace.yaml}`、`skill-filter.yaml`、home 级 `cordis.patch.yml` 拷到 `~/.dsh-dev` 同名路径，再把 `link:/home/sx/projects/MyAI/deepseek-harness/` 全部改成 `deepseek-harness-dev/`（`sed -i 's#MyAI/deepseek-harness/#MyAI/deepseek-harness-dev/#g'`）。
   3. **装依赖 + 重启验证**：在 `~/.dsh-dev/profiles/web`（和 `headless`）里 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`，`systemctl --user restart dsh-web-dev.service`，刷新 3081 确认能起、能建会话。
-  4. **提交 dev**：`~/.dsh-dev` 里再 `git commit` + push。判断是否落后：`git -C ~/.dsh log --oneline main..dev` 与 `dev..main`（`~/.dsh-dev` 用 `git -C ~/.dsh` 看同一仓库）。
+  4. **提交 dev**：`~/.dsh-dev` 里再 `git commit` + push。判断是否落后：orphan 分支没有共同祖先，`rev-list` 计数无意义——直接比内容：`git -C ~/.dsh diff --stat main dev -- profiles/ cordis.patch.yml skill-filter.yaml`，剩下的差异应只有 `link:` 里的 `-dev/` 那几行与 dev 独有的 `dsh-web-dev-launch.sh`。
 
 ## 会话产物落点（临时文件）
 
