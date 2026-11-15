@@ -1,0 +1,4 @@
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then the profile's patch
+# file, then any --patch overlays. Edit that patch file, not this one.
+entry = []
