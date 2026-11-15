@@ -222,6 +222,22 @@ configs:
       - "ui-ux-pro-max"
     mcp: []
     tools: []
+  design-brand:
+    skills:
+      - "design"
+      - "design-system"
+      - "brand"
+      - "banner-design"
+    mcp: []
+    tools: []
+  proj-find-work:
+    skills:
+      - "find-work"
+      - "find-work-image"
+      - "taobao-web-ops"
+      - "xhs-web-ops"
+    mcp: []
+    tools: []
   ende:
     skills:
       - "setup-ts-deep-modules"
@@ -375,6 +391,8 @@ configs:
       - "update_goal"
 projects:
   "/mnt/Video2/System":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "dotnet"
@@ -382,7 +400,6 @@ projects:
     - "blender"
     - "search"
     - "dotnet-build"
-    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -390,11 +407,12 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/MyAI":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "js"
     - "search"
     - "agent"
-    - "ui-design"
     - "testing"
     - "test-audit"
     - "dsh-dev"
@@ -405,10 +423,14 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/mnt/Video2/计划":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "obsidian"
     - "search"
   "/mnt/Video2/ps-tool":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "dotnet"
@@ -421,6 +443,8 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/find-work":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "dotnet"
     - "search"
@@ -431,7 +455,10 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+    - "proj-find-work"
   "/home/sx/projects/unrealengine/ue5.8":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "dotnet"
@@ -444,21 +471,26 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/mnt/Video2/PsShowcaseWeb/client-deliverables/SxGame":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "testing"
     - "test-audit"
   "/mnt/Storage/归档/min/资料/法律":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
   "/mnt/Video2/PsShowcaseWeb":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "dotnet"
     - "js"
     - "search"
     - "dotnet-build"
-    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -466,11 +498,15 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/mnt/Video2/XianXia":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unreal"
     - "testing"
     - "test-audit"
   "/mnt/Video/PsShowcase":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unity"
     - "unreal"
@@ -482,13 +518,19 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/mnt/Storage/归档/min/资料/被骗":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
   "/mnt/Video2/ps":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "obsidian"
     - "search"
   "/mnt/Video/vr-quiz":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unity"
     - "dotnet"
@@ -501,19 +543,22 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/mnt/Video2/template":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unity"
     - "unreal"
     - "testing"
     - "test-audit"
   "/home/sx/projects/hgame":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "dotnet"
     - "js"
     - "rea"
     - "search"
     - "dotnet-build"
-    - "ui-design"
     - "testing"
     - "test-audit"
     - "wf-plan"
@@ -521,32 +566,45 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/0526":
+    - "ui-design"
+    - "design-brand"
     - "core"
   "/home/sx/projects/gitserver":
+    - "ui-design"
+    - "design-brand"
     - "core"
   "/home/sx":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
     - "ops-desktop"
     - "ops-infra"
   "/tmp":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
     - "ops-desktop"
     - "ops-infra"
   "/home/sx/projects/test":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "testing"
     - "test-audit"
   "/mnt/Video/test":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "testing"
     - "test-audit"
   "/home/sx/projects/MyAI/deepseek-harness":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
     - "js"
-    - "ui-design"
     - "agent"
     - "testing"
     - "test-audit"
@@ -558,10 +616,11 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/MyAI/deepseek-harness-dev":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
     - "js"
-    - "ui-design"
     - "agent"
     - "testing"
     - "test-audit"
@@ -573,8 +632,12 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/MyAI/.scratch/mgr-ws-demo":
+    - "ui-design"
+    - "design-brand"
     - "core"
   "/home/sx/projects/ps-tool":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "search"
     - "unreal"
