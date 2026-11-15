@@ -304,6 +304,7 @@ projects:
     - "search"
   "/mnt/Video2/PsShowcaseWeb":
     - "core"
+    - "unreal"
     - "dotnet"
     - "js"
     - "search"
@@ -372,6 +373,8 @@ projects:
   "/mnt/Video2/Moon_VR_TCP":
     - "core"
     - "unreal"
+  "/home/sx/projects/gitserver":
+    - "core"
   "/home/sx":
     - "core"
     - "search"
