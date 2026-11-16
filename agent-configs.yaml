@@ -575,6 +575,10 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+  "/mnt/Video/CesiumOfflineServer":
+    - "ui-design"
+    - "design-brand"
+    - "core"
   "/home/sx":
     - "ui-design"
     - "design-brand"
