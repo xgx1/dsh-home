@@ -175,9 +175,10 @@ projects['/mnt/Video2/_from-system'] = ['core']
 
 # plugins：Unity 插件源码库（unity-pkgs 各包源码 + CoplayDev/unity-mcp 检出 + 购买的 .unitypackage）。probe 只探到
 # UniTask.NetCore.sln（Unity 包的 asmdef 不是 csproj，唯一的 Unity 工程 NaughtyAttributes 在 maxdepth 5 外），
-# dotnet-build/testing/test-audit 全是 *.sln 误判；这里要的是 unity 的 csharp 技能与 unity MCP + dotnet 的
-# csharp-refactoring/debugging-code（2026-11-16 用户要求「正确且合适」）。
-projects['/home/sx/projects/plugins'] = ['core', 'unity', 'dotnet']
+# dotnet-build/testing/test-audit 全是 *.sln 误判；dotnet 那套 Blazor/MAUI/迁移技能在这里同样是噪音（源码不可构建，
+# 只有 unity-mcp/Server 的 pytest）。要的是 unity 三件 csharp 技能 + unity MCP（本机有 6000.7.0b5）——只给 core + unity
+# （2026-11-16 用户要求「正确且合适」）。
+projects['/home/sx/projects/plugins'] = ['core', 'unity']
 
 # KO2：UE6 源码引擎（/home/sx/projects/unrealengine/ue6）上的 C++ 游戏工程，*.uproject 探测是对的。
 # testing/test-audit 来自 3 个 UBT 的 *.Build.cs/*.Target.cs——这是 UnrealBuildTool 的 C# 定义，不是 .NET 工程，也没有测试；

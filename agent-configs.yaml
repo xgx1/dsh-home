@@ -306,6 +306,16 @@ configs:
       - "meeting"
     mcp: []
     tools: []
+  docs:
+    skills:
+      - "pdf"
+      - "scanned-doc-ocr-extraction"
+      - "meeting"
+      - "batch-file-organizing"
+      - "media-convert-defaults"
+      - "video-transcribe-cn-env"
+    mcp: []
+    tools: []
   wf-plan:
     skills:
       - "grill-with-docs"
@@ -607,13 +617,11 @@ projects:
   "/home/sx/projects/plugins":
     - "core"
     - "unity"
-    - "dotnet"
   "/mnt/Video2/_from-system":
     - "core"
   "/mnt/Video2/待整理":
-    - "ui-design"
-    - "design-brand"
     - "core"
+    - "docs"
   "/mnt/Video2/jami":
     - "core"
   "/mnt/Video2/Plugins":
