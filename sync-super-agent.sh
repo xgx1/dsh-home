@@ -16,5 +16,5 @@ cd "$DEV"
 git add extensions/dsh-super-agent
 if git diff --cached --quiet; then echo "--- 指针未变"; else git commit -m "chore(extensions): bump dsh-super-agent" && git log --oneline -1; fi
 
-systemctl --user restart dsh-superagent.service
-echo "--- 已重启 :3082"
+systemctl --user restart dsh-web-dev.service
+echo "--- 已重启 :3081（super-agent 与 dev 实例同进程）"

@@ -978,3 +978,48 @@ name = "@deepseek-ai/dsh-agent-default-model"
 [entry.config]
 provider = "opencode-go"
 model = "deepseek-v4.1-flash"
+
+# ── dsh-super-agent（Router/Worker 双层，2026-11-16 从 :3082 合并进来）──────────────
+# observe = 只记录不执行。config 整份写在这里（与 bundle 自带 cordis.patch.yml 同值），
+# 因为插件 apply() 对 DEFAULTS 只做浅合并，缺项会掉回更宽松的默认（预算无上限）。
+[[entry]]
+id = "dsh-super-agent"
+
+[entry.config]
+acceptMode = "observe"
+runner = "auto"
+maxWorkers = 4
+acceptSources = []
+# 放在 storages/（gitignore）而不是 profile 目录下，避免工单状态进配置层仓库。
+stateDir = "/home/sx/.dsh-dev/storages/super-agent"
+
+[entry.config.budget]
+maxWorkersPerHour = 12
+maxRuntimeMs = 1800000
+maxTokensPerDay = 0
+
+[entry.config.worktree]
+enabled = true
+root = ""
+
+[entry.config.delivery]
+mode = "patch"
+remote = "origin"
+prBase = ""
+githubToken = ""
+artifactsDir = ""
+
+[entry.config.sources.inbox]
+enabled = false
+dir = ""
+intervalMs = 2000
+
+[entry.config.sources.github]
+enabled = false
+repos = []
+token = ""
+intervalMs = 300000
+allowAuthors = []
+
+[entry.config.sources.ci]
+secret = ""

@@ -41,6 +41,9 @@ importers:
       dsh-sidebar-taskbar:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+      dsh-super-agent:
+        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
+        version: link:../../../projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
       dsh-task-manager:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
