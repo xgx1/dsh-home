@@ -1,0 +1,16 @@
+{
+  "name": "dsh-profile-superagent",
+  "private": true,
+  "dependencies": {
+    "dsh-super-agent": "link:/home/sx/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-super-agent"
+      ]
+    }
+  }
+}
