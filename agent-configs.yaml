@@ -644,8 +644,6 @@ projects:
     - "testing"
     - "test-audit"
   "/mnt/Video2/aur":
-    - "ui-design"
-    - "design-brand"
     - "core"
   "/mnt/Video2/captcha-solver":
     - "ui-design"
