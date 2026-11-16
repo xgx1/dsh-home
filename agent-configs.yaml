@@ -587,6 +587,11 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
+    - "search"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
   "/mnt/Video2/dsh-Go":
     - "ui-design"
     - "design-brand"
