@@ -306,60 +306,6 @@ name = "/home/sx/.dsh/profiles/web/opencode-go-headers.mjs"
 id = "llm-pi-ai"
 name = "@deepseek-ai/dsh-llm-pi-ai"
 
-      # Venice（2026-11-13 装）：自营聚合 + uncensored 端点，OpenAI 兼容。
-      # 凭据走 web Models 页写 VENICE_API_KEY（或 ~/.dsh/.env）。
-[entry.config.providers.venice]
-displayName = "Venice"
-apiKeyEnv = "VENICE_API_KEY"
-api = "openai-completions"
-baseURL = "https://api.venice.ai/api/v1"
-
-[entry.config.providers.venice.compat]
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.venice.models]]
-id = "deepseek-v4-1-flash-1017-uncensored"
-name = "DeepSeek V4.1 Flash Uncensored"
-contextWindow = 1000000
-maxTokens = 131072
-input = [ "text" ]
-
-[[entry.config.providers.venice.models]]
-id = "qwen-3-6-plus"
-name = "Qwen 3.6 Plus Uncensored"
-contextWindow = 1000000
-maxTokens = 65536
-input = [ "text" ]
-
-[[entry.config.providers.venice.models]]
-id = "abliteration-abliterated-model-large-flash"
-name = "Abliterated Large Flash"
-contextWindow = 1000000
-maxTokens = 131072
-input = [ "text" ]
-
-[[entry.config.providers.venice.models]]
-id = "venice-uncensored-1-2"
-name = "Venice Uncensored 1.2"
-contextWindow = 128000
-maxTokens = 8192
-input = [ "text" ]
-
-[[entry.config.providers.venice.models]]
-id = "claude-opus-5"
-name = "Claude Opus 5 (Venice)"
-contextWindow = 1000000
-maxTokens = 128000
-input = [ "text", "image" ]
-
-[[entry.config.providers.venice.models]]
-id = "openai-gpt-6-astra"
-name = "GPT-6 Astra (Venice)"
-contextWindow = 1050000
-maxTokens = 128000
-input = [ "text", "image" ]
-
 [entry.config.providers.opencode-go]
 displayName = "OpenCode Go"
 apiKeyEnv = "OPENCODE_API_KEY"
@@ -397,17 +343,6 @@ low = "low"
 high = "high"
 max = "max"
 
-[entry.config.providers.md]
-apiKeyEnv = "MD_API_KEY"
-api = "openai-completions"
-baseURL = "https://api-inference.modelscope.cn/v1"
-
-[[entry.config.providers.md.models]]
-id = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
-name = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
-contextWindow = 1000000
-maxTokens = 256000
-
 [entry.config.providers.openai-codex]
 displayName = "ChatGPT Plus (Codex)"
 
@@ -419,109 +354,6 @@ id = "gpt-6-luna"
 
 [[entry.config.providers.openai-codex.models]]
 id = "gpt-6.1-sol"
-
-[entry.config.providers.sensenova]
-displayName = "SenseNova token plan (Responses API)"
-apiKeyEnv = "SENSENOVA_API_KEY"
-api = "openai-responses"
-baseURL = "https://token.sensenova.cn/v1"
-reasoning = "xhigh"
-
-[entry.config.providers.sensenova.compat]
-supportsDeveloperRole = true
-supportsMaxOutputTokens = true
-supportsStrictMode = true
-
-[[entry.config.providers.sensenova.models]]
-id = "deepseek-flash"
-name = "DeepSeek"
-contextWindow = 1000000
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.sensenova.models.reasoningEfforts]
-off = "none"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-
-[[entry.config.providers.sensenova.models]]
-id = "sensenova-6.8-flash"
-name = "sensenova"
-contextWindow = 262144
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.sensenova.models.reasoningEfforts]
-off = "none"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-
-[entry.config.providers.step]
-displayName = "StepFun Step 5"
-apiKeyEnv = "STEP_API_KEY"
-api = "openai-completions"
-baseURL = "https://api.stepfun.com/step_plan/v1"
-reasoning = "medium"
-
-[entry.config.providers.step.compat]
-supportsReasoningEffort = true
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.step.models]]
-id = "step-5-preview"
-name = "step-5-preview"
-contextWindow = 1000000
-maxTokens = 131072
-input = [ "text", "image" ]
-
-[entry.config.providers.step.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-
-[entry.config.providers.freellmapi]
-displayName = "FreeLLMAPI (119.45.10.68)"
-apiKeyEnv = "FREELLMAPI_API_KEY"
-api = "openai-completions"
-baseURL = "http://119.45.10.68:3001/v1"
-
-[[entry.config.providers.freellmapi.models]]
-id = "auto"
-name = "Auto (面板智能路由)"
-contextWindow = 300000
-maxTokens = 8192
-
-[entry.config.providers.nvidia]
-displayName = "NVIDIA NIM (Mistral Large 4 1T)"
-apiKeyEnv = "NVIDIA_API_KEY"
-api = "openai-completions"
-baseURL = "https://integrate.api.nvidia.com/v1"
-reasoning = "high"
-
-[entry.config.providers.nvidia.headers]
-NVCF-POLL-SECONDS = "3600"
-
-[entry.config.providers.nvidia.compat]
-supportsReasoningEffort = true
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.nvidia.models]]
-id = "mistralai/mistral-large-4-1t-a52b"
-name = "Mistral Large 4 (1T A52B)"
-contextWindow = 262144
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.nvidia.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
 
 [entry.config.providers.qwen]
 displayName = "Qwen token plan (DeepSeek V4.1 Flash)"
@@ -951,81 +783,13 @@ name = "@dsh-external/dsh-blender-plugin"
 id = "cua"
 name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"
 
-# ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
-# 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
-# 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
-#  · 前置：~/.config/helium-browser-flags.conf 里的 --remote-debugging-port=9222
-#    （Helium 必须由 helium-wrapper/桌面图标启动才读这份 flags）。
-#  · egoBin 指向本地 JS 包装：先探 9222，取到 webSocketDebuggerUrl 就设
-#    EGO_LINUX_CDP_URL 直接挂载；挂不上才退回用 Helium profile 自起一份
-#    （此时两者仍同一份数据，因为 EGO_LINUX_PROFILE 也指过去了）。
-#  · idleTimeoutMin: 0 —— 共享模式下不能让插件的空闲回收去关用户自己的浏览器。
-#  · chromePath/chromeArgs 只在「挂不上、需自起」时生效；Chrome 137+ 忽略
-#    --load-extension，所以内核必须留 Helium。
-[[entry]]
-id = "ego-browser"
-
-[entry.config]
-egoBin = "/home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs"
-idleTimeoutMin = 0
-chromePath = "/opt/helium-browser-bin/helium"
-chromeArgs = "--load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
-
-[[entry]]
-id = "agent-default-model"
-name = "@deepseek-ai/dsh-agent-default-model"
-
-[entry.config]
-provider = "opencode-go"
-model = "deepseek-v4.1-flash"
-
-# ── dsh-super-agent（Router/Worker 双层，2026-11-16 从 :3082 合并进来）──────────────
-# observe = 只记录不执行。config 整份写在这里（与 bundle 自带 cordis.patch.yml 同值），
-# 因为插件 apply() 对 DEFAULTS 只做浅合并，缺项会掉回更宽松的默认（预算无上限）。
-[[entry]]
-id = "dsh-super-agent"
-
-[entry.config]
-acceptMode = "observe"
-runner = "auto"
-maxWorkers = 4
-acceptSources = []
-# 放在 storages/（gitignore）而不是 profile 目录下，避免工单状态进配置层仓库。
-stateDir = "/home/sx/.dsh-dev/storages/super-agent"
-
-[entry.config.budget]
-maxWorkersPerHour = 12
-maxRuntimeMs = 1800000
-maxTokensPerDay = 0
-
-[entry.config.worktree]
-enabled = true
-root = ""
-
-[entry.config.delivery]
-mode = "patch"
-remote = "origin"
-prBase = ""
-githubToken = ""
-artifactsDir = ""
-
-[entry.config.sources.inbox]
-enabled = false
-dir = ""
-intervalMs = 2000
-
-[entry.config.sources.github]
-enabled = false
-repos = []
-token = ""
-intervalMs = 300000
-allowAuthors = []
-
-[entry.config.sources.ci]
-secret = ""
-# ── 任务台两层管理器（ADR-0014）────────────────────────────────────────────
-# 大管理器：全局一个，只判断项目归属并把任务派给该项目的项目管理器。
-# 项目管理器：每个项目一个，拆单、裁决下一步、起执行会话、把问题落到卡片上。
+# ── 任务台两层管理器（ADR-0014，2026-11-16 用户要求）────────────────────────
+# 大管理器：全局一个，只判断项目归属，用 task_dispatch_project 派给该项目的项目管理器。
+# 项目管理器：每个项目一个，拆单、起执行会话（task_start_execution）、裁决下一步、
+# 把必须人拍板的问题落到卡片上（task_question）。两个 id 与 dsh-task-manager 的
+# console.ts 常量逐字绑定（GLOBAL_MANAGER_PRESET / PROJECT_MANAGER_PRESET）。
+# 工具面只有 dsh-task-manager/tools（必须走子路径行，整包会在 host 面重复注册）+ 压缩：
+# 这两个会话是常驻的，没有自动压缩活不过半天。管理会话不改代码，所以不给 bash / fs。
 [[entry]]
 [[entry.insert]]
 id = "preset-task-console-global"
@@ -1063,7 +827,6 @@ auto = true
 id = "task-console-global-tools"
 name = "dsh-task-manager/tools"
 
-[[entry]]
 [[entry.insert]]
 id = "preset-task-console-project"
 name = "@deepseek-ai/dsh-agent-preset"
@@ -1099,3 +862,31 @@ auto = true
 [[entry.insert.config.plugins]]
 id = "task-console-project-tools"
 name = "dsh-task-manager/tools"
+
+# ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
+# 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
+# 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
+#  · 前置：~/.config/helium-browser-flags.conf 里的 --remote-debugging-port=9222
+#    （Helium 必须由 helium-wrapper/桌面图标启动才读这份 flags）。
+#  · egoBin 指向本地 JS 包装：先探 9222，取到 webSocketDebuggerUrl 就设
+#    EGO_LINUX_CDP_URL 直接挂载；挂不上才退回用 Helium profile 自起一份
+#    （此时两者仍同一份数据，因为 EGO_LINUX_PROFILE 也指过去了）。
+#  · idleTimeoutMin: 0 —— 共享模式下不能让插件的空闲回收去关用户自己的浏览器。
+#  · chromePath/chromeArgs 只在「挂不上、需自起」时生效；Chrome 137+ 忽略
+#    --load-extension，所以内核必须留 Helium。
+[[entry]]
+id = "ego-browser"
+
+[entry.config]
+egoBin = "/home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs"
+idleTimeoutMin = 0
+chromePath = "/opt/helium-browser-bin/helium"
+chromeArgs = "--load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
+
+[[entry]]
+id = "agent-default-model"
+name = "@deepseek-ai/dsh-agent-default-model"
+
+[entry.config]
+provider = "opencode-go"
+model = "deepseek-v4.1-flash"
