@@ -690,6 +690,65 @@
           - id: cua
             name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'
 
+# ── 任务台两层管理器（ADR-0014，2026-11-16 用户要求）────────────────────────
+# 大管理器：全局一个，只判断项目归属，用 task_dispatch_project 派给该项目的项目管理器。
+# 项目管理器：每个项目一个，拆单、起执行会话（task_start_execution）、裁决下一步、
+# 把必须人拍板的问题落到卡片上（task_question）。两个 id 与 dsh-task-manager 的
+# console.ts 常量逐字绑定（GLOBAL_MANAGER_PRESET / PROJECT_MANAGER_PRESET）。
+# 工具面只有 dsh-task-manager/tools（必须走子路径行，整包会在 host 面重复注册）+ 压缩：
+# 这两个会话是常驻的，没有自动压缩活不过半天。管理会话不改代码，所以不给 bash / fs。
+- insert:
+    - id: preset-task-console-global
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: task-console-global
+        name: 任务台·大管理器
+        order: 40
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                你是任务台的大管理器：只做路由——判断这件事属于哪个项目（git 仓库根路径），用 task_dispatch_project 派给该项目的项目管理器。不自己改代码、不建会话、不执行任务。项目判断不了就先问用户，不要猜。
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+          - id: task-console-global-tools
+            name: 'dsh-task-manager/tools'
+    - id: preset-task-console-project
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: task-console-project
+        name: 任务台·项目管理器
+        order: 41
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+                config:
+                  auto: true
+          - id: task-console-project-tools
+            name: 'dsh-task-manager/tools'
+
 # ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
 # 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
 # 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
