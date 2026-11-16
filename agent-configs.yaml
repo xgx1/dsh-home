@@ -595,12 +595,7 @@ projects:
     - "testing"
     - "test-audit"
   "/mnt/Video2/qq-bot":
-    - "ui-design"
-    - "design-brand"
     - "core"
-    - "js"
-    - "testing"
-    - "test-audit"
   "/mnt/Video2/KO2":
     - "ui-design"
     - "design-brand"
