@@ -579,6 +579,7 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
+    - "unreal"
     - "dotnet"
     - "dotnet-build"
     - "testing"
@@ -597,8 +598,7 @@ projects:
     - "design-brand"
     - "core"
     - "js"
-    - "testing"
-    - "test-audit"
+    - "dsh-dev"
   "/mnt/Video2/qq-bot":
     - "core"
   "/mnt/Video2/KO2":
@@ -617,12 +617,7 @@ projects:
     - "testing"
     - "test-audit"
   "/mnt/Video2/_from-system":
-    - "ui-design"
-    - "design-brand"
     - "core"
-    - "unreal"
-    - "testing"
-    - "test-audit"
   "/mnt/Video2/待整理":
     - "ui-design"
     - "design-brand"
@@ -636,13 +631,7 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/3dtiles":
-    - "ui-design"
-    - "design-brand"
     - "core"
-    - "dotnet"
-    - "dotnet-build"
-    - "testing"
-    - "test-audit"
   "/mnt/Video2/aur":
     - "core"
   "/mnt/Video2/captcha-solver":
