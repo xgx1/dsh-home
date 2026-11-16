@@ -143,6 +143,10 @@ if '/home/sx/projects/find-work' in projects:
     projects['/home/sx/projects/find-work'] = list(dict.fromkeys(
         projects['/home/sx/projects/find-work'] + ['proj-find-work']))
 
+# qq-bot：bash + .mjs 粘 Docker/systemd 的运维仓库。js 是 SnowCatQQ/SnowLuma 等 vendor 检出里的 tsconfig 误判，
+# 既没有自己的前端也没有 .NET 测试，UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/qq-bot'] = ['core']
+
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()
 out.write('# 技能 / MCP / 工具 的按项目选择。未列入此处的项目 = 空选择 = 不加载任何技能与 MCP，且一个工具都不允许。\n')
