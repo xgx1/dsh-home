@@ -602,20 +602,12 @@ projects:
   "/mnt/Video2/qq-bot":
     - "core"
   "/mnt/Video2/KO2":
-    - "ui-design"
-    - "design-brand"
     - "core"
     - "unreal"
-    - "testing"
-    - "test-audit"
   "/home/sx/projects/plugins":
-    - "ui-design"
-    - "design-brand"
     - "core"
+    - "unity"
     - "dotnet"
-    - "dotnet-build"
-    - "testing"
-    - "test-audit"
   "/mnt/Video2/_from-system":
     - "core"
   "/mnt/Video2/待整理":
@@ -623,20 +615,14 @@ projects:
     - "design-brand"
     - "core"
   "/mnt/Video2/jami":
-    - "ui-design"
-    - "design-brand"
     - "core"
   "/mnt/Video2/Plugins":
-    - "ui-design"
-    - "design-brand"
     - "core"
   "/home/sx/projects/3dtiles":
     - "core"
   "/mnt/Video2/aur":
     - "core"
   "/mnt/Video2/captcha-solver":
-    - "ui-design"
-    - "design-brand"
     - "core"
   "/home/sx":
     - "ui-design"
@@ -715,3 +701,7 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+  "/mnt/Video2/jami/jami-client-qt":
+    - "core"
+  "/mnt/Video2/jami/jami-patches":
+    - "core"
