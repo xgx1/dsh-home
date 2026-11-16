@@ -296,6 +296,12 @@ configs:
       - "ego_*"
       - "cua_driver_native__*"
       - "team_task_*"
+  task-console:
+    skills: []
+    mcp: []
+    tools:
+      - "task_*"
+
   obsidian:
     skills:
       - "obsidian-*"
@@ -715,3 +721,5 @@ projects:
     - "core"
   "/mnt/Video2/jami/jami-patches":
     - "core"
+  "/home/sx/.dsh/task-manager/console":
+    - "task-console"
