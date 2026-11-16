@@ -64,7 +64,7 @@ WFD = ['wf-plan','wf-build','wf-verify','wf-ship']
 
 def probe(p):
     def has(pat):
-        cmd = "find %r -maxdepth 4 -name %r -not -path '*/node_modules/*' -not -path '*/.git/*' 2>/dev/null | head -1" % (p, pat)
+        cmd = "find %r -maxdepth 4 -name %r -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/_import/*' 2>/dev/null | head -1" % (p, pat)
         try:
             return bool(subprocess.run(['bash','-lc',cmd],capture_output=True,text=True,timeout=45).stdout.strip())
         except Exception:
@@ -88,6 +88,7 @@ for wid, v in ws.items():
         if os.path.exists(os.path.join(p,'package.json')) or has('tsconfig.json'):
             stack.append('js')
     if title == 'System': stack = ['unreal','dotnet','js','blender']
+    if title == 'unrealengine': stack = ['unreal','dotnet']
     if title in ('计划','ps'): stack = ['obsidian']
     if title == 'hgame': stack = ['dotnet','js','rea']
     if title in ('empty','0526','li-dfy'):
@@ -99,7 +100,7 @@ for wid, v in ws.items():
     if title in ('solar_system_ios','HoloLensView'): stack = ['unity','dotnet']
     if title in ('法律','被骗'): stack = ['search']
     sel = ['core'] + [s for s in dict.fromkeys(stack) if s in configs and s != 'core']
-    coding = title in ('MyAI','find-work','ps-tool','System','PsShowcase','PsShowcaseWeb','vr-quiz','ue5.8','hgame')
+    coding = title in ('MyAI','find-work','ps-tool','System','PsShowcase','PsShowcaseWeb','vr-quiz','ue5.8','unrealengine','hgame')
     if 'search' not in sel and (coding or title in ('计划','ps','法律','被骗')):
         sel.append('search')
     if title == 'MyAI': sel.append('agent')
@@ -108,6 +109,8 @@ for wid, v in ws.items():
     if title == 'MyAI': sel += ['dsh-dev', 'ops-desktop', 'ops-infra']
     if coding: sel += WFD
     sel = list(dict.fromkeys(sel))
+    if title == 'MyAI': sel.append('ende')
+    if title == 'hgame': sel.append('agent')
     if title == 'empty':
         report.append((title, p, exists, '(unlisted)'))
         continue
