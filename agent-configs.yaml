@@ -701,6 +701,8 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+  "/home/sx/projects/3dtiles/src-tree":
+    - "core"
   "/mnt/Video2/jami/jami-client-qt":
     - "core"
   "/mnt/Video2/jami/jami-patches":

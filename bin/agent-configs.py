@@ -54,6 +54,7 @@ configs = {
   'rea': {'skills': ['rea-*','reverse-engineer-anything','open-apk','wakaru','read-uasset','android-tombstone-symbolication','apple-crash-symbolication','image-author-reverse-search','scanned-doc-ocr-extraction'], 'mcp': ['rea'], 'tools': []},
   'agent': {'skills': ['create-skill','create-skill-test','improve-skill-quality','writing-*','using-superpowers','brainstorming','grill-me','systematic-debugging','recap','wizard','wayfinder','loop-me','handoff','claude-handoff','ask-matt','chief-of-staff','triage','implement','research','teach','meeting','wait-what'], 'mcp': [], 'tools': ['ego_*','cua_driver_native__*','team_task_*']},
   'obsidian': {'skills': ['obsidian-*','json-canvas','pdf','slides','scanned-doc-ocr-extraction','meeting'], 'mcp': [], 'tools': []},
+  'docs': {'skills': ['pdf','scanned-doc-ocr-extraction','meeting','batch-file-organizing','media-convert-defaults','video-transcribe-cn-env'], 'mcp': [], 'tools': []},
   'wf-plan': {'skills': ['grill-with-docs','grilling','writing-plans','make-feature-plan','to-spec','feature-inventory-docs-first','to-questionnaire','to-tickets'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-build': {'skills': ['execute-feature-plan','executing-plans','subagent-driven-development','tdd','tdd-write-feature','implement-spec','add-software-feature','init-feature-dev','prototype','tdd-fanout','fix-feature-issues','dispatching-parallel-agents','optimize-feature-code'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-verify': {'skills': ['verification-before-completion','code-review','review-feature-code','requesting-code-review','test-gap-analysis','receiving-code-review','write-manual-test-doc','diagnosing-bugs','diagnosing-superpowers'], 'mcp': [], 'tools': WF_TOOLS},
@@ -163,7 +164,9 @@ projects['/mnt/Video2/captcha-solver'] = ['core']
 
 # 3dtiles：Rust（src-tree，cargo）+ C++ 的 3D Tiles 切片流水线，另一半是预编译的离线瓦片服务（/mnt/Video/CesiumOfflineServer，本就是独立工作区）。
 # dotnet/dotnet-build/testing/test-audit 来自 src-tree/vs/vs.sln 这个 C++ 工程被 *.sln 探测误判；UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
-projects['/home/sx/projects/3dtiles'] = ['core']
+# 源码目录单独开会话时也要有工具（未列入 projects 的路径三样都不给），同一套 core。
+for p in ('/home/sx/projects/3dtiles', '/home/sx/projects/3dtiles/src-tree'):
+    projects[p] = ['core']
 
 # _from-system：从 Windows 机器搬来的中转目录——图集目录（967MB 图片）+ 脚本生成的 index.html，加一套 UE 5.8 的
 # PowerShell 构建脚本/日志和一个 2KB 的 .uproject 空壳（无 Source/Content，本机也没有 pwsh）。unreal/testing 全是
@@ -189,6 +192,11 @@ projects['/mnt/Video2/KO2'] = ['core','unreal']
 # 否则那里一个工具都没有（2026-11-16 用户要求「正确且合适」）。
 for repo in ('/mnt/Video2/jami', '/mnt/Video2/jami/jami-client-qt', '/mnt/Video2/jami/jami-patches'):
     projects[repo] = ['core']
+
+# 待整理：文档/资料堆（docx/pdf/xlsx/csv、扫描件、会议录音与视频转录、旧 Windows 桌面导出），既没有代码也没有 UI。
+# 要的是 PDF 阅读、扫描件 OCR、会议纪要、批量归档与媒体转换；office/docx/pptx/xlsx 是 harness 自带技能，本来就加载得到，不必列。
+# web 设计（Tailwind/shadcn）与品牌物料对本目录不适用，universal 那两条不挂——给 core + docs（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/待整理'] = ['core','docs']
 
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()
