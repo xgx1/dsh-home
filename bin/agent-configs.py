@@ -152,6 +152,11 @@ if '/home/sx/projects/find-work' in projects:
 # 既没有自己的前端也没有 .NET 测试，UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/qq-bot'] = ['core']
 
+# Plugins：/mnt/Video2/Plugins 是 Unity 第三方插件与删包留档（4120 个 .cs、105 个 asmdef、9269 个 .meta，没有
+# ProjectSettings / csproj / package.json，既不是 Unity 工程也编译不了），只能读不能构建：unity 那套 dotnet-CLI
+# 技能与 unity-mcp 都用不上，UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/Plugins'] = ['core']
+
 # captcha-solver：FastAPI + cloakbrowser 的验证码求解服务，纯 Python、无前端无 UI；设计/品牌技能不适用，
 # .NET 的 testing/test-audit 同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/captcha-solver'] = ['core']
@@ -164,6 +169,26 @@ projects['/home/sx/projects/3dtiles'] = ['core']
 # PowerShell 构建脚本/日志和一个 2KB 的 .uproject 空壳（无 Source/Content，本机也没有 pwsh）。unreal/testing 全是
 # *.uproject 误判，页面由 build-index.ps1 生成、不手写样式——只给 core（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/_from-system'] = ['core']
+
+# plugins：Unity 插件源码库（unity-pkgs 各包源码 + CoplayDev/unity-mcp 检出 + 购买的 .unitypackage）。probe 只探到
+# UniTask.NetCore.sln（Unity 包的 asmdef 不是 csproj，唯一的 Unity 工程 NaughtyAttributes 在 maxdepth 5 外），
+# dotnet-build/testing/test-audit 全是 *.sln 误判；这里要的是 unity 的 csharp 技能与 unity MCP + dotnet 的
+# csharp-refactoring/debugging-code（2026-11-16 用户要求「正确且合适」）。
+projects['/home/sx/projects/plugins'] = ['core', 'unity', 'dotnet']
+
+# KO2：UE6 源码引擎（/home/sx/projects/unrealengine/ue6）上的 C++ 游戏工程，*.uproject 探测是对的。
+# testing/test-audit 来自 3 个 UBT 的 *.Build.cs/*.Target.cs——这是 UnrealBuildTool 的 C# 定义，不是 .NET 工程，也没有测试；
+# 设计/品牌是 web 视觉技能，UMG/Slate 界面由 unreal-umg-*/ue-ui-umg-slate 覆盖——只给 core + unreal
+# （2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/KO2'] = ['core','unreal']
+
+# jami：C++/Qt（界面是 QML）+ CMake 的 Jami 客户端，走 gerrit 评审、cqfd（docker 镜像 ci-client-qt）跑测试，
+# 架构与编码/git 规则写在仓库自带的 jami-client-qt/AGENTS.md 与 .agents/topics/ 里；Tailwind/shadcn 那套 web 设计技能、
+# 品牌物料技能都不适用（QML 不是 web UI，且仓库自带 clang-format/qmlformat 规则）——只给 core。
+# 真实仓库在父目录下（jami-client-qt 与 jami-patches 两个 git 仓），会话直接开在仓库里时同样只给 core，
+# 否则那里一个工具都没有（2026-11-16 用户要求「正确且合适」）。
+for repo in ('/mnt/Video2/jami', '/mnt/Video2/jami/jami-client-qt', '/mnt/Video2/jami/jami-patches'):
+    projects[repo] = ['core']
 
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()
