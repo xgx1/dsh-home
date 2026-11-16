@@ -321,47 +321,6 @@
   name: "@deepseek-ai/dsh-llm-pi-ai"
   config:
     providers:
-      # Venice（2026-11-13 装）：自营聚合 + uncensored 端点，OpenAI 兼容。
-      # 凭据走 web Models 页写 VENICE_API_KEY（或 ~/.dsh/.env）。
-      venice:
-        displayName: Venice
-        apiKeyEnv: VENICE_API_KEY
-        api: openai-completions
-        baseURL: https://api.venice.ai/api/v1
-        compat:
-          supportsDeveloperRole: false
-          maxTokensField: max_tokens
-        models:
-          - id: deepseek-v4-1-flash-1017-uncensored
-            name: DeepSeek V4.1 Flash Uncensored
-            contextWindow: 1000000
-            maxTokens: 131072
-            input: [ text ]
-          - id: qwen-3-6-plus
-            name: Qwen 3.6 Plus Uncensored
-            contextWindow: 1000000
-            maxTokens: 65536
-            input: [ text ]
-          - id: abliteration-abliterated-model-large-flash
-            name: Abliterated Large Flash
-            contextWindow: 1000000
-            maxTokens: 131072
-            input: [ text ]
-          - id: venice-uncensored-1-2
-            name: Venice Uncensored 1.2
-            contextWindow: 128000
-            maxTokens: 8192
-            input: [ text ]
-          - id: claude-opus-5
-            name: Claude Opus 5 (Venice)
-            contextWindow: 1000000
-            maxTokens: 128000
-            input: [ text, image ]
-          - id: openai-gpt-6-astra
-            name: GPT-6 Astra (Venice)
-            contextWindow: 1050000
-            maxTokens: 128000
-            input: [ text, image ]
       opencode-go:
         displayName: OpenCode Go
         apiKeyEnv: OPENCODE_API_KEY
@@ -376,122 +335,31 @@
             name: Beam Free
             contextWindow: 1048576
             maxTokens: 131072
-            input: [ text ]
-            reasoningEfforts: { low: low, medium: medium, high: high, xhigh: xhigh, max: max }
+            input:
+              - text
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
           - id: deepseek-v4.1-flash
             name: DeepSeek V4.1 Flash
             contextWindow: 1000000
             maxTokens: 384000
-            input: [ text, image ]
-            reasoningEfforts: { low: low, high: high, max: max }
-      md:
-        apiKeyEnv: MD_API_KEY
-        api: openai-completions
-        baseURL: https://api-inference.modelscope.cn/v1
-        models:
-          - id: deepseek-ai/DeepSeek-V4.1-Flash-1017
-            name: deepseek-ai/DeepSeek-V4.1-Flash-1017
-            contextWindow: 1000000
-            maxTokens: 256000
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
       openai-codex:
         displayName: ChatGPT Plus (Codex)
         models:
           - id: gpt-6-astra
           - id: gpt-6-luna
           - id: gpt-6.1-sol
-      sensenova:
-        displayName: SenseNova token plan (Responses API)
-        apiKeyEnv: SENSENOVA_API_KEY
-        api: openai-responses
-        baseURL: https://token.sensenova.cn/v1
-        reasoning: xhigh
-        compat:
-          supportsDeveloperRole: true
-          supportsMaxOutputTokens: true
-          supportsStrictMode: true
-        models:
-          - id: deepseek-flash
-            name: DeepSeek
-            contextWindow: 1000000
-            maxTokens: 65536
-            input:
-              - text
-              - image
-            reasoningEfforts:
-              off: none
-              low: low
-              medium: medium
-              high: high
-              xhigh: xhigh
-          - id: sensenova-6.8-flash
-            name: sensenova
-            contextWindow: 262144
-            maxTokens: 65536
-            input:
-              - text
-              - image
-            reasoningEfforts:
-              off: none
-              low: low
-              medium: medium
-              high: high
-              xhigh: xhigh
-      step:
-        displayName: StepFun Step 5
-        apiKeyEnv: STEP_API_KEY
-        api: openai-completions
-        baseURL: https://api.stepfun.com/step_plan/v1
-        reasoning: medium
-        compat:
-          supportsReasoningEffort: true
-          supportsDeveloperRole: false
-          maxTokensField: max_tokens
-        models:
-          - id: step-5-preview
-            name: step-5-preview
-            contextWindow: 1000000
-            maxTokens: 131072
-            input:
-              - text
-              - image
-            reasoningEfforts:
-              low: low
-              medium: medium
-              high: high
-      freellmapi:
-        displayName: FreeLLMAPI (119.45.10.68)
-        apiKeyEnv: FREELLMAPI_API_KEY
-        api: openai-completions
-        baseURL: http://119.45.10.68:3001/v1
-        models:
-          - id: auto
-            name: Auto (面板智能路由)
-            contextWindow: 300000
-            maxTokens: 8192
-      nvidia:
-        displayName: NVIDIA NIM (Mistral Large 4 1T)
-        apiKeyEnv: NVIDIA_API_KEY
-        api: openai-completions
-        baseURL: https://integrate.api.nvidia.com/v1
-        reasoning: high
-        headers:
-          NVCF-POLL-SECONDS: "3600"
-        compat:
-          supportsReasoningEffort: true
-          supportsDeveloperRole: false
-          maxTokensField: max_tokens
-        models:
-          - id: mistralai/mistral-large-4-1t-a52b
-            name: Mistral Large 4 (1T A52B)
-            contextWindow: 262144
-            maxTokens: 65536
-            input:
-              - text
-              - image
-            reasoningEfforts:
-              low: low
-              medium: medium
-              high: high
       qwen:
         displayName: Qwen token plan (DeepSeek V4.1 Flash)
         apiKeyEnv: QWEN_API_KEY

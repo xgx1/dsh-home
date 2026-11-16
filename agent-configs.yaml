@@ -422,6 +422,7 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+    - "ende"
   "/mnt/Video2/计划":
     - "ui-design"
     - "design-brand"
@@ -565,6 +566,7 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+    - "agent"
   "/home/sx/projects/0526":
     - "ui-design"
     - "design-brand"
