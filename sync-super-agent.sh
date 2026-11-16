@@ -6,7 +6,7 @@ SUB="$HOME/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent"
 DEV="$HOME/projects/MyAI/deepseek-harness-dev"
 
 cd "$SUB"
-git fetch origin upstream official --quiet
+git fetch --all --quiet
 echo "--- 上游新提交："; git log --oneline main..upstream/main | head -10 || true
 git merge --no-edit upstream/main
 echo "--- 官方原型的未跟踪提交（只看不并）："; git log --oneline main..official/main | head -5 || true
