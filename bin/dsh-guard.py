@@ -166,7 +166,7 @@ def prod_repo_actions(cmd):
         if gm and gm.group(1) in GIT_WRITE_VERBS and in_prod:
             hits.append(('prod-git-write', 'critical', 'git %s: %s' % (gm.group(1), s[:170])))
             continue
-        pm = re.search(r'\b(pnpm|npm|yarn|npx)\s+(?:run\s+)?([a-z:.-]+)', s)
+        pm = re.search(r'\b(pnpm|npm|yarn|npx|nub|nubx)\s+(?:run\s+)?([a-z:.-]+)', s)
         if pm and pm.group(2).split(':')[0] in PKG_VERBS and in_prod:
             hits.append(('prod-build', 'critical', '%s %s: %s' % (pm.group(1), pm.group(2), s[:170])))
     return hits
