@@ -100,7 +100,7 @@ for wid, v in ws.items():
     if title in ('solar_system_ios','HoloLensView'): stack = ['unity','dotnet']
     if title in ('法律','被骗'): stack = ['search']
     sel = ['core'] + [s for s in dict.fromkeys(stack) if s in configs and s != 'core']
-    coding = title in ('MyAI','find-work','ps-tool','System','PsShowcase','PsShowcaseWeb','vr-quiz','ue5.8','unrealengine','hgame')
+    coding = title in ('MyAI','find-work','ps-tool','System','PsShowcase','PsShowcaseWeb','vr-quiz','ue5.8','unrealengine','hgame','wivrn-src')
     if 'search' not in sel and (coding or title in ('计划','ps','法律','被骗')):
         sel.append('search')
     if title == 'MyAI': sel.append('agent')
