@@ -28,5 +28,9 @@ export BILI_NATIVE_DSH_LANE=dsh-prod
 # 目录不可用时静默回退 /tmp，保证服务一定能起来。
 if [ -d /mnt/Storage/tmp ] && [ -w /mnt/Storage/tmp ]; then
   export TMPDIR=/mnt/Storage/tmp
+  # 2026-11-16：这些临时目录只增不减（当天量到 128 个 dsh-workspace-changes 共 7.6G，
+  # 盘已 98%）。重启时清 7 天前的快照与 1 天前的空目录（保守值：不确定回滚功能会不会用到）。
+  find /mnt/Storage/tmp -maxdepth 1 -mindepth 1 -name 'dsh-workspace-changes-*' -mtime +7 -exec rm -rf {} + 2>/dev/null
+  find /mnt/Storage/tmp -maxdepth 1 -mindepth 1 -type d -empty -mtime +1 -delete 2>/dev/null
 fi
 exec dsh web --no-open
