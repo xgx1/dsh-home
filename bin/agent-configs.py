@@ -130,6 +130,11 @@ for extra, sel in {
 }.items():
     projects.setdefault(extra, sel)
 
+# dsh-Go：Flutter/Dart 客户端 + Node 插件 SDK 与引擎桥 + .github/workflows（CI 是契约）。
+# 只有 services/share-worker 一个 tsconfig 却把整套 .NET 测试技能（testing/test-audit）带进来，去掉；
+# js 与 dsh-dev（扩展/插件开发）才是这个仓库用得到的（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/dsh-Go'] = ['core','js','dsh-dev']
+
 # 用户要求（2026-11-15）：UI 设计与设计品牌对每个项目都生效。
 UNIVERSAL = ['ui-design', 'design-brand']
 # 例外：/mnt/Video2/aur 是 AUR 打包工作区（只有 PKGBUILD），设计技能不适用（2026-11-16）。
@@ -146,6 +151,19 @@ if '/home/sx/projects/find-work' in projects:
 # qq-bot：bash + .mjs 粘 Docker/systemd 的运维仓库。js 是 SnowCatQQ/SnowLuma 等 vendor 检出里的 tsconfig 误判，
 # 既没有自己的前端也没有 .NET 测试，UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/qq-bot'] = ['core']
+
+# captcha-solver：FastAPI + cloakbrowser 的验证码求解服务，纯 Python、无前端无 UI；设计/品牌技能不适用，
+# .NET 的 testing/test-audit 同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/captcha-solver'] = ['core']
+
+# 3dtiles：Rust（src-tree，cargo）+ C++ 的 3D Tiles 切片流水线，另一半是预编译的离线瓦片服务（/mnt/Video/CesiumOfflineServer，本就是独立工作区）。
+# dotnet/dotnet-build/testing/test-audit 来自 src-tree/vs/vs.sln 这个 C++ 工程被 *.sln 探测误判；UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
+projects['/home/sx/projects/3dtiles'] = ['core']
+
+# _from-system：从 Windows 机器搬来的中转目录——图集目录（967MB 图片）+ 脚本生成的 index.html，加一套 UE 5.8 的
+# PowerShell 构建脚本/日志和一个 2KB 的 .uproject 空壳（无 Source/Content，本机也没有 pwsh）。unreal/testing 全是
+# *.uproject 误判，页面由 build-index.ps1 生成、不手写样式——只给 core（2026-11-16 用户要求「正确且合适」）。
+projects['/mnt/Video2/_from-system'] = ['core']
 
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()
