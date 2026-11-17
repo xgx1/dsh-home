@@ -125,6 +125,42 @@ for wid, v in ws.items():
     projects[p] = sel
     report.append((title, p, exists, ','.join(sel)))
 
+# 任务台（2026-11-17 用户要求）：会话别堆在「未分组」——管理器进「任务台·管理器」工作区，
+# 执行会话进它自己的任务工作区（worktree）。工具可见性按 cwd 发放，这些目录必须先登记，
+# 否则新派出去的执行会话一个工具都没有。
+TASK_SEATS = {}
+for _home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
+    for _seat in ('manager', 'console'):
+        TASK_SEATS[_home + '/task-manager/' + _seat] = ['task-console']
+        projects[_home + '/task-manager/' + _seat] = ['task-console']
+    try:
+        _tasks = json.load(open(_home + '/task-manager/tasks.json'))
+    except Exception:
+        _tasks = []
+    if not isinstance(_tasks, list):
+        _tasks = []
+    for _t in _tasks:
+        if not isinstance(_t, dict):
+            continue
+        _p = _t.get('project')
+        if isinstance(_p, str) and os.path.isdir(_p):
+            projects.setdefault(_p, ['core'])
+        _d = _t.get('directory')
+        if isinstance(_d, str) and os.path.isdir(_d) and _t.get('status') != 'done':
+            TASK_SEATS[_d] = ['core', 'task-exec']
+            projects[_d] = ['core', 'task-exec']
+    # 座位登记（task-manager/seats.json）：worktree 可能还没写进 tasks.json，
+    # 但只要要起执行会话，就必须先有工具。
+    try:
+        _seats = json.load(open(_home + '/task-manager/seats.json'))
+    except Exception:
+        _seats = []
+    if isinstance(_seats, list):
+        for _s in _seats:
+            if isinstance(_s, str) and os.path.isdir(_s):
+                TASK_SEATS[_s] = ['core', 'task-exec']
+                projects[_s] = ['core', 'task-exec']
+
 projects.setdefault('/home/sx', ['core','search','ops-desktop','ops-infra'])
 for scratch in ('/tmp', '/home/sx/projects/test', '/mnt/Video/test'):
     projects.setdefault(scratch, ['core','search','ops-desktop','ops-infra'] if scratch == '/tmp' else ['core','testing','test-audit'])
@@ -161,6 +197,7 @@ for key, sel in projects.items():
     if key in NO_UNIVERSAL:
         continue
     projects[key] = list(dict.fromkeys(UNIVERSAL + sel))
+projects.update(TASK_SEATS)
 # find-work 自己的四个技能只在这个项目里可见。
 if '/home/sx/projects/find-work' in projects:
     projects['/home/sx/projects/find-work'] = list(dict.fromkeys(
