@@ -132,7 +132,7 @@ TASK_SEATS = {}
 for _home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
     for _seat in ('manager', 'console'):
         TASK_SEATS[_home + '/task-manager/' + _seat] = ['task-console']
-        projects[_home + '/task-manager/' + _seat] = ['task-console']
+        projects.setdefault(_home + '/task-manager/' + _seat, ['task-console'])
     try:
         _tasks = json.load(open(_home + '/task-manager/tasks.json'))
     except Exception:
@@ -148,7 +148,7 @@ for _home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
         _d = _t.get('directory')
         if isinstance(_d, str) and os.path.isdir(_d) and _t.get('status') != 'done':
             TASK_SEATS[_d] = ['core', 'task-exec']
-            projects[_d] = ['core', 'task-exec']
+            projects.setdefault(_d, ['core', 'task-exec'])
     # 座位登记（task-manager/seats.json）：worktree 可能还没写进 tasks.json，
     # 但只要要起执行会话，就必须先有工具。
     try:
@@ -159,7 +159,7 @@ for _home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
         for _s in _seats:
             if isinstance(_s, str) and os.path.isdir(_s):
                 TASK_SEATS[_s] = ['core', 'task-exec']
-                projects[_s] = ['core', 'task-exec']
+                projects.setdefault(_s, ['core', 'task-exec'])
 
 projects.setdefault('/home/sx', ['core','search','ops-desktop','ops-infra'])
 for scratch in ('/tmp', '/home/sx/projects/test', '/mnt/Video/test'):
@@ -197,7 +197,9 @@ for key, sel in projects.items():
     if key in NO_UNIVERSAL:
         continue
     projects[key] = list(dict.fromkeys(UNIVERSAL + sel))
-projects.update(TASK_SEATS)
+for _seat_path, _seat_sel in TASK_SEATS.items():
+    if _seat_path not in projects or projects[_seat_path] == ['core']:
+        projects[_seat_path] = _seat_sel
 # find-work 自己的四个技能只在这个项目里可见。
 if '/home/sx/projects/find-work' in projects:
     projects['/home/sx/projects/find-work'] = list(dict.fromkeys(

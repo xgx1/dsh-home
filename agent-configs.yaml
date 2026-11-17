@@ -439,8 +439,24 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/projects/MyAI":
+    - "ui-design"
+    - "design-brand"
     - "core"
-    - "task-exec"
+    - "dotnet"
+    - "js"
+    - "search"
+    - "agent"
+    - "dotnet-build"
+    - "testing"
+    - "test-audit"
+    - "dsh-dev"
+    - "ops-desktop"
+    - "ops-infra"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
+    - "ende"
   "/mnt/Video2/计划":
     - "ui-design"
     - "design-brand"
@@ -601,30 +617,61 @@ projects:
     - "wf-verify"
     - "wf-ship"
   "/home/sx/.dsh/task-manager/manager":
+    - "ui-design"
+    - "design-brand"
     - "task-console"
   "/home/sx/.dsh/task-manager/console":
     - "task-console"
   "/home/sx/.dsh-dev/task-manager/manager":
+    - "ui-design"
+    - "design-brand"
     - "task-console"
   "/home/sx/.dsh-dev/task-manager/console":
     - "task-console"
   "/tmp":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/deepseek-harness-dev":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+  "/home/sx/projects/MyAI/deepseek-harness-dev-fb73dd2e":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
+  "/home/sx/projects/MyAI/deepseek-harness-dev-e0c9cc0a":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "task-exec"
+  "/home/sx/projects/MyAI/deepseek-harness-dev-d420e459":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "task-exec"
+  "/mnt/Video2/empty":
+    - "ui-design"
+    - "design-brand"
+    - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/smoke-py":
     - "ui-design"
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/smoke-py-85b1a935":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/lua-greet":
+    - "ui-design"
+    - "design-brand"
     - "core"
-    - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/lua-greet-2b08481f":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/py-hello":
@@ -632,9 +679,13 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/py-hello-38ab908a":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/py-hello-28787b99":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/js-sum":
@@ -642,6 +693,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/js-sum-2d1fa583":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/ts-upper":
@@ -649,6 +702,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/ts-upper-dc396ab2":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/c-prime":
@@ -656,6 +711,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/c-prime-d2e7da22":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/cpp-rev":
@@ -663,6 +720,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/cpp-rev-b7ee9f97":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/java-echo":
@@ -670,6 +729,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/java-echo-5a8b499f":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/rs-fib":
@@ -677,6 +738,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/rs-fib-317b39e0":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/cs-square":
@@ -684,6 +747,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/cs-square-3f19494b":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/pl-len":
@@ -691,21 +756,33 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-army/pl-len-71835cc9":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/c-prime-68caf7a7":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/pl-len-e18e0821":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/rs-fib-bff13019":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/cpp-rev-1bf3c745":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-army/java-echo-f9b50243":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-close/smoke-report":
@@ -713,6 +790,8 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-close/smoke-report-d783f886":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-close/report-bridge":
@@ -728,13 +807,40 @@ projects:
     - "design-brand"
     - "core"
   "/home/sx/projects/MyAI/.scratch/task-console-ws/hello-ws-baac8064":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-ws/upper-ws":
     - "ui-design"
     - "design-brand"
     - "core"
+  "/home/sx/projects/MyAI/.scratch/task-console-ws/upper-ws-560baed7":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "task-exec"
+  "/home/sx/projects/MyAI/.scratch/task-console-sa/counter-web":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+  "/home/sx/projects/MyAI/.scratch/task-console-sa/counter-web-a2a0380e":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "task-exec"
+  "/home/sx/projects/MyAI/.scratch/task-console-sa/greet-web":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+  "/home/sx/projects/MyAI/.scratch/task-console-sa/greet-web-456ecbfc":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "task-exec"
   "/home/sx/projects/MyAI/.scratch/task-console-ws/upper-ws-4191b0d5":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "task-exec"
   "/home/sx":
