@@ -608,6 +608,7 @@ projects:
     - "docs"
   "/home/sx/projects/3dtiles":
     - "core"
+    - "unreal"
   "/home/sx":
     - "ui-design"
     - "design-brand"
