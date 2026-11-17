@@ -828,6 +828,26 @@ id = "task-console-global-tools"
 name = "dsh-task-manager/tools"
 
 [[entry.insert]]
+id = "preset-task-exec"
+name = "@deepseek-ai/dsh-agent-preset"
+
+[entry.insert.config]
+id = "task-exec"
+name = "任务台·执行会话"
+order = 42
+
+[[entry.insert.config.plugins]]
+id = "persona"
+name = "@deepseek-ai/dsh-persona"
+
+[entry.insert.config.plugins.config]
+prefix = "你是任务台的执行会话：照简报把活干完（代码、验收命令、证据），干完必须用 task_report 把结果写回卡片——能自验收就 status=waiting-check，做不下去就 status=problem 并写清卡在哪。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。"
+
+[[entry.insert.config.plugins]]
+id = "task-exec-tools"
+name = "dsh-task-manager/tools"
+
+[[entry.insert]]
 id = "preset-task-console-project"
 name = "@deepseek-ai/dsh-agent-preset"
 
