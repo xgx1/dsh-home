@@ -146,6 +146,13 @@ projects['/mnt/Video/PsShowcase'] = ['everything']
 # js 与 dsh-dev（扩展/插件开发）才是这个仓库用得到的（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/dsh-Go'] = ['core','js','dsh-dev']
 
+# XianXia：2026-11-17 按 codeup 的布局重构成「父库 + 两个子模块」——/mnt/Video2/XianXia 是父库，
+# 客户端在 XianXia/（UE5 VR），服务端在 XianXiaServer/（.NET 10）。父库的 workspace 记录按 *.uproject+csproj
+# 探测已经同时拿到 unreal 与 dotnet；两个子目录各自单独开会话时也要有工具（未列入 = 一个工具都没有），
+# 客户端照旧给 unreal + 两套测试，服务端给 dotnet 与测试（应用与构建分开）。
+projects['/mnt/Video2/XianXia/XianXia'] = ['core','unreal','testing','test-audit']
+projects['/mnt/Video2/XianXia/XianXiaServer'] = ['core','dotnet','dotnet-build','testing','test-audit']
+
 # 用户要求（2026-11-15）：UI 设计与设计品牌对每个项目都生效。
 UNIVERSAL = ['ui-design', 'design-brand']
 # 例外：/mnt/Video2/aur 是 AUR 打包工作区（只有 PKGBUILD），设计技能不适用（2026-11-16）。

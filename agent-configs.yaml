@@ -517,6 +517,8 @@ projects:
     - "design-brand"
     - "core"
     - "unreal"
+    - "dotnet"
+    - "dotnet-build"
     - "testing"
     - "test-audit"
   "/mnt/Video/PsShowcase":
@@ -697,6 +699,21 @@ projects:
     - "core"
     - "js"
     - "dsh-dev"
+  "/mnt/Video2/XianXia/XianXia":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "unreal"
+    - "testing"
+    - "test-audit"
+  "/mnt/Video2/XianXia/XianXiaServer":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "dotnet"
+    - "dotnet-build"
+    - "testing"
+    - "test-audit"
   "/home/sx/projects/find-work/qq-bot":
     - "core"
   "/mnt/Video2/qq-bot":
