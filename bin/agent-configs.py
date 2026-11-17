@@ -59,6 +59,9 @@ configs = {
   'wf-build': {'skills': ['execute-feature-plan','executing-plans','subagent-driven-development','tdd','tdd-write-feature','implement-spec','add-software-feature','init-feature-dev','prototype','tdd-fanout','fix-feature-issues','dispatching-parallel-agents','optimize-feature-code'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-verify': {'skills': ['verification-before-completion','code-review','review-feature-code','requesting-code-review','test-gap-analysis','receiving-code-review','write-manual-test-doc','diagnosing-bugs','diagnosing-superpowers'], 'mcp': [], 'tools': WF_TOOLS},
   'wf-ship': {'skills': ['finishing-a-development-branch','summarize-feature-work','solidify-feature-lessons','retro','write-feature-docs','cleanup-worktrees','setup-pre-commit','pr','dev-docs'], 'mcp': [], 'tools': WF_TOOLS},
+   # 任务台的两层管理器（ADR-0014）：会话住在 <DSH_HOME>/task-manager/console，只拿 task_* 工具。
+   'task-console': {'skills': [], 'mcp': [], 'tools': ['task_*']},
+
 }
 
 WFD = ['wf-plan','wf-build','wf-verify','wf-ship']
@@ -200,6 +203,13 @@ for repo in ('/mnt/Video2/jami', '/mnt/Video2/jami/jami-client-qt', '/mnt/Video2
 # 要的是 PDF 阅读、扫描件 OCR、会议纪要、批量归档与媒体转换；office/docx/pptx/xlsx 是 harness 自带技能，本来就加载得到，不必列。
 # web 设计（Tailwind/shadcn）与品牌物料对本目录不适用，universal 那两条不挂——给 core + docs（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/待整理'] = ['core','docs']
+
+# 任务台管理器会话的控制台目录（ADR-0014）：不加这条，管理器会话一个工具都没有。
+for home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
+    projects[home + '/task-manager/console'] = ['task-console']
+    # 执行会话住这里（拿到 core 全套工具），项目路径由简报给出、用 bash 进 worktree 干活。
+    projects[home + '/task-manager/exec'] = ['core']
+
 
 def q(s): return json.dumps(s, ensure_ascii=False)
 out = io.StringIO()

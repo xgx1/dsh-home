@@ -399,6 +399,11 @@ configs:
       - "create_goal"
       - "get_goal"
       - "update_goal"
+  task-console:
+    skills: []
+    mcp: []
+    tools:
+      - "task_*"
 projects:
   "/mnt/Video2/System":
     - "ui-design"
@@ -586,10 +591,6 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/mnt/Video/CesiumOfflineServer":
-    - "ui-design"
-    - "design-brand"
-    - "core"
   "/mnt/Video/wivrn-src":
     - "ui-design"
     - "design-brand"
@@ -599,17 +600,6 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
-  "/mnt/Video2/dsh-Go":
-    - "ui-design"
-    - "design-brand"
-    - "core"
-    - "js"
-    - "dsh-dev"
-  "/mnt/Video2/qq-bot":
-    - "core"
-  "/mnt/Video2/KO2":
-    - "core"
-    - "unreal"
   "/home/sx/projects/plugins":
     - "core"
     - "unity"
@@ -695,7 +685,15 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+  "/mnt/Video2/dsh-Go":
+    - "ui-design"
+    - "design-brand"
+    - "core"
+    - "js"
+    - "dsh-dev"
   "/home/sx/projects/find-work/qq-bot":
+    - "core"
+  "/mnt/Video2/qq-bot":
     - "core"
   "/home/sx/projects/qq-bot":
     - "core"
@@ -707,9 +705,20 @@ projects:
     - "core"
   "/mnt/Video2/_from-system":
     - "core"
+  "/mnt/Video2/KO2":
+    - "core"
+    - "unreal"
   "/mnt/Video2/jami":
     - "core"
   "/mnt/Video2/jami/jami-client-qt":
     - "core"
   "/mnt/Video2/jami/jami-patches":
+    - "core"
+  "/home/sx/.dsh/task-manager/console":
+    - "task-console"
+  "/home/sx/.dsh/task-manager/exec":
+    - "core"
+  "/home/sx/.dsh-dev/task-manager/console":
+    - "task-console"
+  "/home/sx/.dsh-dev/task-manager/exec":
     - "core"
