@@ -151,7 +151,9 @@ if '/home/sx/projects/find-work' in projects:
 
 # qq-bot：bash + .mjs 粘 Docker/systemd 的运维仓库。js 是 SnowCatQQ/SnowLuma 等 vendor 检出里的 tsconfig 误判，
 # 既没有自己的前端也没有 .NET 测试，UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
-projects['/mnt/Video2/qq-bot'] = ['core']
+# 2026-11-17 并入 find-work：真实路径 + 两个历史软链路径都要写（selectionOf 是精确字符串匹配）
+for _qq in ('/home/sx/projects/find-work/qq-bot', '/mnt/Video2/qq-bot', '/home/sx/projects/qq-bot'):
+    projects[_qq] = ['core']
 
 # Plugins：/mnt/Video2/Plugins 是 Unity 第三方插件与删包留档（4120 个 .cs、105 个 asmdef、9269 个 .meta，没有
 # ProjectSettings / csproj / package.json，既不是 Unity 工程也编译不了），只能读不能构建：unity 那套 dotnet-CLI

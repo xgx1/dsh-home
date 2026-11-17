@@ -296,12 +296,6 @@ configs:
       - "ego_*"
       - "cua_driver_native__*"
       - "team_task_*"
-  task-console:
-    skills: []
-    mcp: []
-    tools:
-      - "task_*"
-
   obsidian:
     skills:
       - "obsidian-*"
@@ -464,6 +458,7 @@ projects:
     - "design-brand"
     - "core"
     - "dotnet"
+    - "js"
     - "search"
     - "dotnet-build"
     - "testing"
@@ -595,11 +590,6 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
-    - "unreal"
-    - "dotnet"
-    - "dotnet-build"
-    - "testing"
-    - "test-audit"
   "/mnt/Video/wivrn-src":
     - "ui-design"
     - "design-brand"
@@ -623,20 +613,10 @@ projects:
   "/home/sx/projects/plugins":
     - "core"
     - "unity"
-  "/mnt/Video2/_from-system":
-    - "core"
   "/mnt/Video2/待整理":
     - "core"
     - "docs"
-  "/mnt/Video2/jami":
-    - "core"
-  "/mnt/Video2/Plugins":
-    - "core"
   "/home/sx/projects/3dtiles":
-    - "core"
-  "/mnt/Video2/aur":
-    - "core"
-  "/mnt/Video2/captcha-solver":
     - "core"
   "/home/sx":
     - "ui-design"
@@ -715,11 +695,21 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+  "/home/sx/projects/find-work/qq-bot":
+    - "core"
+  "/home/sx/projects/qq-bot":
+    - "core"
+  "/mnt/Video2/Plugins":
+    - "core"
+  "/mnt/Video2/captcha-solver":
+    - "core"
   "/home/sx/projects/3dtiles/src-tree":
+    - "core"
+  "/mnt/Video2/_from-system":
+    - "core"
+  "/mnt/Video2/jami":
     - "core"
   "/mnt/Video2/jami/jami-client-qt":
     - "core"
   "/mnt/Video2/jami/jami-patches":
     - "core"
-  "/home/sx/.dsh/task-manager/console":
-    - "task-console"
