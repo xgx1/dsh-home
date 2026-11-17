@@ -404,6 +404,23 @@ configs:
     mcp: []
     tools:
       - "task_*"
+  task-exec:
+    skills: []
+    mcp: []
+    tools:
+      - "task_report"
+      - "task_list"
+  everything:
+    skills:
+      - "*"
+    mcp:
+      - "cbm"
+      - "ue"
+      - "unity"
+      - "zvecgrep"
+      - "rea"
+    tools:
+      - "*"
 projects:
   "/mnt/Video2/System":
     - "ui-design"
@@ -425,9 +442,11 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
+    - "dotnet"
     - "js"
     - "search"
     - "agent"
+    - "dotnet-build"
     - "testing"
     - "test-audit"
     - "dsh-dev"
@@ -463,7 +482,6 @@ projects:
     - "design-brand"
     - "core"
     - "dotnet"
-    - "js"
     - "search"
     - "dotnet-build"
     - "testing"
@@ -489,13 +507,7 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
-    - "unreal"
-    - "dotnet"
-    - "js"
     - "search"
-    - "dotnet-build"
-    - "testing"
-    - "test-audit"
     - "wf-plan"
     - "wf-build"
     - "wf-verify"
@@ -510,16 +522,7 @@ projects:
   "/mnt/Video/PsShowcase":
     - "ui-design"
     - "design-brand"
-    - "core"
-    - "unity"
-    - "unreal"
-    - "search"
-    - "testing"
-    - "test-audit"
-    - "wf-plan"
-    - "wf-build"
-    - "wf-verify"
-    - "wf-ship"
+    - "everything"
   "/mnt/Storage/归档/min/资料/被骗":
     - "ui-design"
     - "design-brand"
@@ -603,12 +606,14 @@ projects:
   "/home/sx/projects/plugins":
     - "core"
     - "unity"
-  "/mnt/Video2/待整理":
-    - "core"
-    - "docs"
   "/home/sx/projects/3dtiles":
     - "core"
     - "unreal"
+    - "js"
+    - "wf-plan"
+    - "wf-build"
+    - "wf-verify"
+    - "wf-ship"
   "/home/sx":
     - "ui-design"
     - "design-brand"
@@ -715,11 +720,16 @@ projects:
     - "core"
   "/mnt/Video2/jami/jami-patches":
     - "core"
+  "/mnt/Video2/待整理":
+    - "core"
+    - "docs"
   "/home/sx/.dsh/task-manager/console":
     - "task-console"
   "/home/sx/.dsh/task-manager/exec":
     - "core"
+    - "task-exec"
   "/home/sx/.dsh-dev/task-manager/console":
     - "task-console"
   "/home/sx/.dsh-dev/task-manager/exec":
     - "core"
+    - "task-exec"

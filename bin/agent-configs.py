@@ -61,6 +61,10 @@ configs = {
   'wf-ship': {'skills': ['finishing-a-development-branch','summarize-feature-work','solidify-feature-lessons','retro','write-feature-docs','cleanup-worktrees','setup-pre-commit','pr','dev-docs'], 'mcp': [], 'tools': WF_TOOLS},
    # 任务台的两层管理器（ADR-0014）：会话住在 <DSH_HOME>/task-manager/console，只拿 task_* 工具。
    'task-console': {'skills': [], 'mcp': [], 'tools': ['task_*']},
+   # 执行会话：要能收尾回报（task_report），但不需要管理面。
+   'task-exec': {'skills': [], 'mcp': [], 'tools': ['task_report', 'task_list']},
+   # 全能力（2026-11-17 用户要求）：所有技能、所有 MCP server、所有工具。
+   'everything': {'skills': ['*'], 'mcp': ['cbm','ue','unity','zvecgrep','rea'], 'tools': ['*']},
 
 }
 
@@ -134,6 +138,9 @@ for extra, sel in {
 }.items():
     projects.setdefault(extra, sel)
 
+# /mnt/Video/PsShowcase 是 UE + Unity + Web + 文档的混装交付仓库，用户要求（2026-11-17）这个会话要全部能力。
+projects['/mnt/Video/PsShowcase'] = ['everything']
+
 # dsh-Go：Flutter/Dart 客户端 + Node 插件 SDK 与引擎桥 + .github/workflows（CI 是契约）。
 # 只有 services/share-worker 一个 tsconfig 却把整套 .NET 测试技能（testing/test-audit）带进来，去掉；
 # js 与 dsh-dev（扩展/插件开发）才是这个仓库用得到的（2026-11-16 用户要求「正确且合适」）。
@@ -167,11 +174,12 @@ projects['/mnt/Video2/Plugins'] = ['core']
 # .NET 的 testing/test-audit 同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/captcha-solver'] = ['core']
 
-# 3dtiles：Rust（src-tree，cargo）+ C++ 的 3D Tiles 切片流水线，另一半是预编译的离线瓦片服务（/mnt/Video/CesiumOfflineServer，本就是独立工作区）。
-# dotnet/dotnet-build/testing/test-audit 来自 src-tree/vs/vs.sln 这个 C++ 工程被 *.sln 探测误判；UI/设计技能同样不适用——只给 core（2026-11-16 用户要求「正确且合适」）。
-# 源码目录单独开会话时也要有工具（未列入 projects 的路径三样都不给），同一套 core。
-for p in ('/home/sx/projects/3dtiles', '/home/sx/projects/3dtiles/src-tree'):
-    projects[p] = ['core']
+# 3dtiles：Rust（src-tree，cargo）+ C++ 的 3D Tiles 切片流水线，加上 .NET 离线瓦片服务（tile-server）和 UE 工程（ue/OfflineTiles）。
+# 2026-11-16 曾因 src-tree/vs/vs.sln 被 *.sln 误判而只给 core；2026-11-17 用户要求「虚幻、js、子 agent 都打开」——主目录给 core+unreal+js+WFD；
+# testing/test-audit 仍然不要（tile-server 没有测试工程，那套 .sln 误判的教训还在），UI/设计技能同样不适用。
+projects['/home/sx/projects/3dtiles'] = ['core', 'unreal', 'js'] + WFD
+# 源码目录单独开会话时也要有工具（未列入 projects 的路径三样都不给），只给 core。
+projects['/home/sx/projects/3dtiles/src-tree'] = ['core']
 
 # _from-system：从 Windows 机器搬来的中转目录——图集目录（967MB 图片）+ 脚本生成的 index.html，加一套 UE 5.8 的
 # PowerShell 构建脚本/日志和一个 2KB 的 .uproject 空壳（无 Source/Content，本机也没有 pwsh）。unreal/testing 全是
@@ -208,7 +216,7 @@ projects['/mnt/Video2/待整理'] = ['core','docs']
 for home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
     projects[home + '/task-manager/console'] = ['task-console']
     # 执行会话住这里（拿到 core 全套工具），项目路径由简报给出、用 bash 进 worktree 干活。
-    projects[home + '/task-manager/exec'] = ['core']
+    projects[home + '/task-manager/exec'] = ['core', 'task-exec']
 
 
 def q(s): return json.dumps(s, ensure_ascii=False)
