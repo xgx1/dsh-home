@@ -41,6 +41,9 @@ llm-deepseek/
 # bin/hypr-place 依赖本机 Hyprland；evolve/ 含 rubric.key 与运行时日志
 bin/*
 !bin/gen-project-presets.py
+# 2026-11-17：ego 标签页看门狗与工作区迁移脚本是配置层的一部分，换机也要有。
+!bin/ego-tab-janitor.mjs
+!bin/migrate-workspaces.py
 !bin/opencode-zen-bridge.py
 # 2026-10-23：这两个是本机运行链路的一部分（profile 的 MCP command 直接指 zg-autoidx），
 # 必须入库，否则换机/回滚后 zvec 自动建索引与 scope 清理就没了。
