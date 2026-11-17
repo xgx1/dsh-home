@@ -42,7 +42,7 @@
 因此恢复顺序必须是**先项目、后配置**。新设备需要：
 
 1. `~/projects/MyAI`（含 `dsh-extensions`，其下 `vendor/` 与 `skills/` 是 git submodule，共 17 个）
-2. `~/projects/update-app`（`install-skill.sh` 的技能源之一）
+2. `/mnt/Video2/ps-tool`（`install-skill.sh` 的技能源之一：`.dsh/skills/`；2026-11-17 起 `update-app` 已并进它）
 3. DSH 本体检出 `~/projects/MyAI/deepseek-harness` 与 `~/.local/bin/dsh`
 
 ## 新设备恢复
