@@ -20,4 +20,14 @@ export CUA_DRIVER_RS_ENABLE_WAYLAND=1
 export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Hyprland}"
 export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
 export BILI_NATIVE_DSH_LANE=dsh-dev
+# 固定入口 token（packages/host/authentication-token 读 DSH_WEB_TOKEN）：
+# 重启后打印的链接不变，已经开着的标签页不会因为换 token 全部 401。
+# 值存在不入库的 .web-token 里（repo 是公开的，别把 token 写进这个脚本）。
+WEB_TOKEN_FILE="$HOME/.dsh-dev/.web-token"
+if [ ! -s "$WEB_TOKEN_FILE" ]; then
+  head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=
+' > "$WEB_TOKEN_FILE"
+  chmod 600 "$WEB_TOKEN_FILE"
+fi
+export DSH_WEB_TOKEN="$(cat "$WEB_TOKEN_FILE")"
 exec node "$HOME/projects/MyAI/deepseek-harness-dev/apps/cli/lib/bin.js" web --port 3081 --no-open
