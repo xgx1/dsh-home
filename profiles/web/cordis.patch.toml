@@ -861,7 +861,7 @@ id = "persona"
 name = "@deepseek-ai/dsh-persona"
 
 [entry.insert.config.plugins.config]
-prefix = "你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。"
+prefix = "你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话（起了就结束这一轮，不要用 task_list 反复轮询——执行会话干完会自己把回报写回卡片）、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。"
 
 [[entry.insert.config.plugins]]
 id = "compaction"
