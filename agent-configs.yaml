@@ -405,11 +405,18 @@ configs:
     tools:
       - "task_*"
   task-exec:
-    skills: []
+    skills:
+      - "tdd-fanout"
+      - "write-manual-test-doc"
+      - "verification-before-completion"
+      - "background-window-control"
     mcp: []
     tools:
       - "task_report"
+      - "task_test_doc"
       - "task_list"
+      - "ego_*"
+      - "cua_driver_native__*"
   everything:
     skills:
       - "*"
