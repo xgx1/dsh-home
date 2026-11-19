@@ -61,8 +61,10 @@ configs = {
   'wf-ship': {'skills': ['finishing-a-development-branch','summarize-feature-work','solidify-feature-lessons','retro','write-feature-docs','cleanup-worktrees','setup-pre-commit','pr','dev-docs'], 'mcp': [], 'tools': WF_TOOLS},
    # 任务台的两层管理器（ADR-0014）：会话住在 <DSH_HOME>/task-manager/console，只拿 task_* 工具。
    'task-console': {'skills': [], 'mcp': [], 'tools': ['task_*']},
-   # 执行会话：要能收尾回报（task_report），但不需要管理面。
-   'task-exec': {'skills': [], 'mcp': [], 'tools': ['task_report', 'task_list']},
+   # 执行会话：要能收尾回报（task_report / task_test_doc），进入待测试后还要自己写用例真跑、
+   # 模拟点桌面窗口再交回正式测试文档（2026-11-19 用户要求），所以带测试四技能与桌面工具面。
+   'task-exec': {'skills': ['tdd-fanout','write-manual-test-doc','verification-before-completion','background-window-control'],
+                 'mcp': [], 'tools': ['task_report', 'task_test_doc', 'task_list', 'ego_*', 'cua_driver_native__*']},
    # 全能力（2026-11-17 用户要求）：所有技能、所有 MCP server、所有工具。
    'everything': {'skills': ['*'], 'mcp': ['cbm','ue','unity','zvecgrep','rea'], 'tools': ['*']},
 
