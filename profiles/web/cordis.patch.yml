@@ -361,7 +361,7 @@
           - id: gpt-6-luna
           - id: gpt-6.1-sol
       qwen:
-        displayName: Qwen token plan (DeepSeek V4.1 Flash)
+        displayName: Qwen token plan
         apiKeyEnv: QWEN_API_KEY
         api: openai-completions
         baseURL: https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1
@@ -376,6 +376,19 @@
             name: deepseek-v4.1-flash-1017
             contextWindow: 1048576
             maxTokens: 393216
+            input:
+              - text
+              - image
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+          # 官方规格：上下文 1,000,000；思考模式输出上限 262,144。自 Qwen4-Max 起
+          # max_tokens 计入思维链，故取思考模式值（非思考模式只有 131,072）。
+          - id: qwen4-max
+            name: Qwen4 Max
+            contextWindow: 1000000
+            maxTokens: 262144
             input:
               - text
               - image
