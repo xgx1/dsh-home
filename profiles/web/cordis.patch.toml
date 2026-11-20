@@ -318,20 +318,6 @@ supportsDeveloperRole = false
 maxTokensField = "max_tokens"
 
 [[entry.config.providers.opencode-go.models]]
-id = "beam-free"
-name = "Beam Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-go.models]]
 id = "deepseek-v4.1-flash"
 name = "DeepSeek V4.1 Flash"
 contextWindow = 1000000
@@ -343,8 +329,9 @@ low = "low"
 high = "high"
 max = "max"
 
-# 2026-11-20 实测可用的 Go 免费模型（HK 出口 200；Go 付费额度耗尽 14 天后重置，
-# 免费模型不占额度）。longcat 恒思考、hy4 可 off:none。
+# Go 免费模型（HK 出口 200，不占付费额度）。思考等级按 /models 元数据
+# capabilities.reasoning.effort + 实测：longcat 恒思考受 low..max，hy4 仅 none/high。
+# beam-free 区域受限（HK 403），改由 opencode-zen 经美欧出口代理提供。
 [[entry.config.providers.opencode-go.models]]
 id = "longcat-2.5-free"
 name = "LongCat 2.5 Free"
@@ -368,26 +355,34 @@ input = [ "text", "image" ]
 
 [entry.config.providers.opencode-go.models.reasoningEfforts]
 off = "none"
-low = "high"
-medium = "high"
 high = "high"
-xhigh = "high"
-max = "high"
 
-# OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-20
-# 实测全部 429 FreeUsageLimitError（账号免费额度耗尽）；额度恢复或换美/欧出口后
-# 可用。beam-free 另受区域限制（HK 出口 403）。默认模型不用它。
+# OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-21
+# 实测破解：网关匹配 opencode 客户端系统提示（bridge 预置 opencode-zen-system.txt）
+# + 完整 UA + 降序 session id，全部免费模型 HK 出口 200（此前 429 是伪装不全，非额度）。
+# beam-free 区域受限，bridge 自动经美欧出口代理(opencode-useu-proxy.service :7898)转发。
+# 思考等级按 /models 元数据 effort 数组配置；无 effort 数组者按实测 off 行为取 off+high。
 [entry.config.providers.opencode-zen]
 displayName = "OpenCode Zen (free)"
 apiKeyEnv = "OPENCODE_API_KEY"
 api = "openai-completions"
 baseURL = "http://127.0.0.1:8790/v1"
+reasoning = "high"
+
+[entry.config.providers.opencode-zen.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "big-pickle"
 name = "Big Pickle"
 contextWindow = 200000
 maxTokens = 32000
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "deepseek-v4.1-flash-free"
@@ -396,12 +391,21 @@ contextWindow = 200000
 maxTokens = 32000
 input = [ "text", "image" ]
 
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
 [[entry.config.providers.opencode-zen.models]]
 id = "mimo-v2.6-flash-free"
 name = "MiMo-V2.6-Flash Free"
 contextWindow = 200000
 maxTokens = 32000
 input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "longcat-2.5-free"
@@ -410,29 +414,60 @@ contextWindow = 1000000
 maxTokens = 262144
 input = [ "text", "image" ]
 
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
 [[entry.config.providers.opencode-zen.models]]
 id = "iceman-free"
 name = "Iceman Free"
 contextWindow = 262144
 maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+high = "high"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "beam-free"
 name = "Beam Free"
 contextWindow = 1048576
 maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "flint-40b-free"
 name = "Flint 40B Free"
 contextWindow = 262144
 maxTokens = 65536
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "nemotron-3.5-lightning-free"
 name = "Nemotron 3.5 Lightning Free"
 contextWindow = 262144
 maxTokens = 262144
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+high = "high"
 
 [[entry.config.providers.opencode-zen.models]]
 id = "nemotron-3.5-super-vl-free"
@@ -441,6 +476,14 @@ contextWindow = 1048576
 maxTokens = 131072
 input = [ "text", "image" ]
 
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+
 [[entry.config.providers.opencode-zen.models]]
 id = "hy4-flash-free"
 name = "Hy4 Flash Free"
@@ -448,11 +491,24 @@ contextWindow = 1048576
 maxTokens = 65536
 input = [ "text", "image" ]
 
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
+
 [[entry.config.providers.opencode-zen.models]]
 id = "tidepool-alpha-free"
 name = "Tidepool Alpha Free"
 contextWindow = 1048576
 maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
 
 [entry.config.providers.openai-codex]
 displayName = "ChatGPT Plus (Codex)"
@@ -601,6 +657,10 @@ model = "longcat-2.5-free"
 [[entry.config.allowedModels]]
 provider = "opencode-go"
 model = "hy4-flash-free"
+
+[[entry.config.allowedModels]]
+provider = "opencode-zen"
+model = "beam-free"
 
 # 2026-11-13 用户要求：7 个类型预设合并成一个 preset-all（所有项目类型共用，
 # ue / unity / blender / cua 四个类型专属行全部挂上）；生成器与 preset-base.yml、
