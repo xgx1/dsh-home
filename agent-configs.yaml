@@ -209,6 +209,11 @@ configs:
       - "win-install-vs2022-ue"
     mcp: []
     tools: []
+  ops-update:
+    skills:
+      - "update-all"
+    mcp: []
+    tools: []
   js:
     skills:
       - "setup-ts-deep-modules"
@@ -445,6 +450,7 @@ projects:
     - "wf-build"
     - "wf-verify"
     - "wf-ship"
+    - "ops-update"
   "/home/sx/projects/MyAI":
     - "ui-design"
     - "design-brand"
