@@ -29,9 +29,11 @@ failOnStartupError = false
         # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。默认 reconnect
         # maxAttempts=10、退避封顶 30s，约 1 分钟就"永久放弃"，之后只能靠 HMR
         # 或重启 Host 才回来（实测 2026-09-26：编辑器起来后仍报 server is
-        # disconnected）。放宽到 ~1.5h 窗口，让编辑器重启后自愈。
+        # disconnected）。2026-11-21 断点续传：30s 封顶 × 20 万次 ≈ 69 天。
 [entry.insert.config.reconnect]
-maxAttempts = 215
+initialDelayMs = 2000
+maxDelayMs = 30000
+maxAttempts = 200000
 
     # ── CoplayDev/unity-mcp（MCP for Unity）2026-10-14 接入 ──────────────
     # 两端：Unity 侧 UPM 包 com.coplaydev.unity-mcp（git 依赖，钉 v10.3.0）；
@@ -58,6 +60,11 @@ args = [ "--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", 
         # 编译、进播放模式这类调用超过默认 60s。
 toolCallTimeoutMs = 180000
 failOnStartupError = false
+        # 断点续传：stdio 断了靠重起 uvx→python，60s 封顶 × 10 万次 ≈ 69 天。
+[entry.insert.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
 
     # ── 用户调整（2026-09-20）：桌面控制挂 Cua Driver native（0.1.6 新能力，实验性）─
     # dsh-computer-use 同样是**互斥单注册**（"A deployment can enable one
@@ -725,6 +732,12 @@ toolCallTimeoutMs = 600000
 [entry.insert.config.env]
 GHIDRA_INSTALL_DIR = "/opt/ghidra"
 
+# 断点续传：首连失败也一直重试（10 万 × 60s ≈ 69 天）。
+[entry.insert.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
+
 # ── 用户要求（2026-10-17）：工具按需加载 ────────────────────────────────────
 # 400+ 枚注册工具的目录成本（PTC 下生成 SDK 段 267,755 字符，占系统提示 94%）
 # 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
@@ -944,7 +957,9 @@ url = "http://127.0.0.1:8000/mcp"
 failOnStartupError = false
 
 [entry.insert.config.plugins.config.reconnect]
-maxAttempts = 215
+initialDelayMs = 2000
+maxDelayMs = 30000
+maxAttempts = 200000
 
 [[entry.insert.config.plugins]]
 id = "mcp-unity"
@@ -957,6 +972,11 @@ command = "/home/sx/.local/bin/uvx-no-proxy"
 args = [ "--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", "stdio" ]
 toolCallTimeoutMs = 180000
 failOnStartupError = false
+
+[entry.insert.config.plugins.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
 
 [[entry.insert.config.plugins]]
 id = "blender"
