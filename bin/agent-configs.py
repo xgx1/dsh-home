@@ -176,8 +176,11 @@ for extra, sel in {
 }.items():
     projects.setdefault(extra, sel)
 
-# /mnt/Video/PsShowcase 是 UE + Unity + Web + 文档的混装交付仓库，用户要求（2026-11-17）这个会话要全部能力。
-projects['/mnt/Video/PsShowcase'] = ['everything']
+# /mnt/Video/PsShowcase 是 UE + Unity + Web + 文档的混装交付仓库。2026-11-17 用户要「全部能力」；
+# 2026-11-18 又要「默认启用更多 Agent Config」——显式列出各域配置（各自带工具授权、列表即文档），
+# everything 留末尾兜底：它是 skills/tools 的 * 通配，删掉等于悄悄砍掉 anime/office/byted 那批。
+projects['/mnt/Video/PsShowcase'] = ['ui-design','design-brand','core','search','unreal','dotnet','js',
+    'dotnet-build','testing','test-audit','agent','docs','ops-desktop']+WFD+['everything']
 
 # dsh-Go：Flutter/Dart 客户端 + Node 插件 SDK 与引擎桥 + .github/workflows（CI 是契约）。
 # 只有 services/share-worker 一个 tsconfig 却把整套 .NET 测试技能（testing/test-audit）带进来，去掉；
