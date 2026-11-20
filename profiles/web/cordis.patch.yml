@@ -18,12 +18,15 @@
       config:
         serverName: ue
         transport: streamable-http
-        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。默认 reconnect
-        # maxAttempts=10、退避封顶 30s，约 1 分钟就"永久放弃"，之后只能靠 HMR
-        # 或重启 Host 才回来（实测 2026-09-26：编辑器起来后仍报 server is
-        # disconnected）。放宽到 ~1.5h 窗口，让编辑器重启后自愈。
+        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。一次停机共用一个尝试
+        # 预算，用完就"永久放弃"并注销工具，之后只能靠 HMR / 重启 Host 回来
+        # （实测 2026-09-26：编辑器起来后仍报 server is disconnected）。
+        # 2026-11-21 用户要求断点续传：退避封顶 30s × 20 万次 ≈ 69 天——会话期间
+        # 任何时刻打开编辑器，≤30s 内自动接上并重新注册工具。
         reconnect:
-          maxAttempts: 215
+          initialDelayMs: 2000
+          maxDelayMs: 30000
+          maxAttempts: 200000
         url: http://127.0.0.1:8000/mcp
         failOnStartupError: false
 
@@ -52,6 +55,12 @@
           - 'mcp-for-unity'
           - '--transport'
           - 'stdio'
+        # 断点续传：stdio 断线靠重起 uvx→python，退避封顶 60s（每分钟一次）、
+        # 10 万次 ≈ 69 天——Unity 与 6400 桥任何时候起来都能接上。
+        reconnect:
+          initialDelayMs: 5000
+          maxDelayMs: 60000
+          maxAttempts: 100000
         # 编译、进播放模式这类调用超过默认 60s。
         toolCallTimeoutMs: 180000
         failOnStartupError: false
@@ -730,6 +739,11 @@
         env:
           GHIDRA_INSTALL_DIR: /opt/ghidra
         toolCallTimeoutMs: 600000
+        # 断点续传：首连失败也会一直重试（10 万 × 60s ≈ 69 天），不再是"一次没连上就隐身"。
+        reconnect:
+          initialDelayMs: 5000
+          maxDelayMs: 60000
+          maxAttempts: 100000
 
 # ── 用户要求（2026-10-17）：工具按需加载 ────────────────────────────────────
 # 400+ 枚注册工具的目录成本（PTC 下生成 SDK 段 267,755 字符，占系统提示 94%）
@@ -877,8 +891,11 @@
               serverName: ue
               transport: streamable-http
               url: http://127.0.0.1:8000/mcp
+              # 与宿主层 mcp-ue 同一套断点续传策略。
               reconnect:
-                maxAttempts: 215
+                initialDelayMs: 2000
+                maxDelayMs: 30000
+                maxAttempts: 200000
               failOnStartupError: false
           - id: mcp-unity
             name: '@deepseek-ai/dsh-mcp-client'
@@ -892,6 +909,10 @@
                 - mcp-for-unity
                 - --transport
                 - stdio
+              reconnect:
+                initialDelayMs: 5000
+                maxDelayMs: 60000
+                maxAttempts: 100000
               toolCallTimeoutMs: 180000
               failOnStartupError: false
           # dsh-blender-plugin 是链接进来的源码 checkout，profile 只认它构建出来的 lib/。
