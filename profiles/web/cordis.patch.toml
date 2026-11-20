@@ -356,7 +356,7 @@ id = "gpt-6-luna"
 id = "gpt-6.1-sol"
 
 [entry.config.providers.qwen]
-displayName = "Qwen token plan (DeepSeek V4.1 Flash)"
+displayName = "Qwen token plan"
 apiKeyEnv = "QWEN_API_KEY"
 api = "openai-completions"
 baseURL = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
@@ -373,6 +373,18 @@ id = "deepseek-v4.1-flash-1017"
 name = "deepseek-v4.1-flash-1017"
 contextWindow = 1048576
 maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.qwen.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.qwen.models]]
+id = "qwen4-max"
+name = "Qwen4 Max"
+contextWindow = 1000000
+maxTokens = 262144
 input = [ "text", "image" ]
 
 [entry.config.providers.qwen.models.reasoningEfforts]
