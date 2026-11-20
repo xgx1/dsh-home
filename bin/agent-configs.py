@@ -45,6 +45,9 @@ configs = {
   'dsh-dev': {'skills': DSHDEV, 'mcp': ['cbm'], 'tools': []},
   'ops-desktop': {'skills': OPS_DESKTOP, 'mcp': [], 'tools': ['ego_*','cua_driver_native__*']},
   'ops-infra': {'skills': OPS_INFRA, 'mcp': [], 'tools': []},
+  # 系统更新：原独立仓 update-app（2026-11-17 并入 ps-tool 成 pstool-update），技能软链在 ~/.dsh/skills/update-all。
+  # 单独成组，挂给「跑更新」的工作区，不连带 ops-infra 那套平台/LLM 技能。
+  'ops-update': {'skills': ['update-all'], 'mcp': [], 'tools': []},
   'js': {'skills': ['setup-ts-deep-modules','wakaru','authoring-github-workflows'], 'mcp': [], 'tools': []},
   'ui-design': {'skills': ['ui-styling','ui-ux-pro-max'], 'mcp': [], 'tools': []},
   'design-brand': {'skills': ['design','design-system','brand','banner-design'], 'mcp': [], 'tools': []},
@@ -85,6 +88,8 @@ projects, report = {}, []
 ws = json.load(open('/home/sx/.dsh/storages/workspace.json'))['tables']['workspaces']
 for wid, v in ws.items():
     p, title = v['path'], v.get('title','')
+    # GUI 会把工作区改名成「中文 English」（如 '系统 System'），按空格后那段取英文名，否则整批 title 判断失效
+    title = title.split()[-1] if title and ' ' in title else title
     exists = os.path.isdir(p)
     stack = []
     if exists:
@@ -179,6 +184,10 @@ for extra, sel in {
 # /mnt/Video/PsShowcase 是 UE + Unity + Web + 文档的混装交付仓库。2026-11-17 用户要「全部能力」；
 # 2026-11-18 又要「默认启用更多 Agent Config」——显式列出各域配置（各自带工具授权、列表即文档），
 # everything 留末尾兜底：它是 skills/tools 的 * 通配，删掉等于悄悄砍掉 anime/office/byted 那批。
+# System：本机运维现场（网盘转码 / 桌面调优）。2026-11-20 用户要求开「update-app 那套更新」——现为 ps-tool 的
+# pstool-update，只挂 ops-update（唯一技能 update-all），不把 ops-infra 那套平台/LLM 技能拉进来。
+projects.setdefault('/mnt/Video2/System', ['core']).append('ops-update')
+
 projects['/mnt/Video/PsShowcase'] = ['ui-design','design-brand','core','search','unreal','dotnet','js',
     'dotnet-build','testing','test-audit','agent','docs','ops-desktop']+WFD+['everything']
 
