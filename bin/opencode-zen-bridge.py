@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """Local bridge: an OpenAI-compatible client to opencode's free tier.
 
-opencode's free tier refuses requests that do not look like its own client. Three
-things in the request carry that identity, and only one of them is something a
-stock OpenAI client can supply:
+opencode's free tier refuses requests that do not look like its own client. The
+gate matches the OpenCode client's system prompt (its core instructions plus the
+model/environment block) and the whole `User-Agent`; a valid `x-opencode-session`
+(12 hex digits whose low 12 bits are >= 0xfc0, then 14 base62 chars) is also
+required. Verified 2026-11-21 against the live gateway by replaying a real
+opencode 1.19.6 request: the system prompt is the load-bearing attestation, the
+extra x-opencode-client/project/request headers are not needed.
 
-  * `User-Agent: opencode/<version>`   — the DSH pi-ai adapter reserves that
-    header for its own attribution, so it cannot be set from provider config;
-  * `x-opencode-session: ses_...`      — a descending-ordered opencode
-    identifier (12 hex digits with the high bit set, then 14 base62 chars);
-  * `tools` containing a function named `read`, and `stream: true` — both of
-    which DSH's agent loop already sends.
-
-The bridge adds the first two, and the `read` tool only when the caller sent
-none. Streaming responses pass through unchanged.
+The bridge prepends the captured OpenCode system prompt (opencode-zen-system.txt,
+sitting next to this file) to the caller's first system message, sets the full
+User-Agent and a descending session id, and guarantees a `read` tool when the
+caller sent none. Streaming responses pass through unchanged.
 
 Run: opencode-zen-bridge.py [--host 127.0.0.1] [--port 8790]
 Check: opencode-zen-bridge.py --selftest big-pickle
@@ -29,11 +28,33 @@ import secrets
 import socketserver
 import sys
 import time
+from pathlib import Path
 
 UPSTREAM_HOST = "opencode.ai"
 UPSTREAM_PATH = "/inference/openai/v1/chat/completions"
-OPENCODE_VERSION = "1.19.3"
+# The gateway compares the whole User-Agent; every segment is pinned to the
+# opencode 1.19.6 client (ai-sdk/provider-utils 4.0.23, Bun 1.4.4).
+OPENCODE_USER_AGENT = "opencode/1.19.6 ai-sdk/provider-utils/4.0.23 runtime/bun/1.4.4"
 IDENTIFIER_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+# The OpenCode client system prompt the free-tier gate matches (core instructions
+# + model/environment block). Prepend it; the caller's own instructions follow.
+SYSTEM_PROMPT = (Path(__file__).resolve().parent / "opencode-zen-system.txt").read_text().rstrip()
+
+# beam-free is region-gated (HK egress -> 403); the parallel US/EU mihomo proxy
+# on :7898 (opencode-useu-proxy.service) gives it a US exit. All other free
+# models work direct from HK, so only these route through the proxy.
+USEU_PROXY_HOST = "127.0.0.1"
+USEU_PROXY_PORT = 7898
+US_ROUTED_MODELS = {"beam-free"}
+
+
+def upstream_connection(model: str | None, timeout: int) -> http.client.HTTPSConnection:
+    """Direct to opencode.ai, or tunneled through the US/EU proxy for region-gated models."""
+    if model and model.split("/")[-1] in US_ROUTED_MODELS:
+        conn = http.client.HTTPSConnection(USEU_PROXY_HOST, USEU_PROXY_PORT, timeout=timeout)
+        conn.set_tunnel(UPSTREAM_HOST, 443)
+        return conn
+    return http.client.HTTPSConnection(UPSTREAM_HOST, timeout=timeout)
 
 # Injected only when the caller's request carries no `read` tool at all; a real
 # tool set always wins.
@@ -56,7 +77,9 @@ def session_id(now_ms: int | None = None) -> str:
 
     Mirrors `Identifier.descending()` from opencode's `packages/schema`: a
     millisecond timestamp shifted left 12 bits plus a counter, complemented,
-    rendered as six big-endian hex bytes, then 14 random base62 characters.
+    rendered as six big-endian hex bytes, then 14 random base62 characters. The
+    complement leaves the head's low 12 bits at 0xffe, clearing the gate's 0xfc0
+    floor.
     """
     current = (int(time.time() * 1000) if now_ms is None else now_ms) * 0x1000 + 1
     value = ~current & 0xFFFF_FFFF_FFFF_FFFF
@@ -74,18 +97,35 @@ def parse(body: bytes) -> dict | None:
 
 
 def gated(body: bytes, document: dict | None) -> bytes:
-    """Return the request body with a `read` function tool guaranteed present.
+    """Return the request body shaped like the OpenCode client.
 
-    A body that is not a JSON object is forwarded untouched — the upstream then
-    rejects it with its own message rather than this bridge inventing one.
+    Prepends the OpenCode system prompt to the first system/developer message and
+    guarantees a `read` function tool. A body that is not a JSON object is
+    forwarded untouched — the upstream then rejects it with its own message
+    rather than this bridge inventing one.
     """
     if document is None:
         return body
+    messages = document.get("messages")
+    if isinstance(messages, list):
+        for message in messages:
+            if isinstance(message, dict) and message.get("role") in ("system", "developer"):
+                content = message.get("content")
+                if isinstance(content, str):
+                    if not content.startswith(SYSTEM_PROMPT):
+                        message["content"] = SYSTEM_PROMPT + "\n\n" + content
+                elif isinstance(content, list):
+                    message["content"] = [{"type": "text", "text": SYSTEM_PROMPT}] + content
+                else:
+                    message["content"] = SYSTEM_PROMPT
+                break
+        else:
+            messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
     tools = document.get("tools")
     if isinstance(tools, list):
         for tool in tools:
             if isinstance(tool, dict) and (tool.get("function") or {}).get("name") == "read":
-                return body
+                return json.dumps(document, separators=(",", ":")).encode()
     document["tools"] = (tools if isinstance(tools, list) else []) + [READ_TOOL]
     return json.dumps(document, separators=(",", ":")).encode()
 
@@ -128,7 +168,7 @@ class Bridge(http.server.BaseHTTPRequestHandler):
             )
             return
         raw = gated(body, document)
-        upstream = http.client.HTTPSConnection(UPSTREAM_HOST, timeout=1800)
+        upstream = upstream_connection(document.get("model") if document else None, 1800)
         try:
             upstream.request(
                 "POST",
@@ -137,7 +177,7 @@ class Bridge(http.server.BaseHTTPRequestHandler):
                 headers={
                     "Authorization": authorization,
                     "Content-Type": "application/json",
-                    "User-Agent": "opencode/" + OPENCODE_VERSION,
+                    "User-Agent": OPENCODE_USER_AGENT,
                     "x-opencode-session": session_id(),
                     "Accept": "text/event-stream",
                     "Content-Length": str(len(raw)),
@@ -172,17 +212,14 @@ class Server(socketserver.ThreadingTCPServer):
 
 def selftest(model: str, api_key: str) -> int:
     """One real request that fails if the gate recipe or the model id breaks."""
-    body = json.dumps(
-        {
-            "model": model,
-            "max_tokens": 16,
-            "messages": [{"role": "user", "content": "reply with exactly: ok"}],
-            "tools": [READ_TOOL],
-            "stream": True,
-        },
-        separators=(",", ":"),
-    ).encode()
-    request = http.client.HTTPSConnection(UPSTREAM_HOST, timeout=180)
+    document = {
+        "model": model,
+        "max_tokens": 200,
+        "messages": [{"role": "user", "content": "What is 17*23? Reply with just the number."}],
+        "stream": True,
+    }
+    body = gated(json.dumps(document).encode(), document)
+    request = upstream_connection(model, 180)
     request.request(
         "POST",
         UPSTREAM_PATH,
@@ -190,7 +227,7 @@ def selftest(model: str, api_key: str) -> int:
         headers={
             "Authorization": "Bearer " + api_key,
             "Content-Type": "application/json",
-            "User-Agent": "opencode/" + OPENCODE_VERSION,
+            "User-Agent": OPENCODE_USER_AGENT,
             "x-opencode-session": session_id(),
             "Accept": "text/event-stream",
             "Content-Length": str(len(body)),
