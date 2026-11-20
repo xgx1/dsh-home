@@ -832,9 +832,8 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: qwen
-    model: qwen4-max
-    reasoningEffort: max
+    provider: sensenova
+    model: sensenova-6.8-flash
 
 # ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
 # 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），
