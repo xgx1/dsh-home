@@ -12,6 +12,7 @@
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
+    "dsh-super-agent": "link:/home/sx/projects/MyAI/deepseek-harness/extensions/dsh-super-agent",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
   },
@@ -31,7 +32,8 @@
         "dsh-perf-mode",
         "@deepseek-ai/dsh-experimental-tool-worktree",
         "@deepseek-ai/dsh-experimental-terminal-bundle",
-        "@deepseek-ai/dsh-experimental-session-titles-bundle"
+        "@deepseek-ai/dsh-experimental-session-titles-bundle",
+        "dsh-super-agent"
       ]
     }
   }

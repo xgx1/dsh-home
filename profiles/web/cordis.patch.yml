@@ -996,6 +996,20 @@
                   auto: true
           - id: task-console-global-tools
             name: 'dsh-task-manager/tools'
+    - id: preset-task-exec
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: task-exec
+        name: 任务台·执行会话
+        order: 42
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                你是任务台的执行会话：照简报把活干完（代码、验收命令、证据），干完必须用 task_report 把结果写回卡片——能自验收就 status=waiting-check，做不下去就 status=problem 并写清卡在哪。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。
+          - id: task-exec-tools
+            name: 'dsh-task-manager/tools'
     - id: preset-task-console-project
       name: '@deepseek-ai/dsh-agent-preset'
       config:
@@ -1007,7 +1021,7 @@
             name: '@deepseek-ai/dsh-persona'
             config:
               prefix: |-
-                你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。
+                你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话（起了就结束这一轮，不要用 task_list 反复轮询——执行会话干完会自己把回报写回卡片）、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。
           - id: compaction
             name: cordis:group
             group: true
@@ -1043,8 +1057,8 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: sensenova
-    model: deepseek-flash
+    provider: nvidia-nim
+    model: nvidia/nemotron-3.5-super-vl-120b-a12b
 
 # ── 2026-10-23：重试预算**故意保持原样（maxRetries: 1000 + 阶梯 5s/10s/60s）**──────
 # 事故里 ChatGPT Plus 报「try again in ~232 min」时它确实会一直重试（截断到 60s 档），
