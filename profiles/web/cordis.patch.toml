@@ -26,10 +26,11 @@ transport = "streamable-http"
 url = "http://127.0.0.1:8000/mcp"
 failOnStartupError = false
 
-        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。默认 reconnect
-        # maxAttempts=10、退避封顶 30s，约 1 分钟就"永久放弃"，之后只能靠 HMR
-        # 或重启 Host 才回来（实测 2026-09-26：编辑器起来后仍报 server is
-        # disconnected）。2026-11-21 断点续传：30s 封顶 × 20 万次 ≈ 69 天。
+        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。一次停机共用一个尝试
+        # 预算，用完就"永久放弃"并注销工具，之后只能靠 HMR / 重启 Host 回来
+        # （实测 2026-09-26：编辑器起来后仍报 server is disconnected）。
+        # 2026-11-21 用户要求断点续传：退避封顶 30s × 20 万次 ≈ 69 天——会话期间
+        # 任何时刻打开编辑器，≤30s 内自动接上并重新注册工具。
 [entry.insert.config.reconnect]
 initialDelayMs = 2000
 maxDelayMs = 30000
@@ -60,7 +61,9 @@ args = [ "--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", 
         # 编译、进播放模式这类调用超过默认 60s。
 toolCallTimeoutMs = 180000
 failOnStartupError = false
-        # 断点续传：stdio 断了靠重起 uvx→python，60s 封顶 × 10 万次 ≈ 69 天。
+
+        # 断点续传：stdio 断线靠重起 uvx→python，退避封顶 60s（每分钟一次）、
+        # 10 万次 ≈ 69 天——Unity 与 6400 桥任何时候起来都能接上。
 [entry.insert.config.reconnect]
 initialDelayMs = 5000
 maxDelayMs = 60000
@@ -336,9 +339,6 @@ low = "low"
 high = "high"
 max = "max"
 
-# Go 免费模型（HK 出口 200，不占付费额度）。思考等级按 /models 元数据
-# capabilities.reasoning.effort + 实测：longcat 恒思考受 low..max，hy4 仅 none/high。
-# beam-free 区域受限（HK 403），改由 opencode-zen 经美欧出口代理提供。
 [[entry.config.providers.opencode-go.models]]
 id = "longcat-2.5-free"
 name = "LongCat 2.5 Free"
@@ -364,11 +364,11 @@ input = [ "text", "image" ]
 off = "none"
 high = "high"
 
-# OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-21
-# 实测破解：网关匹配 opencode 客户端系统提示（bridge 预置 opencode-zen-system.txt）
-# + 完整 UA + 降序 session id，全部免费模型 HK 出口 200（此前 429 是伪装不全，非额度）。
-# beam-free 区域受限，bridge 自动经美欧出口代理(opencode-useu-proxy.service :7898)转发。
-# 思考等级按 /models 元数据 effort 数组配置；无 effort 数组者按实测 off 行为取 off+high。
+      # OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-21
+      # 实测破解：网关匹配 opencode 客户端系统提示（bridge 预置 opencode-zen-system.txt）
+      # + 完整 UA + 降序 session id，全部免费模型 HK 出口 200（此前 429 是伪装不全，非额度）。
+      # beam-free 区域受限，bridge 自动经美欧出口代理(opencode-useu-proxy.service :7898)转发。
+      # 思考等级按 /models 元数据 effort 数组配置；无 effort 数组者按实测 off 行为取 off+high。
 [entry.config.providers.opencode-zen]
 displayName = "OpenCode Zen (free)"
 apiKeyEnv = "OPENCODE_API_KEY"
@@ -566,14 +566,70 @@ low = "low"
 high = "high"
 max = "max"
 
-# ── NVIDIA NIM 免费额度（2026-11-21 用户要求接入）───────────────────
-# 入口 https://integrate.api.nvidia.com/v1 是 OpenAI 风格 Chat Completions；key 在
-# https://build.nvidia.com/settings/api-keys 建，写进 <DSH_HOME>/.credentials.yaml 的 refs 下
-# （dsh-env.sh 导出所有 *_API_KEY）。只留 2026-11-21 用真 key 实测「能回话 + 认 tools」的六个；
-# 线上 /v1/models 里的 glm-5.3-flash、gemma-4-31b-it、kimi-k3.1-pro、step-5-preview 都跑到
-# 25~100s 仍无首字节，故不列。
-# shortcut: 上下文/输出上限没权威来源，统一按保守 128K/16K；思考强度未声明（NIM 只认
-# reasoning_effort，逐模型档位没逐个验）。
+      # ── 商汤 SenseNova token plan（2026-11-19 用户要求）─────────────────────
+      # 只接 sensenova-6.8-flash 与 deepseek-flash；context/max_output/模态取自
+      # 线上 GET https://token.sensenova.cn/v1/models（实测 262144/65536、
+      # 1048576/65536；前者带图）。思考强度走标准 reasoning_effort 字段，
+      # 线上校验器接受 none/minimal/low/medium/high/xhigh/max，none = 关思考
+      # （2026-11-19 用 usage.completion_tokens_details.reasoning_tokens 实测：
+      # none→0，low/max→有值）。docs 里写的 output_config.effort 同样可用，
+      # 但 pi-ai 只发 reasoning_effort，故以它为准。
+      # 路由级 reasoning: max = 会话没选档位时的默认档（用户要求两个模型都默认 max）。
+[entry.config.providers.sensenova]
+displayName = "SenseNova (token plan)"
+apiKeyEnv = "SENSENOVA_API_KEY"
+api = "openai-completions"
+baseURL = "https://token.sensenova.cn/v1"
+reasoning = "max"
+
+[entry.config.providers.sensenova.compat]
+supportsReasoningEffort = true
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.sensenova.models]]
+id = "sensenova-6.8-flash"
+name = "SenseNova 6.8 Flash"
+contextWindow = 262144
+maxTokens = 65536
+input = [ "text", "image" ]
+
+[entry.config.providers.sensenova.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.sensenova.models]]
+id = "deepseek-flash"
+name = "DeepSeek Flash (SenseNova)"
+contextWindow = 1048576
+maxTokens = 65536
+input = [ "text" ]
+
+[entry.config.providers.sensenova.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+      # ── NVIDIA NIM 免费额度（2026-11-21 用户要求接入）───────────────────
+      # 入口 https://integrate.api.nvidia.com/v1 是 OpenAI 风格 Chat Completions；key 在
+      # https://build.nvidia.com/settings/api-keys 建，写进 ~/.dsh/.credentials.yaml 的 refs 下。
+      # 只留 2026-11-21 用真 key 实测「能回话 + 认 tools」的六个；线上 /v1/models 里的
+      # z-ai/glm-5.3-flash、google/gemma-4-31b-it、moonshotai/kimi-k3.1-pro、stepfun-ai/step-5-preview
+      # 都跑到 25~100s 仍无首字节（单测在同一时刻别的模型是秒回），故不列。仓库
+      # konglong87/free-AI-free-token 的清单已过期，别照抄（它写的 glm-5.2 线上已换成 5.3-flash）。
+      # shortcut: 上下文/输出上限没有权威来源，统一按保守的 128K/16K；要精确就照
+      # build.nvidia.com 模型页逐个补 contextWindow/maxTokens。思考强度未声明：实测 NIM 只认
+      # reasoning_effort（nemotron/laguna/supervl 上 none 关得掉、mistral-large 对 none 直接 400），
+      # 逐模型档位没逐个验，先不开放选择器。
 [entry.config.providers.nvidia-nim]
 displayName = "NVIDIA NIM (free)"
 apiKeyEnv = "NVIDIA_API_KEY"
@@ -610,6 +666,7 @@ name = "Mistral Large 4 (NIM)"
 id = "nvidia/nemotron-3.5-super-vl-120b-a12b"
 name = "Nemotron 3.5 Super VL (NIM)"
 input = [ "text", "image" ]
+
 [[entry]]
 id = "ui-theme"
 name = "@deepseek-ai/dsh-client-ui-theme"
@@ -713,6 +770,10 @@ model = "hy4-flash-free"
 provider = "opencode-zen"
 model = "beam-free"
 
+[[entry.config.allowedModels]]
+provider = "sensenova"
+model = "sensenova-6.8-flash"
+
 # 2026-11-13 用户要求：7 个类型预设合并成一个 preset-all（所有项目类型共用，
 # ue / unity / blender / cua 四个类型专属行全部挂上）；生成器与 preset-base.yml、
 # type-presets.yaml 一并删除，改动直接写在本文件。默认预设 = all。
@@ -776,7 +837,7 @@ toolCallTimeoutMs = 600000
 [entry.insert.config.env]
 GHIDRA_INSTALL_DIR = "/opt/ghidra"
 
-# 断点续传：首连失败也一直重试（10 万 × 60s ≈ 69 天）。
+        # 断点续传：首连失败也会一直重试（10 万 × 60s ≈ 69 天），不再是"一次没连上就隐身"。
 [entry.insert.config.reconnect]
 initialDelayMs = 5000
 maxDelayMs = 60000
@@ -1155,6 +1216,5 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "opencode-go"
-model = "longcat-2.5-free"
-reasoningEffort = "max"
+provider = "nvidia-nim"
+model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
