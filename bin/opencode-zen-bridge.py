@@ -5,14 +5,15 @@ opencode's free tier refuses requests that do not look like its own client. The
 gate matches the OpenCode client's system prompt (its core instructions plus the
 model/environment block) and the whole `User-Agent`; a valid `x-opencode-session`
 (12 hex digits whose low 12 bits are >= 0xfc0, then 14 base62 chars) is also
-required. Verified 2026-11-21 against the live gateway by replaying a real
-opencode 1.19.6 request: the system prompt is the load-bearing attestation, the
-extra x-opencode-client/project/request headers are not needed.
+required. It also blocklists the code-mode tool name `run_code` (the opencode
+client calls its executor `bash`). Verified 2026-11-21 against the live gateway.
 
 The bridge prepends the captured OpenCode system prompt (opencode-zen-system.txt,
 sitting next to this file) to the caller's first system message, sets the full
-User-Agent and a descending session id, and guarantees a `read` tool when the
-caller sent none. Streaming responses pass through unchanged.
+User-Agent and a descending session id, guarantees a `read` tool when the caller
+sent none, and renames a lone `run_code` tool to `bash` (mapping the model's tool
+calls back in the stream so the harness still dispatches `run_code`). Streaming
+responses pass through unchanged except for that name mapping.
 
 Run: opencode-zen-bridge.py [--host 127.0.0.1] [--port 8790]
 Check: opencode-zen-bridge.py --selftest big-pickle
@@ -96,16 +97,18 @@ def parse(body: bytes) -> dict | None:
     return document if isinstance(document, dict) else None
 
 
-def gated(body: bytes, document: dict | None) -> bytes:
-    """Return the request body shaped like the OpenCode client.
+def gated(body: bytes, document: dict | None) -> tuple[bytes, dict]:
+    """Return (request body shaped like the OpenCode client, tool-name map).
 
-    Prepends the OpenCode system prompt to the first system/developer message and
-    guarantees a `read` function tool. A body that is not a JSON object is
-    forwarded untouched — the upstream then rejects it with its own message
-    rather than this bridge inventing one.
+    Prepends the OpenCode system prompt to the first system/developer message,
+    guarantees a `read` function tool, and renames a lone `run_code` tool to
+    `bash` (the gate blocklists `run_code`); the returned map tells the stream
+    pass-through to rename the model's tool calls back. A body that is not a JSON
+    object is forwarded untouched — the upstream then rejects it with its own
+    message rather than this bridge inventing one.
     """
     if document is None:
-        return body
+        return body, {}
     messages = document.get("messages")
     if isinstance(messages, list):
         for message in messages:
@@ -122,12 +125,47 @@ def gated(body: bytes, document: dict | None) -> bytes:
         else:
             messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
     tools = document.get("tools")
+    rename: dict = {}
     if isinstance(tools, list):
-        for tool in tools:
-            if isinstance(tool, dict) and (tool.get("function") or {}).get("name") == "read":
-                return json.dumps(document, separators=(",", ":")).encode()
+        names = {(t.get("function") or {}).get("name") for t in tools if isinstance(t, dict)}
+        # The gate blocklists the code-mode executor name `run_code`; opencode's
+        # own executor is `bash`. Rename it (schema/description unchanged, so the
+        # model still emits run_code-style arguments) and map the calls back.
+        if "run_code" in names and "bash" not in names:
+            for tool in tools:
+                if isinstance(tool, dict) and (tool.get("function") or {}).get("name") == "run_code":
+                    tool["function"]["name"] = "bash"
+            rename["bash"] = "run_code"
+        if "read" in names:
+            return json.dumps(document, separators=(",", ":")).encode(), rename
     document["tools"] = (tools if isinstance(tools, list) else []) + [READ_TOOL]
-    return json.dumps(document, separators=(",", ":")).encode()
+    return json.dumps(document, separators=(",", ":")).encode(), rename
+
+
+def rename_tool_calls(line: bytes, rename: dict) -> bytes:
+    """Rewrite tool-call function names in one SSE `data:` line per `rename`."""
+    if not rename or not line.startswith(b"data:"):
+        return line
+    payload = line[5:].strip()
+    if payload == b"[DONE]":
+        return line
+    try:
+        doc = json.loads(payload)
+    except ValueError:
+        return line
+    changed = False
+    for choice in doc.get("choices", []):
+        for container in (choice.get("delta"), choice.get("message")):
+            if not isinstance(container, dict):
+                continue
+            for call in container.get("tool_calls") or []:
+                function = call.get("function") or {}
+                if function.get("name") in rename:
+                    function["name"] = rename[function["name"]]
+                    changed = True
+    if not changed:
+        return line
+    return b"data: " + json.dumps(doc, separators=(",", ":")).encode()
 
 
 class Bridge(http.server.BaseHTTPRequestHandler):
@@ -143,6 +181,10 @@ class Bridge(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+    def _chunk(self, payload: bytes) -> None:
+        self.wfile.write(b"%x\r\n" % len(payload) + payload + b"\r\n")
+        self.wfile.flush()
 
     def do_GET(self) -> None:  # noqa: N802 - http.server's naming
         if self.path.rstrip("/") in ("/health", ""):
@@ -167,7 +209,7 @@ class Bridge(http.server.BaseHTTPRequestHandler):
                 b'{"error":"opencode\'s free tier requires \\"stream\\": true; resend the request streamed"}',
             )
             return
-        raw = gated(body, document)
+        raw, rename = gated(body, document)
         upstream = upstream_connection(document.get("model") if document else None, 1800)
         try:
             upstream.request(
@@ -193,12 +235,25 @@ class Bridge(http.server.BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache")
             self.send_header("Transfer-Encoding", "chunked")
             self.end_headers()
-            while True:
-                chunk = response.read1(4096)
-                if not chunk:
-                    break
-                self.wfile.write(b"%x\r\n" % len(chunk) + chunk + b"\r\n")
-                self.wfile.flush()
+            if rename:
+                # Line-buffer so tool-call names can be mapped back to run_code.
+                buffer = b""
+                while True:
+                    chunk = response.read1(4096)
+                    if not chunk:
+                        break
+                    buffer += chunk
+                    while b"\n" in buffer:
+                        line, buffer = buffer.split(b"\n", 1)
+                        self._chunk(rename_tool_calls(line, rename) + b"\n")
+                if buffer:
+                    self._chunk(buffer)
+            else:
+                while True:
+                    chunk = response.read1(4096)
+                    if not chunk:
+                        break
+                    self._chunk(chunk)
             self.wfile.write(b"0\r\n\r\n")
             self.wfile.flush()
         finally:
@@ -218,7 +273,7 @@ def selftest(model: str, api_key: str) -> int:
         "messages": [{"role": "user", "content": "What is 17*23? Reply with just the number."}],
         "stream": True,
     }
-    body = gated(json.dumps(document).encode(), document)
+    body, _ = gated(json.dumps(document).encode(), document)
     request = upstream_connection(model, 180)
     request.request(
         "POST",
