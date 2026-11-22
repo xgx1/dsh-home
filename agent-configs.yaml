@@ -538,6 +538,8 @@ projects:
     - "ui-design"
     - "design-brand"
     - "everything"
+    - "core"
+    - "unity"
   "/mnt/Storage/归档/min/资料/被骗":
     - "ui-design"
     - "design-brand"

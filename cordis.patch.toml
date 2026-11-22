@@ -30,11 +30,13 @@
 #   3. node 在 dsh-web 的 PATH 上（桥用 bash -c 起钩子）
 # 依赖解析：@deepseek-ai/dsh-hooks-claude-code 由启动器 app 声明
 # （apps/cli/package.json），从 apps/cli 的解析链加载，不用装进 profile。
-- insert:
-    - id: hooks-claude-code
-      name: '@deepseek-ai/dsh-hooks-claude-code'
-      config:
+[[entry]]
+[[entry.insert]]
+id = "hooks-claude-code"
+name = "@deepseek-ai/dsh-hooks-claude-code"
+
+[entry.insert.config]
         # 跨平台：用 dshHomePath() 在运行时解析，避免把 C:/... 或 /home/... 写死。
-        configPath: !!js dshHomePath('hooks', 'skill-context-hooks.json')
+configPath = "js:dshHomePath('hooks', 'skill-context-hooks.json')"
         # ${CLAUDE_PLUGIN_ROOT} 的替换值，供 skill-context-hooks.json 里的命令定位分发器。
-        pluginRoot: !!js dshHomePath('hooks')
+pluginRoot = "js:dshHomePath('hooks')"

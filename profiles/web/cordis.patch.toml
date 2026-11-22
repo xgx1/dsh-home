@@ -1,0 +1,1220 @@
+# dsh web profile MCP servers (migrated from OMP mcp.json).
+# One @deepseek-ai/dsh-mcp-client instance per server.
+
+[[entry]]
+[[entry.insert]]
+id = "mcp-cbm"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config]
+serverName = "cbm"
+transport = "stdio"
+        # 2026-10-16 用户要求：UI 开关与端口是 codebase-memory-mcp 的**持久化配置**
+        # （`codebase-memory-mcp config list`：ui_enabled=true / ui_port=9749），
+        # 由 systemd 的 `codebase-memory-mcp daemon start`（codebase-memory.service）
+        # 单点持有；MCP 这行再传一次只是每次启动重写同一份配置，属冗余，故删除。
+        # 删除不改行为：缺省不传即不动配置，daemon 仍在 9749 提供 UI。
+command = "codebase-memory-mcp"
+
+[[entry.insert]]
+id = "mcp-ue"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config]
+serverName = "ue"
+transport = "streamable-http"
+url = "http://127.0.0.1:8000/mcp"
+failOnStartupError = false
+
+        # 端点在 UnrealEditor 进程内（编辑器关闭 = 连接失败）。一次停机共用一个尝试
+        # 预算，用完就"永久放弃"并注销工具，之后只能靠 HMR / 重启 Host 回来
+        # （实测 2026-09-26：编辑器起来后仍报 server is disconnected）。
+        # 2026-11-21 用户要求断点续传：退避封顶 30s × 20 万次 ≈ 69 天——会话期间
+        # 任何时刻打开编辑器，≤30s 内自动接上并重新注册工具。
+[entry.insert.config.reconnect]
+initialDelayMs = 2000
+maxDelayMs = 30000
+maxAttempts = 200000
+
+    # ── CoplayDev/unity-mcp（MCP for Unity）2026-10-14 接入 ──────────────
+    # 两端：Unity 侧 UPM 包 com.coplaydev.unity-mcp（git 依赖，钉 v10.3.0）；
+    # 客户端走 stdio，由 uvx 拉 Python 服务端 mcpforunityserver==10.3.0（与 UPM
+    # 包同版本），服务端再连 Unity 侧的反向桥 127.0.0.1:6400。
+    #
+    # Unity 侧起桥：默认懒得自启（HTTP 模式才是包默认），用包自带的 CI 入口显式拉起——
+    #   Unity -projectPath <proj> -executeMethod MCPForUnity.Editor.McpCiBoot.StartStdioForCi
+    # 起了会监听 6400 并写 ~/.unity-mcp/unity-mcp-status-<hash>.json（reason:"ready"）。
+    #
+    # 代理坑（2026-10-14 实测）：本机全局 all_proxy=socks5://127.0.0.1:7897，httpx
+    # 构造期就建 SOCKS 传输层，缺 socksio 直接 ImportError；且 no_proxy 里的 `[::1]`
+    # 写法让 httpx 抛 `InvalidURL: Invalid port: ':1]'`。故一律经包装脚本
+    # ~/.local/bin/uvx-no-proxy（先清代理变量、换干净的本地白名单再 exec uvx）。
+[[entry.insert]]
+id = "mcp-unity"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config]
+serverName = "unity"
+transport = "stdio"
+command = "/home/sx/.local/bin/uvx-no-proxy"
+args = [ "--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", "stdio" ]
+        # 编译、进播放模式这类调用超过默认 60s。
+toolCallTimeoutMs = 180000
+failOnStartupError = false
+
+        # 断点续传：stdio 断线靠重起 uvx→python，退避封顶 60s（每分钟一次）、
+        # 10 万次 ≈ 69 天——Unity 与 6400 桥任何时候起来都能接上。
+[entry.insert.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
+
+    # ── 用户调整（2026-09-20）：桌面控制挂 Cua Driver native（0.1.6 新能力，实验性）─
+    # dsh-computer-use 同样是**互斥单注册**（"A deployment can enable one
+    # computer-use provider at a time"），Cua 的两个实现只能挂一个。
+    # 选 native 而不是 MCP 版的原因：MCP 版要 PATH 上有独立的 `cua-driver` 可执行
+    # （trycua/cua 那个 Rust 应用，还得给 OS 授桌面权限），本机没装；native 版直接用
+    # 已装的 @trycua/cua-driver@0.28.0（linux-x64-gnu 二进制已在 node_modules），零配置。
+    # 代价：native 运行时与 dsh-web **同进程**，native 崩溃会带走 dsh-web。装上独立
+    # Cua 应用后换成下面这段（独立进程，崩了不带走 dsh-web）：
+    #   - id: computer-use-cua-mcp
+    #     name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp'
+    #     config:
+    #       command: cua-driver
+    #       args: [mcp]
+    # 截图要生效还需 attachment store + 声明 image 输入的模型路由。
+    # 工具命名空间：native 版 `cua_driver_native__*`（无 mcp__ 前缀）；MCP 版 `mcp__cua-driver-mcp__*`。
+[[entry]]
+[[entry.insert]]
+id = "computer-use"
+name = "@deepseek-ai/dsh-computer-use"
+
+[[entry.insert]]
+id = "computer-use-cua-native"
+name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"
+
+# 2026-11-15 用户要求：沙箱全部禁止挂载（消费者已改为容忍缺席）。
+[[entry]]
+id = "sandbox"
+disabled = true
+
+[[entry]]
+id = "sandbox-policy"
+disabled = true
+
+[[entry]]
+id = "bash-sandbox"
+disabled = true
+
+[[entry]]
+id = "pwsh-sandbox"
+disabled = true
+
+[[entry]]
+id = "fs-sandbox"
+disabled = true
+
+[[entry]]
+id = "permission"
+disabled = true
+
+[[entry]]
+id = "ui-permission"
+disabled = true
+
+# approval：完全关闭审批 seam（disabled 后不加载，不再有 policy）
+[[entry]]
+id = "approval"
+disabled = true
+
+# 会话全文搜索：首个搜索请求时惰性建库（不拖慢启动），索引落在 DSH_HOME 根下
+[[entry]]
+id = "session-query-sqlite"
+
+[entry.config]
+path = "js:dshHomePath('session-search.db')"
+openAt = "first-search"
+
+# 无沙箱替代品：本地文件系统 + 本地 bash 执行器
+[[entry]]
+[[entry.insert]]
+id = "bash-local"
+name = "@deepseek-ai/dsh-bash-local"
+
+[[entry.insert]]
+id = "fs-local"
+name = "@deepseek-ai/dsh-fs-local"
+
+# ── 子 agent 背景模式：fork 用 one-shot（preset 默认 continuable）──
+# 2026-10-05 删两条 agentOptions：原指向 provider `deepseek-official` 与 model
+# `deepseek-v4.1-flash-expires-on-0910`，两者均不在 settings.yaml 的模型目录里，
+# 属失效引用；子 agent 的模型选择由 subagent-model-selection 的 allowedModels 控。
+# tool-subagent 段整段删除：其 config 与 preset 值逐键相同（除 agentOptions），
+# 删后回落 preset，行为不变。patch 是整行替换 config，不合并。
+[[entry]]
+id = "tool-subagent-fork"
+
+[entry.config]
+provider = "fork"
+toolName = "subagent_fork"
+backgroundMode = "one-shot"
+
+# ── 用户要求关闭（2026-08-23）：精简能力面 ─────────────────────────────
+# 关闭：会话日志导出 / Ralph 循环 / 审批 seam / read-before-edit 强制策略 /
+# GUI plan 模式。（目标系统全套与 GUI 目标栏已于 2026-09-25 恢复，见下。）
+# ── 用户恢复（2026-08-28）：重新启用 DeepSeek 搜索 provider ──────────
+# web-search-deepseek disabled:false，凭据已在 ~/.dsh/.credentials.yaml
+# （DEEPSEEK_API_KEY），无需环境变量；改后需重启 dsh web 生效。
+[[entry]]
+id = "session-log-download"
+disabled = true
+
+# ── 用户要求（2026-09-25）：goal 相关插件全部启用 ────────────────────────
+# 目标系统留在 host plane 的三项：服务（ctx.goals）、自动续跑 driver、
+# GUI 目标栏（ui-goal，另见下方条目）。
+# goal-round-driver 只在会话空闲、goal 为 active 且续跑已 arm 时追加轮次；
+# 轮数上限由 goal 自身的 maxGoalRounds（默认 256）约束，没有 goal 时它不做事。
+# 另两项（人类命令 command-goal / 模型工具 tool-goal）归 preset plane，
+# 由 .agent-presets/omni|manager 注册——两层同时注册同一工具 id 会 fail loud
+# （见 dsh-web-app bundle 与 shipped cordis preset 的同一条注释），故此处保持
+# disabled:true，不是漏开。
+[[entry]]
+id = "goal"
+disabled = false
+
+[[entry]]
+id = "goal-round-driver"
+disabled = false
+
+[[entry]]
+id = "command-goal"
+disabled = true
+
+[[entry]]
+id = "tool-goal"
+disabled = true
+
+[[entry]]
+id = "web-search-deepseek"
+disabled = false
+
+[entry.config]
+apiKeyEnv = "DEEPSEEK_API_KEY"
+
+# searchProvider 整行替换覆盖：2026-09-06 曾切到 exa（普通 HTTP POST，不烧模型令牌）；
+# 2026-10-16 用户要求改回 DeepSeek 搜索——web-search-exa 的 insert 段已整段删除，
+# 取值回到 base 层默认 `deepseek-official`（packages/bundle/base/cordis.patch.yml:463）。
+[[entry]]
+id = "web"
+
+[entry.config]
+searchProvider = "deepseek-official"
+
+[[entry]]
+id = "fs-observation-policy"
+disabled = true
+
+# GUI 目标栏（composer-context 栈第二条卡片，有 goal 时才渲染）：
+# 2026-09-25 随目标系统一起恢复
+[[entry]]
+id = "ui-goal"
+disabled = false
+
+[[entry]]
+id = "ui-plan"
+disabled = true
+
+# 顺手关闭：OTel 遥测管道（默认 DISABLED 不发送，但整体移除更干净）
+[[entry]]
+id = "session-telemetry-otel"
+disabled = true
+
+# ── 用户调整（2026-08-23 第二批，待重启生效）────────────────────────
+# 启用 agent-instructions：显式 disabled:false 覆盖 dsh-web-app 层的 disabled
+[[entry]]
+id = "agent-instructions"
+disabled = false
+
+# 关闭 message-feedback / command-feedback
+# token-meter 保留：omni 预设的 compaction-basic / tool-result-pruner 依赖 tokenMeter 服务
+[[entry]]
+id = "message-feedback"
+disabled = true
+
+[[entry]]
+id = "command-feedback"
+disabled = true
+
+# ── 用户要求（2026-09-13）：接入 zvec-grep（本地优先检索层）────────────────
+# 上游 zvec-ai/zvec-grep（2026-11-10 升到 v0.3.0：CLI 变成原生二进制 bin/zg，
+# 子命令改为 flag 形式 --server/--index/--status，索引格式换代需 --rebuild 重建）。
+# npm 全局装：npm i -g --allow-scripts=@zvec/zvec-grep @zvec/zvec-grep（npm 12 默认拦 install
+# script，漏了它二进制不会落盘）。再软链 ~/.local/bin/zg -> ~/.npm-global/bin/zg
+# （本机 ~/.npm-global/bin 不在 dsh-web 的 PATH 里）。它自带 ripgrep 与本地
+# embedding（local/potion-code-16m-v2，CPU），全局配置在 ~/.zvec-grep/config.json。
+#
+# 用 --stdio：DSH 拉起子进程并复用共享 daemon，无需预先 `zg server on`，
+# 也不会出现「守护进程没起就静默消失」的失败模式。
+#
+# 工具集（2026-09-13 调整）：改用 **full** toolset。
+# 原因是同日按用户要求禁用了内建 grep/glob（omni 预设的 tool-fs-search 行），
+# 精确检索需要替补——agent toolset 只暴露 zvec_grep_search（语义、需索引），
+# 而 full 会额外暴露**托管 rg** 与四个 index/status 管理工具，把精确检索补回来。
+# 代价：agent 由此获得改索引的能力（index/drop），且工具目录多 5 项。
+#
+# 前置条件（新设备部署时）：
+#   1. npm i -g --allow-scripts=@zvec/zvec-grep @zvec/zvec-grep && ln -sfn ~/.npm-global/bin/zg ~/.local/bin/zg
+#   2. zg --config model set local/potion-code-16m-v2 --device cpu --default
+#   3. 每个要检索的工作区需**工作区级**索引：zg --index <root> --device cpu
+#      （不给 root 只建子目录索引的话，工作区根上查不到，会报
+#        ZVEC_GREP.ENGINE.SERVICE.WORKSPACE_INDEX_NOT_FOUND）
+#   4. 索引落在 <root>/.zvec-grep/（已在各仓 .gitignore 排除）
+# 不写 failOnStartupError：首次接入保持默认(true)，让命令缺失/加载失败立刻可见。
+[[entry]]
+[[entry.insert]]
+id = "mcp-zvecgrep"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config]
+serverName = "zvecgrep"
+transport = "stdio"
+        # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
+        # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
+        # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
+        # 代理内部用 `--server --stdio` 拉起真 zg，参数原样透传（0.3.0 起子命令改成 flag）。
+command = "/home/sx/.dsh/bin/zg-autoidx.mjs"
+args = [ "--server", "--stdio", "--mcp-toolset", "full" ]
+
+[[entry]]
+id = "ui-settings-general"
+name = "@deepseek-ai/dsh-client-ui-settings-general"
+
+[entry.config]
+welcomeNoticeVersion = "2026-09-28.1"
+
+[[entry]]
+id = "agent-loop"
+name = "@deepseek-ai/dsh-agent-loop"
+
+[entry.config]
+agents = []
+maxParallelToolCalls = 10
+
+[[entry]]
+id = "locale"
+name = "@deepseek-ai/dsh-client-locale"
+
+[entry.config]
+preference = "zh"
+
+[[entry]]
+[[entry.insert]]
+id = "opencode-go-headers"
+name = "/home/sx/.dsh/profiles/web/opencode-go-headers.mjs"
+
+[[entry]]
+id = "llm-pi-ai"
+name = "@deepseek-ai/dsh-llm-pi-ai"
+
+[entry.config.providers.opencode-go]
+displayName = "OpenCode Go"
+apiKeyEnv = "OPENCODE_API_KEY"
+api = "openai-completions"
+baseURL = "https://opencode.ai/inference/go/openai/v1"
+reasoning = "max"
+
+[entry.config.providers.opencode-go.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.opencode-go.models]]
+id = "deepseek-v4.1-flash"
+name = "DeepSeek V4.1 Flash"
+contextWindow = 1000000
+maxTokens = 384000
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-go.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.opencode-go.models]]
+id = "longcat-2.5-free"
+name = "LongCat 2.5 Free"
+contextWindow = 1000000
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-go.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.opencode-go.models]]
+id = "hy4-flash-free"
+name = "Hy4 Flash Free"
+contextWindow = 1048576
+maxTokens = 65536
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-go.models.reasoningEfforts]
+off = "none"
+high = "high"
+
+      # OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-21
+      # 实测破解：网关匹配 opencode 客户端系统提示（bridge 预置 opencode-zen-system.txt）
+      # + 完整 UA + 降序 session id，全部免费模型 HK 出口 200（此前 429 是伪装不全，非额度）。
+      # beam-free 区域受限，bridge 自动经美欧出口代理(opencode-useu-proxy.service :7898)转发。
+      # 思考等级按 /models 元数据 effort 数组配置；无 effort 数组者按实测 off 行为取 off+high。
+[entry.config.providers.opencode-zen]
+displayName = "OpenCode Zen (free)"
+apiKeyEnv = "OPENCODE_API_KEY"
+api = "openai-completions"
+baseURL = "http://127.0.0.1:8790/v1"
+reasoning = "high"
+
+[entry.config.providers.opencode-zen.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "big-pickle"
+name = "Big Pickle"
+contextWindow = 200000
+maxTokens = 32000
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "deepseek-v4.1-flash-free"
+name = "DeepSeek V4.1 Flash Free"
+contextWindow = 200000
+maxTokens = 32000
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "mimo-v2.6-flash-free"
+name = "MiMo-V2.6-Flash Free"
+contextWindow = 200000
+maxTokens = 32000
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "longcat-2.5-free"
+name = "LongCat 2.5 Free"
+contextWindow = 1000000
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "iceman-free"
+name = "Iceman Free"
+contextWindow = 262144
+maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+high = "high"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "beam-free"
+name = "Beam Free"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "flint-40b-free"
+name = "Flint 40B Free"
+contextWindow = 262144
+maxTokens = 65536
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "nemotron-3.5-lightning-free"
+name = "Nemotron 3.5 Lightning Free"
+contextWindow = 262144
+maxTokens = 262144
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+high = "high"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "nemotron-3.5-super-vl-free"
+name = "Nemotron 3.5 Super VL Free"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "hy4-flash-free"
+name = "Hy4 Flash Free"
+contextWindow = 1048576
+maxTokens = 65536
+input = [ "text", "image" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+off = "none"
+high = "high"
+
+[[entry.config.providers.opencode-zen.models]]
+id = "tidepool-alpha-free"
+name = "Tidepool Alpha Free"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.opencode-zen.models.reasoningEfforts]
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[entry.config.providers.openai-codex]
+displayName = "ChatGPT Plus (Codex)"
+
+[[entry.config.providers.openai-codex.models]]
+id = "gpt-6-astra"
+
+[[entry.config.providers.openai-codex.models]]
+id = "gpt-6-luna"
+
+[[entry.config.providers.openai-codex.models]]
+id = "gpt-6.1-sol"
+
+[entry.config.providers.qwen]
+displayName = "Qwen token plan"
+apiKeyEnv = "QWEN_API_KEY"
+api = "openai-completions"
+baseURL = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
+reasoning = "high"
+
+[entry.config.providers.qwen.compat]
+supportsReasoningEffort = true
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+thinkingFormat = "qwen"
+
+[[entry.config.providers.qwen.models]]
+id = "deepseek-v4.1-flash-1017"
+name = "deepseek-v4.1-flash-1017"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.qwen.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.qwen.models]]
+id = "qwen4-max"
+name = "Qwen4 Max"
+contextWindow = 1000000
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.qwen.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+      # ── 商汤 SenseNova token plan（2026-11-19 用户要求）─────────────────────
+      # 只接 sensenova-6.8-flash 与 deepseek-flash；context/max_output/模态取自
+      # 线上 GET https://token.sensenova.cn/v1/models（实测 262144/65536、
+      # 1048576/65536；前者带图）。思考强度走标准 reasoning_effort 字段，
+      # 线上校验器接受 none/minimal/low/medium/high/xhigh/max，none = 关思考
+      # （2026-11-19 用 usage.completion_tokens_details.reasoning_tokens 实测：
+      # none→0，low/max→有值）。docs 里写的 output_config.effort 同样可用，
+      # 但 pi-ai 只发 reasoning_effort，故以它为准。
+      # 路由级 reasoning: max = 会话没选档位时的默认档（用户要求两个模型都默认 max）。
+[entry.config.providers.sensenova]
+displayName = "SenseNova (token plan)"
+apiKeyEnv = "SENSENOVA_API_KEY"
+api = "openai-completions"
+baseURL = "https://token.sensenova.cn/v1"
+reasoning = "max"
+
+[entry.config.providers.sensenova.compat]
+supportsReasoningEffort = true
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.sensenova.models]]
+id = "sensenova-6.8-flash"
+name = "SenseNova 6.8 Flash"
+contextWindow = 262144
+maxTokens = 65536
+input = [ "text", "image" ]
+
+[entry.config.providers.sensenova.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+[[entry.config.providers.sensenova.models]]
+id = "deepseek-flash"
+name = "DeepSeek Flash (SenseNova)"
+contextWindow = 1048576
+maxTokens = 65536
+input = [ "text" ]
+
+[entry.config.providers.sensenova.models.reasoningEfforts]
+off = "none"
+minimal = "minimal"
+low = "low"
+medium = "medium"
+high = "high"
+xhigh = "xhigh"
+max = "max"
+
+      # ── NVIDIA NIM 免费额度（2026-11-21 用户要求接入）───────────────────
+      # 入口 https://integrate.api.nvidia.com/v1 是 OpenAI 风格 Chat Completions；key 在
+      # https://build.nvidia.com/settings/api-keys 建，写进 ~/.dsh/.credentials.yaml 的 refs 下。
+      # 只留 2026-11-21 用真 key 实测「能回话 + 认 tools」的六个；线上 /v1/models 里的
+      # z-ai/glm-5.3-flash、google/gemma-4-31b-it、moonshotai/kimi-k3.1-pro、stepfun-ai/step-5-preview
+      # 都跑到 25~100s 仍无首字节（单测在同一时刻别的模型是秒回），故不列。仓库
+      # konglong87/free-AI-free-token 的清单已过期，别照抄（它写的 glm-5.2 线上已换成 5.3-flash）。
+      # shortcut: 上下文/输出上限没有权威来源，统一按保守的 128K/16K；要精确就照
+      # build.nvidia.com 模型页逐个补 contextWindow/maxTokens。思考强度未声明：实测 NIM 只认
+      # reasoning_effort（nemotron/laguna/supervl 上 none 关得掉、mistral-large 对 none 直接 400），
+      # 逐模型档位没逐个验，先不开放选择器。
+[entry.config.providers.nvidia-nim]
+displayName = "NVIDIA NIM (free)"
+apiKeyEnv = "NVIDIA_API_KEY"
+api = "openai-completions"
+baseURL = "https://integrate.api.nvidia.com/v1"
+defaultContextWindow = 131072
+defaultMaxTokens = 16384
+
+[entry.config.providers.nvidia-nim.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "minimaxai/minimax-m3.1-flash"
+name = "MiniMax M3.1 Flash (NIM)"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "poolside/laguna-xs-2.1"
+name = "Laguna XS 2.1 (NIM)"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "nvidia/nemotron-3-ultra-550b-a55b"
+name = "Nemotron 3 Ultra (NIM)"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "meta/muse-glimmer-30b"
+name = "Muse Glimmer 30B (NIM)"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "mistralai/mistral-large-4-1t-a52b"
+name = "Mistral Large 4 (NIM)"
+
+[[entry.config.providers.nvidia-nim.models]]
+id = "nvidia/nemotron-3.5-super-vl-120b-a12b"
+name = "Nemotron 3.5 Super VL (NIM)"
+input = [ "text", "image" ]
+
+[[entry]]
+id = "ui-theme"
+name = "@deepseek-ai/dsh-client-ui-theme"
+
+[entry.config]
+preference = "dark"
+fontSize = 22
+
+[[entry]]
+id = "ui-conversation"
+name = "@deepseek-ai/dsh-client-ui-conversation"
+
+[entry.config]
+busyEnter = "steer"
+
+[[entry]]
+id = "subagent"
+name = "@deepseek-ai/dsh-subagent"
+
+[entry.config]
+maxDepth = 10
+maxActiveSubagents = 20
+
+[[entry]]
+id = "ui-chat"
+name = "@deepseek-ai/dsh-client-ui-chat"
+
+[entry.config]
+transcriptView = "verbose"
+performanceUsage = "compact"
+
+# ── 0.2.1 settings.yaml 迁移补遗（2026-10-14）──────────────────────────────
+# 0.2.1 启动时把 $DSH_HOME/settings.yaml 改名成 settings.yaml.imported，并把可写字段
+# 导入 profile patch。五节没导进来，原因逐条写明；下面按 0.2.1 的条目 id 补回，值与原
+# settings.yaml 一致（.imported 里仍留原件备查）：
+#   · llm-deepseek             原节含 0.2.1 已删除的 protocol 字段，校验不过
+#   · shell                    LEGACY 映射到 bash-sandbox，而该条目被本 patch disabled，
+#                              用户实际执行器是 bash-local
+#   · subagent-model-selection  条目 id 改为 subagent-model-selection-settings
+#   · agent-presets             条目 id 改为 agent-preset-registry
+#   · permission                permission 条目被本 patch disabled（无限制执行器），
+#                              这节的 defaultPreset 属预期丢弃
+# patch 的 config 是整条目替换，不合并，故每节都写全。
+[[entry]]
+id = "llm-deepseek"
+
+[entry.config]
+apiKeyEnv = "DEEPSEEK_API_KEY"
+    # 0.2.1 的 llm-deepseek（api-key provider）本身就是 Messages 协议
+    # （PUBLIC_BASE_URL = https://api.deepseek.com/anthropic），原 protocol 字段已删。
+thinking = "enabled"
+    # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
+reasoningEffort = "low"
+
+    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
+    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
+[[entry.config.models]]
+id = "deepseek-flash"
+name = "DeepSeek-V4.1-Flash"
+contextWindow = 1048576
+maxTokens = 393216
+inputModalities = [ "text", "image" ]
+imagePixelBudget = 640000
+imageMaxBytes = 1048576
+systemPromptUpdate = "in-history"
+
+    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
+    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
+[[entry.config.models]]
+id = "deepseek-v4-pro"
+name = "DeepSeek-V4-Pro"
+description = "更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。"
+contextWindow = 1048576
+maxTokens = 393216
+inputModalities = [ "text" ]
+
+# 原 settings.yaml 的 shell.timeoutMs = 1800000（30 分钟）。落到实际执行器 bash-local 上，
+# 并同步抬高 maxTimeoutMs——默认上限 600000 会把请求钳回去。
+[[entry]]
+id = "bash-local"
+
+[entry.config]
+timeoutMs = 1800000
+maxTimeoutMs = 1800000
+
+[[entry]]
+id = "subagent-model-selection-settings"
+
+[entry.config]
+enabled = true
+
+[[entry.config.allowedModels]]
+provider = "opencode-go"
+model = "longcat-2.5-free"
+
+[[entry.config.allowedModels]]
+provider = "opencode-go"
+model = "hy4-flash-free"
+
+[[entry.config.allowedModels]]
+provider = "opencode-zen"
+model = "beam-free"
+
+[[entry.config.allowedModels]]
+provider = "sensenova"
+model = "sensenova-6.8-flash"
+
+# 2026-11-13 用户要求：7 个类型预设合并成一个 preset-all（所有项目类型共用，
+# ue / unity / blender / cua 四个类型专属行全部挂上）；生成器与 preset-base.yml、
+# type-presets.yaml 一并删除，改动直接写在本文件。默认预设 = all。
+[[entry]]
+id = "agent-preset-registry"
+
+[entry.config]
+default = "all"
+
+# ── 用户要求（2026-10-14）：禁用右侧面板（文件 / 浏览器 / 终端 / 文档预览）──────
+# ui-sidebar-right 的 panel:false 只停住「面板 + 会话头展开按钮」两处挂载；
+# ctx.sidebarRight 服务与 sidebarRightTabs 注册表照常提供，ui-chat / ui-reference /
+# ui-plan / ui-deliverables / ui-schedule 等 inject 它的插件不会卡在 pending。
+# （整行 disabled 会把这些插件一起打掉，对话区直接空白，故不能用 disabled。）
+# 文件路径点击改由系统默认程序打开：ui-chat 的 openFile 已改走 Host 桌面，
+# Sidebar 只作兜底。
+[[entry]]
+id = "ui-sidebar-right"
+
+[entry.config]
+panel = false
+
+# ── 用户要求（2026-10-14）：/goal 不依赖 preset 面 ───────────────────────────
+# command-goal 在 web-app bundle 的 host 面被 disabled（packages/bundle/web-app/
+# cordis.patch.yml），靠 preset 面补挂；preset 面一死 /goal 就消失（08:05 实测）。
+# 命令注册表是「全局 + 会话域遮蔽」语义，两层同时注册不会 fail loud，故在 host 面
+# 直接补一行。**不要**照做 tool-goal（create_goal/get_goal/update_goal）：工具 id
+# 重复注册会 fail loud，host 面挂它会让所有 preset 会话起不来。
+[[entry]]
+id = "command-goal"
+disabled = false
+
+# ── 用户要求（2026-10-14）：接入 REA（morluto/rea）逆向证据层 ──────────────────
+# npm 包 rea-agents@6.4.0 已全局装（~/.npm-global/bin/rea；~/.local/bin/rea 是它的软链，
+# 与 codebase-memory-mcp 同路——dsh-web 进程的 PATH 里确实有 ~/.local/bin）。
+# 已装引擎：Ghidra 12.1.2（Arch extra 包，树在 /opt/ghidra）、JADX、binwalk、
+# pwntools + pwndbg、mitmproxy、完整 JDK（java-environment）、adb、.NET SDK。
+# Hopper / IDA / JEB 是付费软件或自带服务，本机没有；对应 provider 报 unavailable 属预期。
+#
+# 两个非默认值都有实测依据：
+#   1. GHIDRA_INSTALL_DIR：REA 只在未设该变量时才去 PATH 找 ghidra / ghidraRun，且要求
+#      解析出的真实路径属于一棵 Ghidra 树；Arch 的 /usr/bin/ghidra 是包装脚本
+#      （launch.sh bg jdk Ghidra），不是树内文件，PATH 发现必然失败
+#      （实测 doctor：ok=false, detail=GHIDRA_INSTALL_DIR is not set）。显式给 /opt/ghidra
+#      后 doctor 该 provider 全绿：12.1.2; compatible 12.1.x release。
+#   2. toolCallTimeoutMs：REA 侧 Ghidra 冷启动默认允许 330,000 ms
+#      （REA_GHIDRA_STARTUP_TIMEOUT_MS，REA 自己的下限），而 dsh-mcp-client 默认每次工具
+#      调用 60,000 ms 即取消——首次 binary_overview 很可能死在导入阶段。放大到 600,000 ms。
+[[entry]]
+[[entry.insert]]
+id = "mcp-rea"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config]
+serverName = "rea"
+transport = "stdio"
+command = "rea"
+args = [ "mcp" ]
+toolCallTimeoutMs = 600000
+
+[entry.insert.config.env]
+GHIDRA_INSTALL_DIR = "/opt/ghidra"
+
+        # 断点续传：首连失败也会一直重试（10 万 × 60s ≈ 69 天），不再是"一次没连上就隐身"。
+[entry.insert.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
+
+# ── 用户要求（2026-10-17）：工具按需加载 ────────────────────────────────────
+# 400+ 枚注册工具的目录成本（PTC 下生成 SDK 段 267,755 字符，占系统提示 94%）
+# 只有靠「少注册」才能真正压下来。开启 plugin_manager 工具，让模型能在
+# 运行期 set_plugin 关/开整族 MCP（如 mcp-rea），不必改文件重启。
+# 代价：多 1 枚工具；每次调用需 danger-full-access 审批（本 profile 全权限常开）。
+# 2026-11-13：基础模式（preset-all）不再要 plugin_manager；创造模式（preset-cordis）自带一行，仍然可用。
+[[entry]]
+id = "tool-plugin-manager"
+disabled = true
+
+[[entry]]
+id = "tool-worktree"
+disabled = true
+
+[[entry]]
+id = "mcp-rea"
+disabled = true
+
+# ── 唯一预设：所有项目类型共用（2026-11-13 用户要求，7 个类型预设合并；生成器已删除）──
+[[entry]]
+id = "mcp-unity"
+disabled = true
+
+[[entry]]
+id = "mcp-ue"
+disabled = true
+
+[[entry]]
+id = "computer-use-cua-native"
+disabled = true
+
+[[entry]]
+id = "dsh-blender-plugin"
+disabled = true
+
+[[entry]]
+[[entry.insert]]
+id = "preset-all"
+name = "@deepseek-ai/dsh-agent-preset"
+
+[entry.insert.config]
+id = "all"
+name = "基础模式"
+order = 20
+
+[[entry.insert.config.plugins]]
+id = "persona"
+name = "@deepseek-ai/dsh-persona"
+
+[entry.insert.config.plugins.config]
+prefix = "只使用当前会话工具目录里列出的工具：没列出的（包括任何 MCP 工具）就不要假设它存在。"
+
+[[entry.insert.config.plugins]]
+id = "agent-instructions"
+name = "@deepseek-ai/dsh-agent-instructions"
+
+[entry.insert.config.plugins.config]
+maxBytes = 65536
+
+[[entry.insert.config.plugins]]
+id = "tool-bash"
+name = "@deepseek-ai/dsh-tool-bash"
+disabled = "js:process.platform === 'win32'"
+
+[[entry.insert.config.plugins]]
+id = "tool-fs"
+name = "@deepseek-ai/dsh-tool-fs"
+
+[[entry.insert.config.plugins]]
+id = "tool-jobs"
+name = "@deepseek-ai/dsh-tool-jobs"
+
+[[entry.insert.config.plugins]]
+id = "skill-filesystem"
+name = "@deepseek-ai/dsh-skill-filesystem"
+
+[entry.insert.config.plugins.config]
+includeDefaultRoots = false
+customSkillDirs = [ "js:process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))" ]
+
+[[entry.insert.config.plugins]]
+id = "skill-filter"
+name = "@deepseek-ai/dsh-skill-filter"
+
+[entry.insert.config.plugins.config]
+customSkillDirs = [ "js:process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))" ]
+
+[[entry.insert.config.plugins]]
+id = "tool-skill"
+name = "@deepseek-ai/dsh-tool-skill"
+
+[entry.insert.config.plugins.config]
+catalogDescriptionMaxLength = 150
+
+[[entry.insert.config.plugins]]
+id = "command-goal"
+name = "@deepseek-ai/dsh-command-goal"
+
+[[entry.insert.config.plugins]]
+id = "tool-goal"
+name = "@deepseek-ai/dsh-tool-goal"
+
+[[entry.insert.config.plugins]]
+id = "planning"
+name = "cordis:group"
+group = true
+
+[entry.insert.config.plugins.isolate]
+planMode = true
+
+[[entry.insert.config.plugins.config]]
+id = "plan-mode"
+name = "@deepseek-ai/dsh-plan-mode"
+
+[entry.insert.config.plugins.config.config]
+section = "You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.\nExplore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.\nThe tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.\nResolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.\nMake the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.\nWhen ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask \"should I proceed?\" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.\n"
+
+[[entry.insert.config.plugins]]
+id = "compaction"
+name = "cordis:group"
+group = true
+
+[entry.insert.config.plugins.isolate]
+compaction = true
+toolResultPruner = true
+
+[[entry.insert.config.plugins.config]]
+id = "compaction-basic"
+name = "@deepseek-ai/dsh-compaction-basic"
+
+[entry.insert.config.plugins.config.config]
+auto = true
+
+[[entry.insert.config.plugins.config]]
+id = "command-compact"
+name = "@deepseek-ai/dsh-command-compact"
+
+[[entry.insert.config.plugins]]
+id = "delegation"
+name = "cordis:group"
+group = true
+
+[entry.insert.config.plugins.isolate]
+workflowEngine = true
+
+[[entry.insert.config.plugins.config]]
+id = "tool-subagent"
+name = "@deepseek-ai/dsh-tool-subagent"
+
+[entry.insert.config.plugins.config.config]
+provider = "spawn"
+toolName = "subagent"
+backgroundMode = "continuable"
+
+[[entry.insert.config.plugins.config]]
+id = "tool-subagent-fork"
+name = "@deepseek-ai/dsh-tool-subagent"
+
+[entry.insert.config.plugins.config.config]
+provider = "fork"
+toolName = "subagent_fork"
+backgroundMode = "continuable"
+
+[[entry.insert.config.plugins.config]]
+id = "workflow-ptc"
+name = "@deepseek-ai/dsh-workflow-ptc"
+
+[entry.insert.config.plugins.config.config]
+provider = "spawn"
+
+[[entry.insert.config.plugins.config]]
+id = "tool-workflow"
+name = "@deepseek-ai/dsh-tool-workflow"
+
+[[entry.insert.config.plugins.config]]
+id = "tool-ralph"
+name = "@deepseek-ai/dsh-tool-ralph"
+
+[entry.insert.config.plugins.config.config]
+subagentProvider = "spawn"
+maxRounds = 64
+
+[[entry.insert.config.plugins]]
+id = "tool-ask-user"
+name = "@deepseek-ai/dsh-tool-ask-user"
+
+[[entry.insert.config.plugins]]
+id = "tool-todo"
+name = "@deepseek-ai/dsh-tool-todo"
+
+[entry.insert.config.plugins.config]
+allowParallelInProgress = true
+
+[[entry.insert.config.plugins]]
+id = "tool-web"
+name = "@deepseek-ai/dsh-tool-web"
+
+[entry.insert.config.plugins.config]
+fetch = false
+searchTimeoutMs = 60000
+
+[[entry.insert.config.plugins]]
+id = "tool-presentation"
+name = "@deepseek-ai/dsh-agent-tool-presentation"
+
+[entry.insert.config.plugins.config]
+mode = "ptc"
+
+[[entry.insert.config.plugins]]
+id = "mcp-ue"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config.plugins.config]
+serverName = "ue"
+transport = "streamable-http"
+url = "http://127.0.0.1:8000/mcp"
+failOnStartupError = false
+
+[entry.insert.config.plugins.config.reconnect]
+initialDelayMs = 2000
+maxDelayMs = 30000
+maxAttempts = 200000
+
+[[entry.insert.config.plugins]]
+id = "mcp-unity"
+name = "@deepseek-ai/dsh-mcp-client"
+
+[entry.insert.config.plugins.config]
+serverName = "unity"
+transport = "stdio"
+command = "/home/sx/.local/bin/uvx-no-proxy"
+args = [ "--from", "mcpforunityserver==10.3.0", "mcp-for-unity", "--transport", "stdio" ]
+toolCallTimeoutMs = 180000
+failOnStartupError = false
+
+[entry.insert.config.plugins.config.reconnect]
+initialDelayMs = 5000
+maxDelayMs = 60000
+maxAttempts = 100000
+
+[[entry.insert.config.plugins]]
+id = "blender"
+name = "@dsh-external/dsh-blender-plugin"
+
+[[entry.insert.config.plugins]]
+id = "cua"
+name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"
+
+# ── 任务台两层管理器（ADR-0014，2026-11-16 用户要求）────────────────────────
+# 大管理器：全局一个，只判断项目归属，用 task_dispatch_project 派给该项目的项目管理器。
+# 项目管理器：每个项目一个，拆单、起执行会话（task_start_execution）、裁决下一步、
+# 把必须人拍板的问题落到卡片上（task_question）。两个 id 与 dsh-task-manager 的
+# console.ts 常量逐字绑定（GLOBAL_MANAGER_PRESET / PROJECT_MANAGER_PRESET）。
+# 工具面只有 dsh-task-manager/tools（必须走子路径行，整包会在 host 面重复注册）+ 压缩：
+# 这两个会话是常驻的，没有自动压缩活不过半天。管理会话不改代码，所以不给 bash / fs。
+[[entry]]
+[[entry.insert]]
+id = "preset-task-console-global"
+name = "@deepseek-ai/dsh-agent-preset"
+
+[entry.insert.config]
+id = "task-console-global"
+name = "任务台·大管理器"
+order = 40
+
+[[entry.insert.config.plugins]]
+id = "persona"
+name = "@deepseek-ai/dsh-persona"
+
+[entry.insert.config.plugins.config]
+prefix = "你是任务台的大管理器：只做路由——判断这件事属于哪个项目（git 仓库根路径），用 task_dispatch_project 派给该项目的项目管理器。不自己改代码、不建会话、不执行任务。项目判断不了就先问用户，不要猜。"
+
+[[entry.insert.config.plugins]]
+id = "compaction"
+name = "cordis:group"
+group = true
+
+[entry.insert.config.plugins.isolate]
+compaction = true
+toolResultPruner = true
+
+[[entry.insert.config.plugins.config]]
+id = "compaction-basic"
+name = "@deepseek-ai/dsh-compaction-basic"
+
+[entry.insert.config.plugins.config.config]
+auto = true
+
+[[entry.insert.config.plugins]]
+id = "task-console-global-tools"
+name = "dsh-task-manager/tools"
+
+[[entry.insert]]
+id = "preset-task-exec"
+name = "@deepseek-ai/dsh-agent-preset"
+
+[entry.insert.config]
+id = "task-exec"
+name = "任务台·执行会话"
+order = 42
+
+[[entry.insert.config.plugins]]
+id = "persona"
+name = "@deepseek-ai/dsh-persona"
+
+[entry.insert.config.plugins.config]
+prefix = "你是任务台的执行会话：照简报把活干完（代码、验收命令、证据），干完必须用 task_report 把结果写回卡片——能自验收就 status=waiting-check，做不下去就 status=problem 并写清卡在哪。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。"
+
+[[entry.insert.config.plugins]]
+id = "task-exec-tools"
+name = "dsh-task-manager/tools"
+
+[[entry.insert]]
+id = "preset-task-console-project"
+name = "@deepseek-ai/dsh-agent-preset"
+
+[entry.insert.config]
+id = "task-console-project"
+name = "任务台·项目管理器"
+order = 41
+
+[[entry.insert.config.plugins]]
+id = "persona"
+name = "@deepseek-ai/dsh-persona"
+
+[entry.insert.config.plugins.config]
+prefix = "你是这个项目的项目管理器：拆单、用 task_start_execution 起执行会话（起了就结束这一轮，不要用 task_list 反复轮询——执行会话干完会自己把回报写回卡片）、把执行结果收敛成下一步；能按推荐且保险的方式决定的就直接 task_next_step 记下来继续，只有必须由人拍板的选择才用 task_question 落到卡片上。允许清单 v0.1：只产 patch，不 push、不开 PR、不碰受保护分支、不跨仓库。"
+
+[[entry.insert.config.plugins]]
+id = "compaction"
+name = "cordis:group"
+group = true
+
+[entry.insert.config.plugins.isolate]
+compaction = true
+toolResultPruner = true
+
+[[entry.insert.config.plugins.config]]
+id = "compaction-basic"
+name = "@deepseek-ai/dsh-compaction-basic"
+
+[entry.insert.config.plugins.config.config]
+auto = true
+
+[[entry.insert.config.plugins]]
+id = "task-console-project-tools"
+name = "dsh-task-manager/tools"
+
+# ── ego-browser（2026-10-22 用户要求：装 dsh-ego-browser，网页访问优先 ego）──────
+# 共享 profile 模式（2026-10-22 用户要求）：ego 不再用副本 profile，而是挂到用户**正在
+# 运行的日常 Helium** 上——同一个进程、同一份 ~/.config/net.imput.helium。
+#  · 前置：~/.config/helium-browser-flags.conf 里的 --remote-debugging-port=9222
+#    （Helium 必须由 helium-wrapper/桌面图标启动才读这份 flags）。
+#  · egoBin 指向本地 JS 包装：先探 9222，取到 webSocketDebuggerUrl 就设
+#    EGO_LINUX_CDP_URL 直接挂载；挂不上才退回用 Helium profile 自起一份
+#    （此时两者仍同一份数据，因为 EGO_LINUX_PROFILE 也指过去了）。
+#  · idleTimeoutMin: 0 —— 共享模式下不能让插件的空闲回收去关用户自己的浏览器。
+#  · chromePath/chromeArgs 只在「挂不上、需自起」时生效；Chrome 137+ 忽略
+#    --load-extension，所以内核必须留 Helium。
+[[entry]]
+id = "ego-browser"
+
+[entry.config]
+egoBin = "/home/sx/.local/share/ego-lite-runtime/bin/ego-shared-bili.mjs"
+idleTimeoutMin = 0
+chromePath = "/opt/helium-browser-bin/helium"
+chromeArgs = "--load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
+
+[[entry]]
+id = "agent-default-model"
+name = "@deepseek-ai/dsh-agent-default-model"
+
+[entry.config]
+provider = "nvidia-nim"
+model = "nvidia/nemotron-3.5-super-vl-120b-a12b"

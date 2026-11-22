@@ -1,0 +1,12 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `js:` prefixed strings are expressions).
+
+# 2026-11-22: @deepseek-ai/dsh-tui (turtle-ui) 已从本 profile 移除——它的代码按
+# 0.0.1 时代的 API 写死（ctx.agents.roots()、agent.session.*、tools.mode、
+# dsh-llm 的 assertNever），任何 dsh 0.2.x 发布版都跑不起来。只留 dsh-base 时
+# TUI 不绘制、进程却一直存活（看起来像卡死），所以插一行 fail-fast 插件把话说清楚。
+[[entry]]
+[[entry.insert]]
+id = "no-front-door"
+name = "/home/sx/.dsh/profiles/tui/no-front-door.js"
