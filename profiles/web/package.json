@@ -14,7 +14,7 @@
     "dsh-perf-mode": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
     "dsh-sidebar-taskbar": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-super-agent": "link:/home/sx/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent",
-    "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
+    "dsh-task-manager": "link:/home/sx/projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager"
   },
   "dsh": {
     "profile": {
