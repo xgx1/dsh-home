@@ -272,6 +272,10 @@ for repo in ('/mnt/Video2/jami', '/mnt/Video2/jami/jami-client-qt', '/mnt/Video2
 # web 设计（Tailwind/shadcn）与品牌物料对本目录不适用，universal 那两条不挂——给 core + docs（2026-11-16 用户要求「正确且合适」）。
 projects['/mnt/Video2/待整理'] = ['core','docs']
 
+# lizi-dsh：大肥鱼 QQ 机器人现场（AstrBot + NapCat，Python 为主，2026-11-22 用户新建的空工作区）。
+# 空目录、没有工程标记可探测，只给 core + 语义检索读上游源码；浏览器/桌面工具没挂——要拿 QQ 或 AstrBot 控制台再加 ops-desktop。
+projects['/mnt/Video2/lizi-dsh'] = ['core','search']
+
 # 任务台管理器会话的控制台目录（ADR-0014）：不加这条，管理器会话一个工具都没有。
 for home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
     projects[home + '/task-manager/console'] = ['task-console']
