@@ -34,7 +34,7 @@ OPS_INFRA = ['local-git-archive-server','local-llm-amd','platform-detection','qm
 DOTNET_APP = ['dotnet-*','maui-*','msbuild*','migrate-*','mcp-csharp-*','nuget-*','analyzing-dotnet-performance','author-component','collect-user-input','configure-auth','convert-blazor-server-to-webapp','convert-to-cpm','coordinate-components','create-blazor-project','create-datadriven-aspnetcore','csharp-refactoring','clr-activation-debugging','debugging-code','fetch-and-send-data','finding-tests','optimizing-ef-core-queries','plan-ui-change','property-patterns','refactoring-code','support-prerendering','system-text-json-net11','technology-selection','thread-abort-migration','use-igniteui-blazor','use-js-interop','winforms-expert','process-api-net11']
 
 configs = {
-  'core': {'skills': ['cbm-graph-first','ponytail','ponytail-*','git-pull-commit-push','git-merge-cleanup','using-git-worktrees','git-guardrails-claude-code'], 'mcp': ['cbm'], 'tools': CORE_TOOLS},
+  'core': {'skills': ['cbm-graph-first','ponytail','ponytail-*','handoff','git-pull-commit-push','git-merge-cleanup','using-git-worktrees','git-guardrails-claude-code'], 'mcp': ['cbm'], 'tools': CORE_TOOLS},
   'search': {'skills': [], 'mcp': ['zvecgrep'], 'tools': []},
   'unity': {'skills': ['csharp-scripts','csharp-expert','code-testing'], 'mcp': ['unity'], 'tools': []},
   'unreal': {'skills': ['unreal-*','ue-*','ue5-*','create-editor-plugin','create-toolset','plugin-documenter','read-uasset','graphics-debug','renderdoc-gpu-debug','strip-cpp-comments'], 'mcp': ['ue'], 'tools': []},
@@ -273,8 +273,11 @@ for repo in ('/mnt/Video2/jami', '/mnt/Video2/jami/jami-client-qt', '/mnt/Video2
 projects['/mnt/Video2/待整理'] = ['core','docs']
 
 # lizi-dsh：大肥鱼 QQ 机器人现场（AstrBot + NapCat，Python 为主，2026-11-22 用户新建的空工作区）。
-# 空目录、没有工程标记可探测，只给 core + 语义检索读上游源码；浏览器/桌面工具没挂——要拿 QQ 或 AstrBot 控制台再加 ops-desktop。
-projects['/mnt/Video2/lizi-dsh'] = ['core','search']
+# 空目录、没有工程标记可探测，给 core + 语义检索读上游源码；2026-11-23 用户要求在那看 QQ/AstrBot 控制台，补 agent（浏览器/桌面）。
+projects['/mnt/Video2/lizi-dsh'] = ['core','search','agent']
+# Jianyi：Unity 客户端仓库（2026-11-23 提交 00172b6 人工补 unity/dotnet/search；自动探测给不准）。
+projects['/mnt/Video/Jianyi'] = ['core','js','unity','dotnet','search']
+
 
 # 任务台管理器会话的控制台目录（ADR-0014）：不加这条，管理器会话一个工具都没有。
 for home in ('/home/sx/.dsh', '/home/sx/.dsh-dev'):
