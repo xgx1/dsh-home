@@ -662,6 +662,13 @@ projects:
   "/mnt/Video2/lizi-dsh":
     - "core"
     - "search"
+    - "agent"
+  "/mnt/Video/Jianyi":
+    - "core"
+    - "js"
+    - "unity"
+    - "dotnet"
+    - "search"
   "/home/sx/.dsh/task-manager/manager":
     - "ui-design"
     - "design-brand"
@@ -781,11 +788,3 @@ projects:
   "/home/sx/.dsh-dev/task-manager/exec":
     - "core"
     - "task-exec"
-  "/mnt/Video/Jianyi":
-    - "core"
-    - "js"
-    - "unity"
-    - "dotnet"
-    - "search"
-  "/mnt/Video2/lizi-dsh":
-    - "agent"
