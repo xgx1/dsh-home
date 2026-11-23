@@ -780,3 +780,9 @@ projects:
   "/home/sx/.dsh-dev/task-manager/exec":
     - "core"
     - "task-exec"
+  "/mnt/Video/Jianyi":
+    - "core"
+    - "js"
+    - "unity"
+    - "dotnet"
+    - "search"
