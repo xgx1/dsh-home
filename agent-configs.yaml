@@ -10,6 +10,7 @@ configs:
       - "cbm-graph-first"
       - "ponytail"
       - "ponytail-*"
+      - "handoff"
       - "git-pull-commit-push"
       - "git-merge-cleanup"
       - "using-git-worktrees"
@@ -786,3 +787,5 @@ projects:
     - "unity"
     - "dotnet"
     - "search"
+  "/mnt/Video2/lizi-dsh":
+    - "agent"
