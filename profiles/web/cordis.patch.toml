@@ -98,9 +98,15 @@ name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"
 id = "sandbox"
 disabled = true
 
+# 2026-11-23：sandboxPolicy 必须存在——standard/cordis 的 tool-plugin-manager 与 minimal
+# 的 terminal-bash 静态 inject 它，缺了就是 "waiting for sandboxPolicy"，三个随发行版预设
+# 永久 broken（导购页里只剩 ptc 可选）。这里只恢复策略解析、不做任何限制：mode =
+# danger-full-access 时 terminal-bash 直接跑（不找 ctx.sandbox），与关掉的沙箱一脉相承。
 [[entry]]
 id = "sandbox-policy"
-disabled = true
+
+[entry.config]
+mode = "danger-full-access"
 
 [[entry]]
 id = "bash-sandbox"
@@ -121,6 +127,17 @@ disabled = true
 [[entry]]
 id = "ui-permission"
 disabled = true
+
+# 2026-11-23 用户要求：所有预设都用 PTC。预设不自带执行器时用宿主层（最近的 scoped
+# executor）那一个，所以宿主层从 native 换成 PTC 即覆盖全部预设；自带执行器的 ptc 预设与
+# 基础模式（tool-presentation mode=ptc）不受影响。
+[[entry]]
+id = "tool-executor-native"
+disabled = true
+
+[[entry]]
+id = "tool-executor-ptc"
+disabled = false
 
 # approval：完全关闭审批 seam（disabled 后不加载，不再有 policy）
 [[entry]]
