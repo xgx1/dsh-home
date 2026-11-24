@@ -1265,3 +1265,19 @@ name = "@deepseek-ai/dsh-agent-default-model"
 [entry.config]
 provider = "nvidia-nim"
 model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
+
+# ── 2026-11-24 用户要求：停掉「配置」治理 ─────────────────────────────────────
+# 新会话区那个「配置: N」chip 与设置页里的「技能 / MCP / 工具配置」总览背后是
+# agent-configs：它按 ~/.dsh/agent-configs.yaml 给每个项目放行技能/MCP/工具，
+# 未列入的项目「一个工具都不给」。用户选择彻底停掉治理——宿主侧停掉后所有项目
+# 看到全部技能/MCP/工具，agent-configs.yaml 与 ~/.dsh/bin/agent-configs.py 变成
+# 不再生效的遗留文件。客户端 ui-agent-config 的 inject 含 remote.agentConfigs，
+# 宿主侧一停就必须连客户端一起停（否则该 fiber 永远 pending）；chip 与设置页总览
+# 随它一起消失。
+[[entry]]
+id = "agent-configs"
+disabled = true
+
+[[entry]]
+id = "ui-agent-config"
+disabled = true

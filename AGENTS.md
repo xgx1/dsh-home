@@ -12,13 +12,11 @@
   3. **装依赖 + 重启验证**：在 `~/.dsh-dev/profiles/web`（和 `headless`）里 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`，`systemctl --user restart dsh-web-dev.service`，刷新 3081 确认能起、能建会话。**仓库改用 nub（hoisted 布局）后，`~/.dsh/profiles/node_modules` 共享层里指向 `deepseek-harness/apps/cli/node_modules/...` 的软链会全部失效**（启动时表现为 `X did not activate` / `ERR_MODULE_NOT_FOUND`）——用 `find ~/.dsh/profiles/node_modules -xtype l` 列出，改指到 `deepseek-harness/node_modules/@deepseek-ai/<name>`（第三方包指到 `deepseek-harness/node_modules/<name>`）即可。
   4. **提交 dev**：`~/.dsh-dev` 里再 `git commit` + push。判断是否落后：orphan 分支没有共同祖先，`rev-list` 计数无意义——直接比内容：`git -C ~/.dsh diff --stat main dev -- profiles/ cordis.patch.yml`，剩下的差异应只有 `link:` 里的 `-dev/` 那几行与 dev 独有的 `dsh-web-dev-launch.sh`。
 
-## 每个工作区能看到什么（agent-configs）
+## 每个工作区能看到什么（按项目治理已停用，2026-11-24）
 
-**技能、MCP 服务器、工具三样可见性 2026-11-15 起全由 `~/.dsh/agent-configs.yaml` 决定**，三份都是白名单：`configs.<名>.skills`（技能 glob）、`configs.<名>.mcp`（serverName）、`configs.<名>.tools`（工具名 glob，MCP 工具也可由 server 放行）；`projects.<绝对路径>` 选配置，键是 GUI 记录的真实 cwd，软链与真实路径两套都要写。
+**停用原因与现状**：新会话区那个「配置: N」chip 与设置页的「技能 / MCP / 工具配置」总览已去掉——`agent-configs` 与 `ui-agent-config` 两行在 `profiles/web/cordis.patch.toml` 里 `disabled = true`（宿主侧先停，客户端 inject 的 `remote.agentConfigs` 随之消失，必须一起停）。个人层 `skill-filter.yaml`（`allow: []` 全禁）也已移走——**它和设备停治理是配套的**：技能只靠 agent-configs 放行，留着全禁层等于一个技能都不给。现状是所有工作区一律看到全部技能、全部 MCP、全部工具，没有白名单，也没有「未列入就不给」。
 
-**未列入 `projects` 的目录 = 三样都不给**（工具与 MCP 默认拒绝，连 bash/read 都没有；会话启动时 journal 里会有 `is not listed under projects` 警告）。个人层/项目层 `skill-filter.yaml` 已全部删除，别再造。改完两个 home（`~/.dsh`、`~/.dsh-dev`）一起提交，重启会话生效。
-
-生成与审计：`~/.dsh/bin/agent-configs.py` 按 `storages/workspace.json` 重写两个 home 的文档（**新建工作区后必须重跑**，否则该目录一个工具都没有），`~/.dsh/bin/audit-agent-configs.py` 打印覆盖率与未挂清单。
+**遗留（不再生效，别再照旧文档操作）**：`~/.dsh/agent-configs.yaml`、`~/.dsh/bin/agent-configs.py`、`~/.dsh/bin/audit-agent-configs.py` 保留但没人读；不要为了「让模型看见某技能」去改它，也不要再造 `skill-filter.yaml`。要恢复治理：删掉那两条 `disabled`，同时把个人层 `allow: []` 放回去。
 
 ## 会话产物落点（临时文件）
 
