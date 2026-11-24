@@ -109,3 +109,6 @@ pet.json
 # 从 Linux home 拷来的遗留 unit：本机没有 systemd，别入库
 deploy/systemd-user/headroom-*.service
 *.bak
+
+# 本机 Web 入口固定 token（DSH_WEB_TOKEN），每台机器独立，不入库
+/.web-token
