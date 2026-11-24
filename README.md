@@ -160,4 +160,17 @@ git checkout main; git merge --no-ff windows; git push
 1. `git clone` 到 `%USERPROFILE%\.dsh`，`git checkout windows`。
 2. 放 `.credentials.yaml`（不在仓库里；格式见 `keys.example.yaml`）。
 3. `dsh plugin --profile web install`（`profiles/web` 的 `link:` 依赖需要 `dsh-extensions` 先 checkout）。
-4. 计划任务指向 `%USERPROFILE%\.dsh\dsh-web-launch.ps1`，日志落在同目录 `dsh-web.log`。
+4. 计划任务用仓库里的定义装：`powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\.dsh\deploy\windows\install-dsh-web-task.ps1`
+   （任务定义 `deploy/windows/dsh-web-task.xml` 指向 `%USERPROFILE%\.dsh\dsh-web-launch.ps1`，日志落在同目录 `dsh-web.log`）。
+
+### Windows 服务：计划任务 `dsh-web`（:3080）
+
+- **装/修**：`deploy/windows/install-dsh-web-task.ps1`（先停旧实例、重注册、起一轮并验收 3080 在听）。
+- **手动重启**：`bin/restart-dsh-web.ps1`。**不要**在 DSH 自己的会话里直接 `Stop-ScheduledTask` 再
+  `Start-ScheduledTask` —— Stop 会把调用的 shell 一起杀掉，脚本死在 Start 之前，DSH 就再也不起来
+  （2026-11-24 实况，掉了 12 分钟）。该脚本把动作交给 WMI 起的 worker（父进程 WmiPrvSE，不在任务进程树里）。
+- **看门狗**：登录触发首启 + 独立 `TimeTrigger` 每 5 分钟重触发（`MultipleInstances=IgnoreNew`），
+  任务被停/崩溃后最多 5 分钟自愈。**必须**是独立触发器：`<Repetition>` 挂在 `LogonTrigger` 上
+  Task Scheduler 不注册（`schtasks /query /v` 的 `Repeat: Every` 是 `N/A`、`NextRunTime` 为空）。
+- **验收**：`schtasks /query /tn dsh-web /v /fo LIST` 里 `Next Run Time` 有值、`Repeat: Every` 是 5 分钟；
+  `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3080/` 返回 `401`（未带 token，属正常）。

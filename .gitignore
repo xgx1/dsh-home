@@ -41,6 +41,8 @@ llm-deepseek/
 # bin/hypr-place 依赖本机 Hyprland；evolve/ 含 rubric.key 与运行时日志
 bin/*
 !bin/gen-project-presets.py
+# 2026-11-24：Windows 侧手动重启入口（WMI worker 脱离计划任务进程树，避免 Stop 把自己杀掉）。
+!bin/restart-dsh-web.ps1
 # 2026-11-17：ego 标签页看门狗与工作区迁移脚本是配置层的一部分，换机也要有。
 !bin/ego-tab-janitor.mjs
 !bin/migrate-workspaces.py
