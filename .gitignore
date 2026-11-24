@@ -112,3 +112,6 @@ deploy/systemd-user/headroom-*.service
 
 # 本机 Web 入口固定 token（DSH_WEB_TOKEN），每台机器独立，不入库
 /.web-token
+
+# taskbar 插件的运行态（Turso 本地库，含 -wal/-shm），属本机状态
+taskbar.db*
