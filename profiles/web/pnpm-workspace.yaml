@@ -13,7 +13,7 @@ autoInstallPeers: false
 # 留着它们会让本文件「只放行真正需要的构建脚本」的政策失真：
 # 日后新增带 postinstall 的依赖时，pnpm 会以 ERR_PNPM_IGNORED_BUILDS 报错并点名，
 # 届时再按需添加即可。
-allowBuilds: { esbuild: true }
+allowBuilds: {}
 minimumReleaseAgeExclude:
   - '@nanmicoder/dsh-agent-teams@0.1.2 || 0.1.5'
   - '@anionex/dsh-vision-toolkit@0.1.7'

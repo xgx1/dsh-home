@@ -2,7 +2,7 @@
   "name": "dsh-profile-headless",
   "private": true,
   "dependencies": {
-    "billion-context": "link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context"
+    "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context"
   },
   "dsh": {
     "profile": {

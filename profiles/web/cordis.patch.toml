@@ -153,6 +153,7 @@ path = "js:dshHomePath('session-search.db')"
 openAt = "first-search"
 
 # 无沙箱替代品：本地文件系统 + 本地执行器（Linux = bash-local，Windows = pwsh-local）
+# 两条都用平台表达式，不写死 disabled：这份文件跨设备同步，pull 后自动翻面（INSTALL §1.4）。
 [[entry]]
 [[entry.insert]]
 id = "bash-local"
@@ -301,10 +302,12 @@ name = "@deepseek-ai/dsh-mcp-client"
 [entry.insert.config]
 serverName = "zvecgrep"
 transport = "stdio"
-        # 2026-11-24（Windows 本机）：包装脚本 ~/.dsh/bin/zg-autoidx.mjs 是 Linux 本机资产，
-        # 这里直接拉 `zg`——语义检索照常，只是不再自动建索引。
-command = "zg"
-args = [ "server", "--stdio", "--mcp-toolset", "full" ]
+        # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
+        # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
+        # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
+        # 代理内部用 `--server --stdio` 拉起真 zg，参数原样透传（0.3.0 起子命令改成 flag）。
+command = "/home/sx/.dsh/bin/zg-autoidx.mjs"
+args = [ "--server", "--stdio", "--mcp-toolset", "full" ]
 
 [[entry]]
 id = "ui-settings-general"
@@ -918,13 +921,6 @@ disabled = true
 
 [[entry]]
 id = "dsh-blender-plugin"
-disabled = true
-
-# ── 2026-11-24 Windows 新设备：本机没有这些运行时/本机独有层，先停掉（对应 INSTALL §6/§7）──
-#   · ego-browser：egoBin 指向 Linux 本机包装与 Helium profile（INSTALL §6）
-# mcp-cbm / mcp-zvecgrep 保留启用——本机 codebase-memory-mcp 与 zg 都在 PATH 上。
-[[entry]]
-id = "ego-browser"
 disabled = true
 
 [[entry]]

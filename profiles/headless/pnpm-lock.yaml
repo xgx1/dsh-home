@@ -9,5 +9,5 @@ importers:
   .:
     dependencies:
       billion-context:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context
+        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
         version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
