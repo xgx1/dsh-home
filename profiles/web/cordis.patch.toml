@@ -325,11 +325,6 @@ name = "@deepseek-ai/dsh-client-locale"
 preference = "zh"
 
 [[entry]]
-[[entry.insert]]
-id = "opencode-go-headers"
-name = "/home/sx/.dsh/profiles/web/opencode-go-headers.mjs"
-
-[[entry]]
 id = "llm-pi-ai"
 name = "@deepseek-ai/dsh-llm-pi-ai"
 
