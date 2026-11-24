@@ -665,10 +665,10 @@ projects:
     - "agent"
   "/mnt/Video/Jianyi":
     - "core"
-    - "js"
     - "unity"
     - "dotnet"
     - "search"
+    - "task-console"
   "/home/sx/.dsh/task-manager/manager":
     - "ui-design"
     - "design-brand"

@@ -684,6 +684,41 @@ id = "nvidia/nemotron-3.5-super-vl-120b-a12b"
 name = "Nemotron 3.5 Super VL (NIM)"
 input = [ "text", "image" ]
 
+[entry.config.providers.ark]
+displayName = "Ark Agent Plan"
+apiKeyEnv = "ARK_API_KEY"
+api = "openai-completions"
+baseURL = "https://ark.cn-beijing.volces.com/api/plan/v3"
+reasoning = "high"
+
+[entry.config.providers.ark.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4.1-flash-economy"
+name = "DeepSeek V4.1 Flash Economy"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4.1-flash"
+name = "DeepSeek V4.1 Flash"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
 [[entry]]
 id = "ui-theme"
 name = "@deepseek-ai/dsh-client-ui-theme"
