@@ -1294,3 +1294,26 @@ disabled = true
 [[entry]]
 id = "ui-agent-config"
 disabled = true
+
+# ── 2026-11-24 修复：配额/余额类失败不再把一整轮对话悄悄卡死 ───────────────────
+# 现场取证（今天 16:13–17:30，4 个会话共 377 条 llm/retry）：
+#   · provider `deepseek-official` 余额为 0 → 402 Insufficient Balance（code QUOTA）
+#   · provider `ark`（Agent Plan）5 小时配额耗尽 → 429 AccountQuotaExceeded（code RATE_LIMIT）
+# dsh-llm-retry-schedule 默认 maxRetries=1000 + 60s 兜底，把一轮对话在后台拖了
+# 70 分钟还在重试，Web 上看起来就是「发出去没反应、会话像死了」。402 那条更糟：
+# 余额不会自己回来，重试等不到任何恢复。
+# 收敛策略：
+#   · 重试预算 30 次（5s×4 + 10s×15 + 60s×11 ≈ 14 分钟）后把真实错误抛给用户，
+#     让他换模型/换 provider —— 既还留着“provider 抽风自己恢复”的余地，又不会
+#     在 5 小时配额告罄时静默拖上一小时；
+#   · retryableCodes 去掉 QUOTA —— 402 余额不足是永久故障，重试无意义。
+# 要恢复原来的长预算（等 provider 抖动回来）：删掉这一节，bundle 层默认就是
+# 1000 次 / 60s 兜底。
+[[entry]]
+id = "llm-retry-schedule"
+
+[entry.config]
+maxRetries = 30
+retryableCodes = [
+  "EMPTY_RESPONSE", "RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT",
+]

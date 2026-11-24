@@ -1,5 +1,6 @@
 {
-  "_comment": "Cross-platform: commands only reference ${CLAUDE_PLUGIN_ROOT} (resolved by the hooks-claude-code plugin from the pluginRoot set in ~/.dsh/cordis.patch.yml). All OS-specific paths and env vars live inside dsh-skill-hooks.mjs. Do not reintroduce `VAR=value` prefixes or absolute paths here.",
+  "_comment": "Cross-platform: commands only reference ${CLAUDE_PLUGIN_ROOT} (resolved by the hooks-claude-code plugin from the pluginRoot set in the home-level cordis.patch.toml). All OS-specific paths and env vars live inside dsh-skill-hooks.mjs. Do not reintroduce `VAR=value` prefixes or absolute paths here.",
+  "_removed": "caveman 两个 hook 已于 2026-11-24 移除：caveman 技能分组 2026-10-26 从 dsh-extensions/skills 删除后，钩子仍在每轮提示里跑，结果每次都 Cannot find module ...caveman/src/hooks/caveman-mode-tracker.js（exitCode 1）。要恢复得先把技能分组 clone 回来。",
   "hooks": {
     "SessionStart": [
       {
@@ -10,12 +11,6 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" ponytail-activate",
             "timeout": 10,
             "statusMessage": "Loading ponytail (ultra)..."
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" caveman-session-context",
-            "timeout": 30,
-            "statusMessage": "Loading caveman (wenyan-ultra)..."
           }
         ]
       }
@@ -28,12 +23,6 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" ponytail-mode-tracker",
             "timeout": 10,
             "statusMessage": "Tracking ponytail mode..."
-          },
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs\" caveman-mode-tracker",
-            "timeout": 30,
-            "statusMessage": "Tracking caveman mode..."
           }
         ]
       }
