@@ -174,3 +174,18 @@ git checkout main; git merge --no-ff windows; git push
   Task Scheduler 不注册（`schtasks /query /v` 的 `Repeat: Every` 是 `N/A`、`NextRunTime` 为空）。
 - **验收**：`schtasks /query /tn dsh-web /v /fo LIST` 里 `Next Run Time` 有值、`Repeat: Every` 是 5 分钟；
   `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3080/` 返回 `401`（未带 token，属正常）。
+
+### Windows 本机已知坑（2026-11-24 实测）
+
+- **别把 `@deepseek-ai/dsh-cua-bundle` 加进 `profiles/web/package.json` 的 `dsh.profile.bundles`**：
+  该 bundle（0.2.2-rc.3，platforms=`darwin|win32`）自带 `cua-provider-registry`（`@deepseek-ai/dsh-computer-use`）
+  与 `cua-windows`，而本 profile 的 `cordis.patch.toml` 已经手插了 `computer-use` 与
+  `computer-use-cua-native`（预设里还有一行 `cua`）—— 启动日志里必然出现
+  `service "computerUse" has been registered` / `computer use provider "cua-driver-native" is already registered`，
+  结尾 `dsh: warning: 2 entries did not activate`。真要用 bundle，得同时把 profile 里那几行按平台关掉
+  （但预设内的 `cua` 行被关会让预设判 invalid、新会话起不来，所以 Windows 上先不要动 bundle）。
+- **home 级 user patch 层只认 `cordis.patch.toml`**：启动路径是
+  `resolveProfilePatchPath($DSH_HOME)`（TOML 优先），而 `dsh --dump-config` 走的是
+  `homePatchPath()`（写死 `cordis.patch.yml`）。所以 `arkcli helper` 之类写出来的
+  `~/.dsh/cordis.patch.yml` 在**真实启动时不生效**（只在 dump-config 里看得见），
+  要改 home 层就改 `cordis.patch.toml`。
