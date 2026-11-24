@@ -302,10 +302,13 @@ name = "@deepseek-ai/dsh-mcp-client"
 [entry.insert.config]
 serverName = "zvecgrep"
 transport = "stdio"
-        # 2026-11-24（Windows 本机）：包装脚本 ~/.dsh/bin/zg-autoidx.mjs 是 Linux 本机资产，
-        # 这里直接拉 `zg`——语义检索照常，只是不再自动建索引。
-command = "zg"
-args = [ "server", "--stdio", "--mcp-toolset", "full" ]
+        # 2026-11-24（Windows 本机）：两处本机差异。
+        # ① ~/.dsh/bin/zg-autoidx.mjs 是 Linux 本机资产，这里不自动建索引；
+        # ② DSH 在 Windows 上经 `cmd /d /s /c` 起 stdio server，且每个参数各自加引号，
+        #    `server` 会变成字面量 '"server"' → zg 报 Unknown command → 客户端无限重连。
+        #    故走 ~/.local/bin/zg-mcp.cmd 垫片，子命令与参数都收在垫片里。
+command = "zg-mcp"
+args = []
 
 [[entry]]
 id = "ui-settings-general"
@@ -1138,10 +1141,12 @@ initialDelayMs = 5000
 maxDelayMs = 60000
 maxAttempts = 100000
 
-[[entry.insert.config.plugins]]
-id = "blender"
-name = "@dsh-external/dsh-blender-plugin"
-
+        # 2026-11-24（Windows 本机）：blender 从预设清单移除。
+        # 预设要求清单里每个子插件都真的启动；@dsh-external/dsh-blender-plugin 的 lib/ 是构建产物，
+        # 而它锁定的是 harness 0.1.x 的 API（src/host/context.ts 用 @deepseek-ai/dsh-tools 的
+        # ToolRegistry，0.2.2 已删除导出），在本机重建必然 typecheck 失败 → 该子插件 never started
+        # → 整个预设判 invalid → 网页端「新建会话」直接失败。
+        # 本机没装 Blender，这行本就不该在默认预设里；Linux 侧保留（那边有旧 lib/ 产物）。
 [[entry.insert.config.plugins]]
 id = "cua"
 name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"

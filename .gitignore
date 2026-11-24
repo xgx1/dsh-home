@@ -115,3 +115,6 @@ deploy/systemd-user/headroom-*.service
 
 # taskbar 插件的运行态（Turso 本地库，含 -wal/-shm），属本机状态
 taskbar.db*
+
+# Windows 本机：zg 的 MCP stdio 垫片（DSH 在 Windows 上 cmd /c 逐参数加引号，子命令必须收进脚本）
+!bin/zg-mcp.cmd

@@ -9,50 +9,44 @@ importers:
   .:
     dependencies:
       '@deepseek-ai/dsh-browser-use':
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/browser-use/browser-use
-        version: link:../../../Project/MyAI/deepseek-harness/packages/browser-use/browser-use
+        specifier: link:../../../projects/MyAI/deepseek-harness/packages/browser-use/browser-use
+        version: link:../../../projects/MyAI/deepseek-harness/packages/browser-use/browser-use
       '@deepseek-ai/dsh-computer-use':
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/computer-use/computer-use
-        version: link:../../../Project/MyAI/deepseek-harness/packages/computer-use/computer-use
+        specifier: link:../../../projects/MyAI/deepseek-harness/packages/computer-use/computer-use
+        version: link:../../../projects/MyAI/deepseek-harness/packages/computer-use/computer-use
       '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native':
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native
-        version: link:../../../Project/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native
-      '@deepseek-ai/dsh-hook-protocol':
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hook-protocol
-        version: link:../../../Project/MyAI/deepseek-harness/packages/experimental/hook-protocol
-      '@deepseek-ai/dsh-hooks-claude-code':
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
-        version: link:../../../Project/MyAI/deepseek-harness/packages/experimental/hooks-claude-code
+        specifier: link:../../../projects/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native
+        version: link:../../../projects/MyAI/deepseek-harness/packages/experimental/computer-use-cua-driver-native
       '@dsh-external/dsh-blender-plugin':
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/dsh-blender-plugin
-        version: link:../../../Project/MyAI/dsh-extensions/vendor/dsh-blender-plugin
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
       '@openviking/dsh-memory-plugin':
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
-        version: link:../../../Project/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
       billion-context:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/vendor/billion-context
-        version: link:../../../Project/MyAI/dsh-extensions/vendor/billion-context
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
       dsh-dracula-theme:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-dracula-theme
-        version: link:../../../Project/MyAI/dsh-extensions/plugins/dsh-dracula-theme
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
       dsh-ego-browser:
         specifier: ^0.8.6
         version: 0.8.6
       dsh-llm-retry-schedule:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
-        version: link:../../../Project/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
       dsh-perf-mode:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-perf-mode
-        version: link:../../../Project/MyAI/dsh-extensions/plugins/dsh-perf-mode
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
       dsh-sidebar-taskbar:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
-        version: link:../../../Project/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
       dsh-super-agent:
-        specifier: link:C:/Users/Admin/Project/MyAI/deepseek-harness/extensions/dsh-super-agent
-        version: link:../../../Project/MyAI/deepseek-harness/extensions/dsh-super-agent
+        specifier: link:../../../projects/MyAI/deepseek-harness/extensions/dsh-super-agent
+        version: link:../../../projects/MyAI/deepseek-harness/extensions/dsh-super-agent
       dsh-task-manager:
-        specifier: link:C:/Users/Admin/Project/MyAI/dsh-extensions/plugins/dsh-task-manager
-        version: link:../../../Project/MyAI/dsh-extensions/plugins/dsh-task-manager
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
 
 packages:
 
@@ -79,7 +73,6 @@ packages:
       '@deepseek-ai/dsh-settings': '>=0.1.2-rc.1'
       '@deepseek-ai/dsh-tools': '>=0.1.2-rc.1'
       react: ^18.2.0
-      schemastery: ^3.18.0
     peerDependenciesMeta:
       '@deepseek-ai/dsh-client-locale':
         optional: true
@@ -94,8 +87,6 @@ packages:
       '@deepseek-ai/dsh-tools':
         optional: true
       react:
-        optional: true
-      schemastery:
         optional: true
 
   schemastery@3.18.0:
