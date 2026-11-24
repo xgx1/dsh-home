@@ -830,18 +830,9 @@ id = "agent-preset-registry"
 [entry.config]
 default = "all"
 
-# ── 用户要求（2026-10-14）：禁用右侧面板（文件 / 浏览器 / 终端 / 文档预览）──────
-# ui-sidebar-right 的 panel:false 只停住「面板 + 会话头展开按钮」两处挂载；
-# ctx.sidebarRight 服务与 sidebarRightTabs 注册表照常提供，ui-chat / ui-reference /
-# ui-plan / ui-deliverables / ui-schedule 等 inject 它的插件不会卡在 pending。
-# （整行 disabled 会把这些插件一起打掉，对话区直接空白，故不能用 disabled。）
-# 文件路径点击改由系统默认程序打开：ui-chat 的 openFile 已改走 Host 桌面，
-# Sidebar 只作兜底。
-[[entry]]
-id = "ui-sidebar-right"
-
-[entry.config]
-panel = false
+# 2026-11-24 用户要求：恢复右侧面板（文件 / 浏览器 / 终端 / 文档预览 +
+# 会话头展开按钮）。2026-10-14 的 panel=false 撤销；该 entry 的默认值就是
+# panel=true，所以不再保留任何覆盖行。
 
 # ── 用户要求（2026-10-14）：/goal 不依赖 preset 面 ───────────────────────────
 # command-goal 在 web-app bundle 的 host 面被 disabled（packages/bundle/web-app/
