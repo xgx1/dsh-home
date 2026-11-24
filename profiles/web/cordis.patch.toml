@@ -325,11 +325,6 @@ name = "@deepseek-ai/dsh-client-locale"
 preference = "zh"
 
 [[entry]]
-[[entry.insert]]
-id = "opencode-go-headers"
-name = "/home/sx/.dsh/profiles/web/opencode-go-headers.mjs"
-
-[[entry]]
 id = "llm-pi-ai"
 name = "@deepseek-ai/dsh-llm-pi-ai"
 
@@ -911,16 +906,6 @@ disabled = true
 
 [[entry]]
 id = "mcp-rea"
-disabled = true
-
-# 2026-11-23 用户要求：关掉自建的 agent-config 管控（agent-configs.yaml 的技能/MCP/工具白名单）
-# 与技能全禁层（skill-filter.yaml allow: []）。技能回到自带 skill-filter：无配置即不过滤。
-[[entry]]
-id = "agent-configs"
-disabled = true
-
-[[entry]]
-id = "ui-agent-config"
 disabled = true
 
 # ── 唯一预设：所有项目类型共用（2026-11-13 用户要求，7 个类型预设合并；生成器已删除）──

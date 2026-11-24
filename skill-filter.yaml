@@ -1,0 +1,5 @@
+# 默认全禁（deny-all）：空 allow 列表即「一个技能都不给」。
+# 注意：把本文件删掉不是全禁，而是【不过滤】（两层配置都不存在时 loadRules() 直接返回，
+# 见 packages/skill/skill-filter/src/index.ts），所以这个文件必须留下、allow 必须留空。
+# 技能的开启改为按项目在 <DSH_HOME>/agent-configs.yaml 的 projects: 里选 config。
+allow: []

@@ -8,7 +8,6 @@
     "@dsh-external/dsh-blender-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context",
-    "dsh-auto-continue": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-auto-continue",
     "dsh-dracula-theme": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
@@ -26,7 +25,6 @@
         "dsh-sidebar-taskbar",
         "dsh-llm-retry-schedule",
         "billion-context",
-        "dsh-auto-continue",
         "dsh-dracula-theme",
         "@openviking/dsh-memory-plugin",
         "@dsh-external/dsh-blender-plugin",
@@ -34,7 +32,7 @@
         "dsh-perf-mode",
         "@deepseek-ai/dsh-experimental-tool-worktree",
         "@deepseek-ai/dsh-experimental-terminal-bundle",
-        "@deepseek-ai/dsh-experimental-session-titles-bundle"
+        "@deepseek-ai/dsh-timeline"
       ]
     }
   }
