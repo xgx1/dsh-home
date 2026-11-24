@@ -2642,8 +2642,8 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: opencode-go
-    model: deepseek-v4.1-flash
+    provider: openai-codex
+    model: gpt-6-astra
     reasoningEffort: max
 
 # <<< END generated type presets >>>
