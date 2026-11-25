@@ -44,6 +44,10 @@ patches/
 channel-pack/
 native-open/
 our-free-model/
+dsh-purge/
+dsh-purge-community/
+redteam/
+prompt-inject.md
 openai-gateway/
 backup-*/
 

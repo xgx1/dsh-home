@@ -38,6 +38,9 @@ importers:
       dsh-perf-mode:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
         version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
+      dsh-purge-community:
+        specifier: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
+        version: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
       dsh-sidebar-taskbar:
         specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
         version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
@@ -89,8 +92,18 @@ packages:
       react:
         optional: true
 
+  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+    resolution: {tarball: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz}
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.1
+
   schemastery@3.18.0:
     resolution: {integrity: sha512-Jw2uxjoyyqc/yeurmChUEc/jbi8GsrdXV/KmqRUDZXJAXAmrJiPsz8vKa17l/VckyzljHZ9oGaul443CQiXxtA==}
+
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
 
 snapshots:
 
@@ -110,7 +123,13 @@ snapshots:
       '@deepseek-ai/schemastery': 3.18.5
       schemastery: 3.18.0
 
+  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+    dependencies:
+      yaml: 2.9.1
+
   schemastery@3.18.0:
     dependencies:
       '@standard-schema/spec': 1.1.0
       cosmokit: 1.8.1
+
+  yaml@2.9.1: {}
