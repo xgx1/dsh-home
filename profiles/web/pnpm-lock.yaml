@@ -9,47 +9,47 @@ importers:
   .:
     dependencies:
       '@deepseek-ai/dsh-browser-use':
-        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
-        version: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
+        specifier: link:../../../projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use
       '@deepseek-ai/dsh-computer-use':
-        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
-        version: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
+        specifier: link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use
       '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native':
-        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
-        version: link:/home/sx/projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+        specifier: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
       '@dsh-external/dsh-blender-plugin':
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
-        version: link:/home/sx/projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
       '@openviking/dsh-memory-plugin':
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
-        version: link:/home/sx/projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
       billion-context:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
-        version: link:/home/sx/projects/MyAI/dsh-extensions/vendor/billion-context
+        specifier: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
+        version: link:../../../projects/MyAI/dsh-extensions/vendor/billion-context
       dsh-dracula-theme:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
-        version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme
       dsh-ego-browser:
         specifier: ^0.8.6
         version: 0.8.6
       dsh-llm-retry-schedule:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
-        version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
       dsh-perf-mode:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
-        version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
       dsh-purge-community:
         specifier: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
-        version: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
+        version: file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
       dsh-sidebar-taskbar:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
-        version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar
       dsh-super-agent:
-        specifier: link:/home/sx/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
-        version: link:/home/sx/projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
+        specifier: link:../../../projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
+        version: link:../../../projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent
       dsh-task-manager:
-        specifier: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
-        version: link:/home/sx/projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
 
 packages:
 
@@ -92,8 +92,11 @@ packages:
       react:
         optional: true
 
-  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
-    resolution: {tarball: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz}
+  dsh-purge-community@file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+    resolution: {integrity: sha512-yXBFQufiE44kFHQj9RpLorcmYfTPOCE/JWENJuskKhS8GlVw1SRccPSx7+mgceKqIHRqoBAO0vl/glM1idF+vw==, tarball: file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz}
+    version: 1.7.20
+    engines: {node: '>=18'}
+    hasBin: true
     peerDependencies:
       '@deepseek-ai/cordis': ^4.0.1
 
@@ -123,7 +126,7 @@ snapshots:
       '@deepseek-ai/schemastery': 3.18.5
       schemastery: 3.18.0
 
-  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+  dsh-purge-community@file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
     dependencies:
       yaml: 2.9.1
 
