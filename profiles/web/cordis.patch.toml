@@ -777,7 +777,7 @@ contextWindow = 1048576
 maxTokens = 393216
 inputModalities = [ "text", "image" ]
 imagePixelBudget = 640000
-imageMaxBytes = 1048576
+imageTargetBytes = 1048576
 systemPromptUpdate = "in-history"
 
     # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
