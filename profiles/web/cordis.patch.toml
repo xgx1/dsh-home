@@ -1233,9 +1233,8 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "ark"
-model = "deepseek-v4.1-flash-economy"
-reasoningEffort = "max"
+provider = "sensenova"
+model = "deepseek-flash"
 
 # ── 2026-11-24 用户要求：停掉「配置」治理 ─────────────────────────────────────
 # 新会话区那个「配置: N」chip 与设置页里的「技能 / MCP / 工具配置」总览背后是
