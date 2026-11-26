@@ -688,6 +688,29 @@ low = "low"
 high = "high"
 max = "max"
 
+[entry.config.providers.open-design-go]
+displayName = "OpenDesign Go"
+apiKeyEnv = "OPEN_DESIGN_GO_API_KEY"
+api = "openai-completions"
+baseURL = "https://amr-link.open-design.ai/v1"
+reasoning = "max"
+
+[entry.config.providers.open-design-go.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+supportsReasoningEffort = true
+
+[[entry.config.providers.open-design-go.models]]
+id = "deepseek-v4.1-flash-eco"
+name = "DeepSeek V4.1 Flash Eco"
+contextWindow = 1048576
+maxTokens = 393216
+
+[entry.config.providers.open-design-go.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
 [[entry]]
 id = "ui-theme"
 name = "@deepseek-ai/dsh-client-ui-theme"
@@ -1233,8 +1256,8 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "sensenova"
-model = "deepseek-flash"
+provider = "open-design-go"
+model = "deepseek-v4.1-flash-eco"
 
 # ── 2026-11-24 用户要求：停掉「配置」治理 ─────────────────────────────────────
 # 新会话区那个「配置: N」chip 与设置页里的「技能 / MCP / 工具配置」总览背后是
