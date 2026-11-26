@@ -688,6 +688,106 @@ low = "low"
 high = "high"
 max = "max"
 
+
+# Auto 调度：model name 固定写 ark-code-latest，由方舟按「效果 + 速度」选后端模型（控制台原话）。
+# shortcut: 上下文档未单列，contextWindow/maxTokens 照 deepseek-v4 系列填（未核实）；
+# 只声明 text——Auto 路由不保证后端支持图片，要图片用明确的视觉模型条目。
+[[entry.config.providers.ark.models]]
+id = "ark-code-latest"
+name = "Ark Code Latest (Auto)"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4-pro"
+name = "DeepSeek V4 Pro"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4-flash"
+name = "DeepSeek V4 Flash"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "doubao-seed-2.1-pro"
+name = "Doubao Seed 2.1 Pro"
+contextWindow = 1048576
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "doubao-seed-2.1-lite"
+name = "Doubao Seed 2.1 Lite"
+contextWindow = 1048576
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "glm-5.4"
+name = "GLM-5.4"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "glm-5.3-flash"
+name = "GLM-5.3 Flash"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "kimi-k3.1-pro"
+name = "Kimi K3.1 Pro"
+contextWindow = 1048576
+maxTokens = 1048576
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
 [entry.config.providers.open-design-go]
 displayName = "OpenDesign Go"
 apiKeyEnv = "OPEN_DESIGN_GO_API_KEY"
