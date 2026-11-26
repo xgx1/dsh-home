@@ -705,6 +705,7 @@ id = "deepseek-v4.1-flash-eco"
 name = "DeepSeek V4.1 Flash Eco"
 contextWindow = 1048576
 maxTokens = 393216
+input = [ "text", "image" ]
 
 [entry.config.providers.open-design-go.models.reasoningEfforts]
 low = "low"
