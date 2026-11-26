@@ -2,9 +2,9 @@
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
-    "@deepseek-ai/dsh-browser-use": "link:../../../projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use",
-    "@deepseek-ai/dsh-computer-use": "link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use",
-    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native",
+    "@deepseek-ai/dsh-browser-use": "link:../../../projects/MyAI/deepseek-harness-desktop/packages/browser-use/browser-use",
+    "@deepseek-ai/dsh-computer-use": "link:../../../projects/MyAI/deepseek-harness-desktop/packages/computer-use/computer-use",
+    "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:../../../projects/MyAI/deepseek-harness-desktop/packages/experimental/computer-use-cua-driver-native",
     "@dsh-external/dsh-blender-plugin": "link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",
     "@openviking/dsh-memory-plugin": "link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin",
     "billion-context": "link:../../../projects/MyAI/dsh-extensions/vendor/billion-context",
@@ -12,10 +12,9 @@
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-perf-mode": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
-    "dsh-purge-community": "file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz",
     "dsh-sidebar-taskbar": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
-    "dsh-super-agent": "link:../../../projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent",
-    "dsh-task-manager": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
+    "dsh-super-agent": "link:../../../projects/MyAI/deepseek-harness-desktop/extensions/dsh-super-agent",
+    "dsh-task-manager": "link:../../../projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager"
   },
   "dsh": {
     "profile": {
@@ -33,7 +32,7 @@
         "@deepseek-ai/dsh-experimental-tool-worktree",
         "@deepseek-ai/dsh-experimental-terminal-bundle",
         "@deepseek-ai/dsh-timeline",
-        "dsh-purge-community"
+        "dsh-task-manager"
       ]
     }
   }
