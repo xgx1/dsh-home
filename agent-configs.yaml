@@ -456,6 +456,8 @@ projects:
     - "ui-design"
     - "design-brand"
     - "core"
+    - "unity"
+    - "unreal"
     - "js"
     - "search"
     - "agent"
@@ -663,12 +665,18 @@ projects:
     - "core"
     - "search"
     - "agent"
-  "/mnt/Video/Jianyi":
+  "/mnt/Video2/Moon_VR_TCP":
+    - "ui-design"
+    - "design-brand"
     - "core"
     - "unity"
-    - "dotnet"
-    - "search"
-    - "task-console"
+    - "unreal"
+    - "testing"
+    - "test-audit"
+  "/mnt/Video/boundless-immortal-path":
+    - "ui-design"
+    - "design-brand"
+    - "core"
   "/home/sx/.dsh/task-manager/manager":
     - "ui-design"
     - "design-brand"
@@ -782,6 +790,12 @@ projects:
   "/mnt/Video2/待整理":
     - "core"
     - "docs"
+  "/mnt/Video/Jianyi":
+    - "core"
+    - "js"
+    - "unity"
+    - "dotnet"
+    - "search"
   "/home/sx/.dsh/task-manager/exec":
     - "core"
     - "task-exec"
