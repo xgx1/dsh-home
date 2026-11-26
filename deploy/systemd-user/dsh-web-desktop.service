@@ -1,0 +1,26 @@
+# dsh-web-desktop.service —— DSH 桌面操作实例（git worktree: ~/projects/MyAI/deepseek-harness-desktop）
+#
+# 三实例分工：
+#   生产   = ~/projects/MyAI/deepseek-harness         （master）   ，DSH_HOME=~/.dsh         → :3080
+#   开发   = ~/projects/MyAI/deepseek-harness-dev     （dev）      ，DSH_HOME=~/.dsh-dev     → :3081
+#   桌面   = ~/projects/MyAI/deepseek-harness-desktop （desktop-ops），DSH_HOME=~/.dsh-desktop → :3082
+# 三者端口与 DSH_HOME 都不同，sessions/storages 互不可见。
+#
+# 退出策略与生产/dev 一致：dsh 正常退出时 status=0，Restart=on-failure 不会拉起，服务会静默趴窝，
+# 所以用 always + 关掉启动限流。
+[Unit]
+Description=DeepSeek Harness (dsh) Web UI — desktop-ops worktree instance (:3082)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/MyAI/deepseek-harness-desktop
+Environment=DSH_HOME=%h/.dsh-desktop
+ExecStart=%h/.dsh-desktop/dsh-desktop-launch.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
