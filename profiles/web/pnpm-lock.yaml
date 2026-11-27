@@ -45,8 +45,8 @@ importers:
         specifier: link:../../../projects/MyAI/deepseek-harness-desktop/extensions/dsh-super-agent
         version: link:../../../projects/MyAI/deepseek-harness-desktop/extensions/dsh-super-agent
       dsh-task-manager:
-        specifier: link:../../../projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager
-        version: link:../../../projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager
+        specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
+        version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager
 
 packages:
 
