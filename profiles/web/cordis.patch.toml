@@ -985,9 +985,8 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "nvidia-nim"
-model = "moonshotai/kimi-k3.1-pro"
-reasoningEffort = "high"
+provider = "open-design-go"
+model = "deepseek-v4.1-flash-eco"
 
 # ── 2026-11-24 修复（2026-11-27 随 windows 分支合回 main，跨平台通用）──────────
 # 现场取证：`deepseek-official` 余额 0 → 402 Insufficient Balance（code QUOTA）；
