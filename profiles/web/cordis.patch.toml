@@ -1134,5 +1134,5 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "deepseek-account"
+provider = "sensenova"
 model = "deepseek-flash"
