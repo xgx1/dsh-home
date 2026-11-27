@@ -335,35 +335,6 @@ preference = "zh"
 id = "llm-pi-ai"
 name = "@deepseek-ai/dsh-llm-pi-ai"
 
-[entry.config.providers.opencode-go]
-displayName = "OpenCode Go"
-apiKeyEnv = "OPENCODE_API_KEY"
-api = "openai-completions"
-baseURL = "https://opencode.ai/inference/go/openai/v1"
-reasoning = "max"
-
-[entry.config.providers.opencode-go.compat]
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.opencode-go.models]]
-id = "deepseek-v4.1-flash"
-name = "DeepSeek V4.1 Flash"
-contextWindow = 1000000
-maxTokens = 384000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[entry.config.providers.openai-codex]
-displayName = "ChatGPT Plus (Codex)"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6.2-astra"
-
 [entry.config.providers.sensenova]
 displayName = "SenseNova (token plan)"
 apiKeyEnv = "SENSENOVA_API_KEY"
@@ -452,10 +423,6 @@ low = "low"
 high = "high"
 max = "max"
 
-
-# Auto 调度：model name 固定写 ark-code-latest，由方舟按「效果 + 速度」选后端模型（控制台原话）。
-# shortcut: 上下文档未单列，contextWindow/maxTokens 照 deepseek-v4 系列填（未核实）；
-# 只声明 text——Auto 路由不保证后端支持图片，要图片用明确的视觉模型条目。
 [[entry.config.providers.ark.models]]
 id = "ark-code-latest"
 name = "Ark Code Latest (Auto)"
@@ -664,18 +631,9 @@ id = "subagent-model-selection-settings"
 [entry.config]
 enabled = true
 
-[[entry.config.allowedModels]]
-provider = "opencode-go"
-model = "longcat-2.5-free"
-
-[[entry.config.allowedModels]]
-provider = "opencode-go"
-model = "hy4-flash-free"
-
-[[entry.config.allowedModels]]
-provider = "opencode-zen"
-model = "beam-free"
-
+# 2026-11-27 用户要求：删掉悬空路由（opencode-go/longcat-2.5-free、opencode-go/hy4-flash-free、
+# opencode-zen/beam-free）——这三个 provider/模型在 11-26 的 provider 收敛后已不存在，
+# 选到会撞 MODEL_ROUTE_NOT_ALLOWED。当前只留实际在用的 sensenova 路由。
 [[entry.config.allowedModels]]
 provider = "sensenova"
 model = "sensenova-6.8-flash"
