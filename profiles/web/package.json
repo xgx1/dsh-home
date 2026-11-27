@@ -11,6 +11,8 @@
     "dsh-dracula-theme": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-dracula-theme",
     "dsh-ego-browser": "^0.8.6",
     "dsh-llm-retry-schedule": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
+    "dsh-openviking-enhance": "^0.3.0",
+    "dsh-openviking-manager": "^0.6.1",
     "dsh-perf-mode": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
     "dsh-purge-community": "file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz",
     "dsh-resume-sessions": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-resume-sessions",
@@ -36,7 +38,9 @@
         "@deepseek-ai/dsh-timeline",
         "dsh-purge-community",
         "dsh-task-manager",
-        "dsh-resume-sessions"
+        "dsh-resume-sessions",
+        "dsh-openviking-enhance",
+        "dsh-openviking-manager"
       ]
     }
   }
