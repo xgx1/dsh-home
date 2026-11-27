@@ -115,3 +115,8 @@ deploy/systemd-user/headroom-*.service
 
 # taskbar 插件的运行态（Turso 本地库，含 -wal/-shm），属本机状态
 taskbar.db*
+
+# ── 红队预设（dsh-purge 种下）：技能随仓库跟踪，运行态由插件启动时重建 ────
+redteam/engagements/
+redteam/preset-declare.json
+redteam/setup.sh
