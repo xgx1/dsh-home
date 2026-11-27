@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Cross-platform dispatcher for the ponytail / caveman Claude Code hooks.
+ * Cross-platform dispatcher for the ponytail Claude Code hooks.
  *
  * Why this exists: DSH runs a hook command through bash on Linux and through
  * pwsh on Windows. The upstream hook snippets use `<VAR>=<value> node <path>`
@@ -12,23 +12,27 @@
  *     node "${CLAUDE_PLUGIN_ROOT}/dsh-skill-hooks.mjs" <hook-id>
  *
  * `${CLAUDE_PLUGIN_ROOT}` is substituted at config-parse time from the plugin's
- * `pluginRoot` (set in ~/.dsh/cordis.patch.yml to `dshHomePath('hooks')`), so it
- * resolves per platform. This script then sets the required env vars and spawns
- * the real hook script, forwarding stdin/stdout/stderr verbatim.
+ * `pluginRoot` (set in the home-level cordis.patch.toml to `dshHomePath('hooks')`),
+ * so it resolves per platform. This script then sets the required env vars and
+ * spawns the real hook script, forwarding stdin/stdout/stderr verbatim.
  *
  * Skills layout: `<home>/projects/MyAI/dsh-extensions/skills/<skill>`.
  * Override with DSH_SKILLS_ROOT if the checkout lives elsewhere.
+ *
+ * History: the two caveman hooks were dropped on 2026-11-24 together with the
+ * caveman skill group (removed from dsh-extensions/skills on 2026-10-26). They
+ * had kept failing with `Cannot find module .../caveman/src/hooks/*.js` on every
+ * session start and every prompt. Re-add the targets together with the skill,
+ * not before (see skill-context-hooks.json `_removed`).
  */
 
 import { spawnSync } from 'node:child_process'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const home = process.env.DSH_HOME || join(homedir(), '.dsh')
 const skills = process.env.DSH_SKILLS_ROOT
   || join(homedir(), 'projects', 'MyAI', 'dsh-extensions', 'skills')
 const ponytail = join(skills, 'dietrichgebert-ponytail')
-const caveman = join(skills, 'caveman')
 const ponytailState = join(tmpdir(), 'ponytail-state')
 
 /** hook id → the real script, its argv tail, and the env it needs. */
@@ -45,23 +49,6 @@ const targets = {
     env: {
       PONYTAIL_DEFAULT_MODE: process.env.PONYTAIL_DEFAULT_MODE || 'ultra',
       PLUGIN_DATA: process.env.PLUGIN_DATA || ponytailState,
-    },
-  },
-  // The shim wraps caveman's plain-stdout SessionStart in the JSON envelope DSH
-  // expects; it wants the caveman repo root as argv[2].
-  'caveman-session-context': {
-    script: join(home, 'hooks', 'caveman-session-context.js'),
-    args: [caveman],
-    env: {
-      CAVEMAN_DEFAULT_MODE: process.env.CAVEMAN_DEFAULT_MODE || 'wenyan-ultra',
-      CLAUDE_PLUGIN_ROOT: caveman,
-    },
-  },
-  'caveman-mode-tracker': {
-    script: join(caveman, 'src', 'hooks', 'caveman-mode-tracker.js'),
-    env: {
-      CAVEMAN_DEFAULT_MODE: process.env.CAVEMAN_DEFAULT_MODE || 'wenyan-ultra',
-      CLAUDE_PLUGIN_ROOT: caveman,
     },
   },
 }
