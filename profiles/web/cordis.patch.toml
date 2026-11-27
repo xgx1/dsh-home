@@ -423,114 +423,6 @@ low = "low"
 high = "high"
 max = "max"
 
-[[entry.config.providers.ark.models]]
-id = "ark-code-latest"
-name = "Ark Code Latest (Auto)"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "deepseek-v4.1-flash"
-name = "DeepSeek V4.1 Flash"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "deepseek-v4-pro"
-name = "DeepSeek V4 Pro"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "deepseek-v4-flash"
-name = "DeepSeek V4 Flash"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "doubao-seed-2.1-pro"
-name = "Doubao Seed 2.1 Pro"
-contextWindow = 1048576
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "doubao-seed-2.1-lite"
-name = "Doubao Seed 2.1 Lite"
-contextWindow = 1048576
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "glm-5.4"
-name = "GLM-5.4"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "glm-5.3-flash"
-name = "GLM-5.3 Flash"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.ark.models]]
-id = "kimi-k3.1-pro"
-name = "Kimi K3.1 Pro"
-contextWindow = 1048576
-maxTokens = 1048576
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
 [entry.config.providers.open-design-go]
 displayName = "OpenDesign Go"
 apiKeyEnv = "OPEN_DESIGN_GO_API_KEY"
@@ -631,12 +523,13 @@ id = "subagent-model-selection-settings"
 [entry.config]
 enabled = true
 
-# 2026-11-27 用户要求：删掉悬空路由（opencode-go/longcat-2.5-free、opencode-go/hy4-flash-free、
-# opencode-zen/beam-free）——这三个 provider/模型在 11-26 的 provider 收敛后已不存在，
-# 选到会撞 MODEL_ROUTE_NOT_ALLOWED。当前只留实际在用的 sensenova 路由。
 [[entry.config.allowedModels]]
 provider = "sensenova"
-model = "sensenova-6.8-flash"
+model = "deepseek-flash"
+
+[[entry.config.allowedModels]]
+provider = "open-design-go"
+model = "deepseek-v4.1-flash-eco"
 
 # 2026-11-13 用户要求：7 个类型预设合并成一个 preset-all（所有项目类型共用，
 # ue / unity / blender / cua 四个类型专属行全部挂上）；生成器与 preset-base.yml、
@@ -1092,8 +985,9 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "sensenova"
-model = "deepseek-flash"
+provider = "nvidia-nim"
+model = "moonshotai/kimi-k3.1-pro"
+reasoningEffort = "high"
 
 # ── 2026-11-24 修复（2026-11-27 随 windows 分支合回 main，跨平台通用）──────────
 # 现场取证：`deepseek-official` 余额 0 → 402 Insufficient Balance（code QUOTA）；
