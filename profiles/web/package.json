@@ -13,10 +13,10 @@
     "dsh-llm-retry-schedule": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule",
     "dsh-perf-mode": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode",
     "dsh-purge-community": "file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz",
-    "dsh-resume-sessions": "link:../../../projects/MyAI/dsh-extensions-dev/plugins/dsh-resume-sessions",
+    "dsh-resume-sessions": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-resume-sessions",
     "dsh-sidebar-taskbar": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-sidebar-taskbar",
     "dsh-super-agent": "link:../../../projects/MyAI/deepseek-harness-dev/extensions/dsh-super-agent",
-    "dsh-task-manager": "link:../../../projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager"
+    "dsh-task-manager": "link:../../../projects/MyAI/dsh-extensions/plugins/dsh-task-manager"
   },
   "dsh": {
     "profile": {
