@@ -1094,3 +1094,20 @@ name = "@deepseek-ai/dsh-agent-default-model"
 [entry.config]
 provider = "sensenova"
 model = "deepseek-flash"
+
+# ── 2026-11-24 修复（2026-11-27 随 windows 分支合回 main，跨平台通用）──────────
+# 现场取证：`deepseek-official` 余额 0 → 402 Insufficient Balance（code QUOTA）；
+# provider `ark`（Agent Plan）5 小时配额耗尽 → 429 AccountQuotaExceeded（code RATE_LIMIT）。
+# dsh-llm-retry-schedule 默认 maxRetries=1000 + 60s 兜底，把一轮对话在后台拖了 70 分钟，
+# Web 上看起来就是「发出去没反应、会话像死了」；402 更是余额不会自己回来，重试等不到恢复。
+# 收敛策略：重试预算 30 次（5s×4 + 10s×15 + 60s×11 ≈ 14 分钟）后把真实错误抛给用户；
+# retryableCodes 去掉 QUOTA（402 余额不足是永久故障）。
+# 要恢复长预算：删掉这一节，bundle 层默认就是 1000 次 / 60s 兜底。
+[[entry]]
+id = "llm-retry-schedule"
+
+[entry.config]
+maxRetries = 30
+retryableCodes = [
+  "EMPTY_RESPONSE", "RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT",
+]
