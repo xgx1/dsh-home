@@ -14,7 +14,6 @@
 | `.agent-presets/` | 自建 agent preset 文件（只剩 `simple`；当前 harness 已不再加载该目录，只作存档） |
 | `profiles/{web,tui,headless}/` | 各 profile 的 composition：`cordis.yml` + `cordis.patch.yml` + `pnpm-workspace.yaml` + `package.json` + lock |
 | `dsh-env.sh` / `dsh-web-launch.sh` | 启动脚本，被 `dsh-web.service` 调用 |
-| `bin/opencode-zen-bridge.py` | `:8790` 本地 OpenAI 兼容桥（opencode-zen provider 的前置，被 `opencode-zen-bridge.service` 拉起） |
 | `keys.example.yaml` | 凭据模板（**只有键名与格式说明，没有值**） |
 
 不跟踪、且**永远不该**进仓库的：
@@ -84,7 +83,6 @@ cp ~/.dsh/keys.example.yaml ~/.dsh/.credentials.yaml && chmod 600 ~/.dsh/.creden
 | unit | 作用 |
 |---|---|
 | `dsh-web.service` | DSH 生产实例（3080），同时**拉起全部 MCP 子进程** |
-| `opencode-zen-bridge.service` | `:8790` 本地 OpenAI 兼容端点（`bin/opencode-zen-bridge.py`），对应 `agent-default-model` 的 `opencode-zen` provider |
 
 unit 里**没有任何密钥**——`dsh-web-launch.sh` 会 source `dsh-env.sh`，把 `.credentials.yaml`
 的 `*_API_KEY` 注入启动环境。所以本仓库可以公开，而密钥仍只在各设备本地的凭据文件里。
