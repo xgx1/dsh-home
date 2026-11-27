@@ -358,227 +358,11 @@ low = "low"
 high = "high"
 max = "max"
 
-[[entry.config.providers.opencode-go.models]]
-id = "longcat-2.5-free"
-name = "LongCat 2.5 Free"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-go.models]]
-id = "hy4-flash-free"
-name = "Hy4 Flash Free"
-contextWindow = 1048576
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[entry.config.providers.opencode-zen]
-displayName = "OpenCode Zen (free)"
-apiKeyEnv = "OPENCODE_API_KEY"
-api = "openai-completions"
-baseURL = "http://127.0.0.1:8790/v1"
-reasoning = "high"
-
-[entry.config.providers.opencode-zen.compat]
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "big-pickle"
-name = "Big Pickle"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "deepseek-v4.1-flash-free"
-name = "DeepSeek V4.1 Flash Free"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "mimo-v2.6-flash-free"
-name = "MiMo-V2.6-Flash Free"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "longcat-2.5-free"
-name = "LongCat 2.5 Free"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "iceman-free"
-name = "Iceman Free"
-contextWindow = 262144
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "beam-free"
-name = "Beam Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "flint-40b-free"
-name = "Flint 40B Free"
-contextWindow = 262144
-maxTokens = 65536
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "nemotron-3.5-lightning-free"
-name = "Nemotron 3.5 Lightning Free"
-contextWindow = 262144
-maxTokens = 262144
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "nemotron-3.5-super-vl-free"
-name = "Nemotron 3.5 Super VL Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-minimal = "minimal"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "hy4-flash-free"
-name = "Hy4 Flash Free"
-contextWindow = 1048576
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "tidepool-alpha-free"
-name = "Tidepool Alpha Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-minimal = "minimal"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
 [entry.config.providers.openai-codex]
 displayName = "ChatGPT Plus (Codex)"
 
 [[entry.config.providers.openai-codex.models]]
-id = "gpt-6-astra"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6-luna"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6.1-sol"
-
-[entry.config.providers.qwen]
-displayName = "Qwen token plan"
-apiKeyEnv = "QWEN_API_KEY"
-api = "openai-completions"
-baseURL = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
-reasoning = "high"
-
-[entry.config.providers.qwen.compat]
-supportsReasoningEffort = true
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-thinkingFormat = "qwen"
-
-[[entry.config.providers.qwen.models]]
-id = "deepseek-v4.1-flash-1017"
-name = "deepseek-v4.1-flash-1017"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text", "image" ]
-
-[entry.config.providers.qwen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.qwen.models]]
-id = "qwen4-max"
-name = "Qwen4 Max"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.qwen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
+id = "gpt-6.2-astra"
 
 [entry.config.providers.sensenova]
 displayName = "SenseNova (token plan)"
@@ -613,7 +397,7 @@ id = "deepseek-flash"
 name = "DeepSeek Flash (SenseNova)"
 contextWindow = 1048576
 maxTokens = 65536
-input = [ "text" ]
+input = [ "text", "image" ]
 
 [entry.config.providers.sensenova.models.reasoningEfforts]
 off = "none"
@@ -645,14 +429,6 @@ input = [ "text", "image" ]
 [entry.config.providers.nvidia-nim.models.reasoningEfforts]
 high = "high"
 
-[[entry.config.providers.nvidia-nim.models]]
-id = "nvidia/nemotron-3.5-super-vl-120b-a12b"
-name = "nvidia/nemotron-3.5-super-vl-120b-a12b"
-input = [ "text", "image" ]
-
-[entry.config.providers.nvidia-nim.models.reasoningEfforts]
-high = "high"
-
 [entry.config.providers.ark]
 displayName = "Ark Agent Plan"
 apiKeyEnv = "ARK_API_KEY"
@@ -676,18 +452,6 @@ low = "low"
 high = "high"
 max = "max"
 
-[[entry.config.providers.ark.models]]
-id = "deepseek-v4.1-flash"
-name = "DeepSeek V4.1 Flash"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text", "image" ]
-
-[entry.config.providers.ark.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
 
 # Auto 调度：model name 固定写 ark-code-latest，由方舟按「效果 + 速度」选后端模型（控制台原话）。
 # shortcut: 上下文档未单列，contextWindow/maxTokens 照 deepseek-v4 系列填（未核实）；
@@ -698,6 +462,18 @@ name = "Ark Code Latest (Auto)"
 contextWindow = 1048576
 maxTokens = 393216
 input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4.1-flash"
+name = "DeepSeek V4.1 Flash"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
 
 [entry.config.providers.ark.models.reasoningEfforts]
 low = "low"
@@ -859,34 +635,19 @@ performanceUsage = "compact"
 id = "llm-deepseek"
 
 [entry.config]
-apiKeyEnv = "DEEPSEEK_API_KEY"
-    # 0.2.1 的 llm-deepseek（api-key provider）本身就是 Messages 协议
-    # （PUBLIC_BASE_URL = https://api.deepseek.com/anthropic），原 protocol 字段已删。
 thinking = "enabled"
-    # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
 reasoningEffort = "low"
+apiKeyEnv = "DEEPSEEK_API_KEY"
 
-    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
-    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
 [[entry.config.models]]
 id = "deepseek-flash"
 name = "DeepSeek-V4.1-Flash"
 contextWindow = 1048576
 maxTokens = 393216
-inputModalities = [ "text", "image" ]
 imagePixelBudget = 640000
 imageTargetBytes = 1048576
 systemPromptUpdate = "in-history"
-
-    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
-    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
-[[entry.config.models]]
-id = "deepseek-v4-pro"
-name = "DeepSeek-V4-Pro"
-description = "更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。"
-contextWindow = 1048576
-maxTokens = 393216
-inputModalities = [ "text" ]
+inputModalities = [ "text", "image" ]
 
 # 原 settings.yaml 的 shell.timeoutMs = 1800000（30 分钟）。落到实际执行器 bash-local 上，
 # 并同步抬高 maxTimeoutMs——默认上限 600000 会把请求钳回去。
@@ -1352,14 +1113,6 @@ idleTimeoutMin = 0
 chromePath = "/opt/helium-browser-bin/helium"
 chromeArgs = "--load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
 
-[[entry]]
-id = "agent-default-model"
-name = "@deepseek-ai/dsh-agent-default-model"
-
-[entry.config]
-provider = "open-design-go"
-model = "deepseek-v4.1-flash-eco"
-
 # ── 2026-11-24 用户要求：停掉「配置」治理 ─────────────────────────────────────
 # 新会话区那个「配置: N」chip 与设置页里的「技能 / MCP / 工具配置」总览背后是
 # agent-configs：它按 ~/.dsh/agent-configs.yaml 给每个项目放行技能/MCP/工具，
@@ -1375,3 +1128,11 @@ disabled = true
 [[entry]]
 id = "ui-agent-config"
 disabled = true
+
+[[entry]]
+id = "agent-default-model"
+name = "@deepseek-ai/dsh-agent-default-model"
+
+[entry.config]
+provider = "sensenova"
+model = "deepseek-flash"
