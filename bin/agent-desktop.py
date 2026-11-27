@@ -503,9 +503,12 @@ def cmd_up(args):
     subprocess.run(['systemctl', '--user', 'stop', name],
                    capture_output=True, text=True, timeout=15)
     cmd = ['systemd-run', '--user', '--unit', name, '--collect', '--quiet',
-           '--description=agent desktop (%s)' % key,
-           sys.executable, os.path.abspath(__file__), 'supervise', '--key', key,
-           '--workspace', root]
+           '--description=agent desktop (%s)' % key]
+    # systemd-run 不继承调用方环境；想换 niri 二进制得显式递过去。
+    if os.environ.get('AGENT_DESKTOP_NIRI'):
+        cmd.append('--setenv=AGENT_DESKTOP_NIRI=%s' % os.environ['AGENT_DESKTOP_NIRI'])
+    cmd += [sys.executable, os.path.abspath(__file__), 'supervise', '--key', key,
+            '--workspace', root]
     if args.size:
         cmd += ['--size', args.size]
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
