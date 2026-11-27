@@ -35,6 +35,12 @@ importers:
       dsh-llm-retry-schedule:
         specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-llm-retry-schedule
+      dsh-openviking-enhance:
+        specifier: ^0.3.0
+        version: 0.3.0
+      dsh-openviking-manager:
+        specifier: ^0.6.1
+        version: 0.6.1(@openviking/dsh-memory-plugin@..+..+projects+MyAI+dsh-extensions+vendor+OpenViking+examples+dsh-memory-plugin)
       dsh-perf-mode:
         specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
@@ -89,6 +95,29 @@ packages:
       react:
         optional: true
 
+  dsh-openviking-enhance@0.3.0:
+    resolution: {integrity: sha512-qrKVyejDkH/7y3xatP+PRC7HIAZ+EsyYFTYGz93uzJsuSURRBZZ7XXHDdpxhtDGS+K+U/Knrx6IJqfbAS3Fk8A==}
+    engines: {dsh: '>=0.2.0-rc.2 || >=0.2.1-rc.2 || >=0.2.2-rc.1', node: ^22.19.0 || >=24}
+    peerDependencies:
+      '@deepseek-ai/dsh': '>=0.2.0-rc.2 || >=0.2.1-rc.2 || >=0.2.2-rc.1'
+      react: ^18.2.0
+
+  dsh-openviking-manager@0.6.1:
+    resolution: {integrity: sha512-/JAm+QYQYE7Dg4ilaj5BW/0lub7plB6DWh1//Z6L2N6ueoGXUfs8hXbUmSyQKzOUDDaCgFGtE4+zFQlaJRHXvg==}
+    engines: {dsh: '>=0.1.6-alpha.2 <0.3.0-0', node: '>=22'}
+    peerDependencies:
+      '@deepseek-ai/cordis': '>=4.0.2'
+      '@deepseek-ai/dsh-client-locale': '>=0.1.6-alpha.2 <0.3.0-0'
+      '@deepseek-ai/dsh-client-ui-plugin-manager': '>=0.1.6-alpha.2 <0.3.0-0'
+      '@deepseek-ai/dsh-client-ui-renderer': '>=0.1.6-alpha.2 <0.3.0-0'
+      '@deepseek-ai/dsh-client-ui-slots': '>=0.1.6-alpha.2 <0.3.0-0'
+      '@deepseek-ai/dsh-host-webserver': '>=0.1.6-alpha.2 <0.3.0-0'
+      '@openviking/dsh-memory-plugin': '>=0.5.29'
+      react: 18.3.1
+    peerDependenciesMeta:
+      '@openviking/dsh-memory-plugin':
+        optional: true
+
   schemastery@3.18.0:
     resolution: {integrity: sha512-Jw2uxjoyyqc/yeurmChUEc/jbi8GsrdXV/KmqRUDZXJAXAmrJiPsz8vKa17l/VckyzljHZ9oGaul443CQiXxtA==}
 
@@ -109,6 +138,12 @@ snapshots:
     dependencies:
       '@deepseek-ai/schemastery': 3.18.5
       schemastery: 3.18.0
+
+  dsh-openviking-enhance@0.3.0: {}
+
+  dsh-openviking-manager@0.6.1(@openviking/dsh-memory-plugin@..+..+projects+MyAI+dsh-extensions+vendor+OpenViking+examples+dsh-memory-plugin):
+    optionalDependencies:
+      '@openviking/dsh-memory-plugin': link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
 
   schemastery@3.18.0:
     dependencies:
