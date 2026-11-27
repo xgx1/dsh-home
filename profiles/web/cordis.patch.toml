@@ -302,13 +302,12 @@ name = "@deepseek-ai/dsh-mcp-client"
 [entry.insert.config]
 serverName = "zvecgrep"
 transport = "stdio"
-        # 2026-11-24（Windows 本机）：两处本机差异。
-        # ① ~/.dsh/bin/zg-autoidx.mjs 是 Linux 本机资产，这里不自动建索引；
-        # ② DSH 在 Windows 上经 `cmd /d /s /c` 起 stdio server，且每个参数各自加引号，
-        #    `server` 会变成字面量 '"server"' → zg 报 Unknown command → 客户端无限重连。
-        #    故走 ~/.local/bin/zg-mcp.cmd 垫片，子命令与参数都收在垫片里。
-command = "zg-mcp"
-args = []
+        # 2026-10-23：改走本地 stdio 代理 —— 语义检索撞 INDEX_MISSING 时自动后台
+        # `zg index`（同根单飞行、独立进程、日志 /tmp/zvec-autoidx.log），并在工具
+        # 结果里追加「已建好/构建中」。回滚只需把 command 改回 `zg`。
+        # 代理内部用 `--server --stdio` 拉起真 zg，参数原样透传（0.3.0 起子命令改成 flag）。
+command = "/home/sx/.dsh/bin/zg-autoidx.mjs"
+args = [ "--server", "--stdio", "--mcp-toolset", "full" ]
 
 [[entry]]
 id = "ui-settings-general"
@@ -336,265 +335,6 @@ preference = "zh"
 id = "llm-pi-ai"
 name = "@deepseek-ai/dsh-llm-pi-ai"
 
-[entry.config.providers.opencode-go]
-displayName = "OpenCode Go"
-apiKeyEnv = "OPENCODE_API_KEY"
-api = "openai-completions"
-baseURL = "https://opencode.ai/inference/go/openai/v1"
-reasoning = "max"
-
-[entry.config.providers.opencode-go.compat]
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.opencode-go.models]]
-id = "deepseek-v4.1-flash"
-name = "DeepSeek V4.1 Flash"
-contextWindow = 1000000
-maxTokens = 384000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.opencode-go.models]]
-id = "longcat-2.5-free"
-name = "LongCat 2.5 Free"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-go.models]]
-id = "hy4-flash-free"
-name = "Hy4 Flash Free"
-contextWindow = 1048576
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-go.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-      # OpenCode Zen 免费层：经本机 bridge(:8790) 伪装 opencode 客户端。2026-11-21
-      # 实测破解：网关匹配 opencode 客户端系统提示（bridge 预置 opencode-zen-system.txt）
-      # + 完整 UA + 降序 session id，全部免费模型 HK 出口 200（此前 429 是伪装不全，非额度）。
-      # beam-free 区域受限，bridge 自动经美欧出口代理(opencode-useu-proxy.service :7898)转发。
-      # 思考等级按 /models 元数据 effort 数组配置；无 effort 数组者按实测 off 行为取 off+high。
-[entry.config.providers.opencode-zen]
-displayName = "OpenCode Zen (free)"
-apiKeyEnv = "OPENCODE_API_KEY"
-api = "openai-completions"
-baseURL = "http://127.0.0.1:8790/v1"
-reasoning = "high"
-
-[entry.config.providers.opencode-zen.compat]
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "big-pickle"
-name = "Big Pickle"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "deepseek-v4.1-flash-free"
-name = "DeepSeek V4.1 Flash Free"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "mimo-v2.6-flash-free"
-name = "MiMo-V2.6-Flash Free"
-contextWindow = 200000
-maxTokens = 32000
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "longcat-2.5-free"
-name = "LongCat 2.5 Free"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "iceman-free"
-name = "Iceman Free"
-contextWindow = 262144
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "beam-free"
-name = "Beam Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "flint-40b-free"
-name = "Flint 40B Free"
-contextWindow = 262144
-maxTokens = 65536
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "nemotron-3.5-lightning-free"
-name = "Nemotron 3.5 Lightning Free"
-contextWindow = 262144
-maxTokens = 262144
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "nemotron-3.5-super-vl-free"
-name = "Nemotron 3.5 Super VL Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-minimal = "minimal"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "hy4-flash-free"
-name = "Hy4 Flash Free"
-contextWindow = 1048576
-maxTokens = 65536
-input = [ "text", "image" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-off = "none"
-high = "high"
-
-[[entry.config.providers.opencode-zen.models]]
-id = "tidepool-alpha-free"
-name = "Tidepool Alpha Free"
-contextWindow = 1048576
-maxTokens = 131072
-input = [ "text" ]
-
-[entry.config.providers.opencode-zen.models.reasoningEfforts]
-minimal = "minimal"
-low = "low"
-medium = "medium"
-high = "high"
-xhigh = "xhigh"
-max = "max"
-
-[entry.config.providers.openai-codex]
-displayName = "ChatGPT Plus (Codex)"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6-astra"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6-luna"
-
-[[entry.config.providers.openai-codex.models]]
-id = "gpt-6.1-sol"
-
-[entry.config.providers.qwen]
-displayName = "Qwen token plan"
-apiKeyEnv = "QWEN_API_KEY"
-api = "openai-completions"
-baseURL = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
-reasoning = "high"
-
-[entry.config.providers.qwen.compat]
-supportsReasoningEffort = true
-supportsDeveloperRole = false
-maxTokensField = "max_tokens"
-thinkingFormat = "qwen"
-
-[[entry.config.providers.qwen.models]]
-id = "deepseek-v4.1-flash-1017"
-name = "deepseek-v4.1-flash-1017"
-contextWindow = 1048576
-maxTokens = 393216
-input = [ "text", "image" ]
-
-[entry.config.providers.qwen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-[[entry.config.providers.qwen.models]]
-id = "qwen4-max"
-name = "Qwen4 Max"
-contextWindow = 1000000
-maxTokens = 262144
-input = [ "text", "image" ]
-
-[entry.config.providers.qwen.models.reasoningEfforts]
-low = "low"
-high = "high"
-max = "max"
-
-      # ── 商汤 SenseNova token plan（2026-11-19 用户要求）─────────────────────
-      # 只接 sensenova-6.8-flash 与 deepseek-flash；context/max_output/模态取自
-      # 线上 GET https://token.sensenova.cn/v1/models（实测 262144/65536、
-      # 1048576/65536；前者带图）。思考强度走标准 reasoning_effort 字段，
-      # 线上校验器接受 none/minimal/low/medium/high/xhigh/max，none = 关思考
-      # （2026-11-19 用 usage.completion_tokens_details.reasoning_tokens 实测：
-      # none→0，low/max→有值）。docs 里写的 output_config.effort 同样可用，
-      # 但 pi-ai 只发 reasoning_effort，故以它为准。
-      # 路由级 reasoning: max = 会话没选档位时的默认档（用户要求两个模型都默认 max）。
 [entry.config.providers.sensenova]
 displayName = "SenseNova (token plan)"
 apiKeyEnv = "SENSENOVA_API_KEY"
@@ -628,7 +368,7 @@ id = "deepseek-flash"
 name = "DeepSeek Flash (SenseNova)"
 contextWindow = 1048576
 maxTokens = 65536
-input = [ "text" ]
+input = [ "text", "image" ]
 
 [entry.config.providers.sensenova.models.reasoningEfforts]
 off = "none"
@@ -639,17 +379,6 @@ high = "high"
 xhigh = "xhigh"
 max = "max"
 
-      # ── NVIDIA NIM 免费额度（2026-11-21 用户要求接入）───────────────────
-      # 入口 https://integrate.api.nvidia.com/v1 是 OpenAI 风格 Chat Completions；key 在
-      # https://build.nvidia.com/settings/api-keys 建，写进 ~/.dsh/.credentials.yaml 的 refs 下。
-      # 只留 2026-11-21 用真 key 实测「能回话 + 认 tools」的六个；线上 /v1/models 里的
-      # z-ai/glm-5.3-flash、google/gemma-4-31b-it、moonshotai/kimi-k3.1-pro、stepfun-ai/step-5-preview
-      # 都跑到 25~100s 仍无首字节（单测在同一时刻别的模型是秒回），故不列。仓库
-      # konglong87/free-AI-free-token 的清单已过期，别照抄（它写的 glm-5.2 线上已换成 5.3-flash）。
-      # shortcut: 上下文/输出上限没有权威来源，统一按保守的 128K/16K；要精确就照
-      # build.nvidia.com 模型页逐个补 contextWindow/maxTokens。思考强度未声明：实测 NIM 只认
-      # reasoning_effort（nemotron/laguna/supervl 上 none 关得掉、mistral-large 对 none 直接 400），
-      # 逐模型档位没逐个验，先不开放选择器。
 [entry.config.providers.nvidia-nim]
 displayName = "NVIDIA NIM (free)"
 apiKeyEnv = "NVIDIA_API_KEY"
@@ -663,29 +392,13 @@ supportsDeveloperRole = false
 maxTokensField = "max_tokens"
 
 [[entry.config.providers.nvidia-nim.models]]
-id = "minimaxai/minimax-m3.1-flash"
-name = "MiniMax M3.1 Flash (NIM)"
-
-[[entry.config.providers.nvidia-nim.models]]
-id = "poolside/laguna-xs-2.1"
-name = "Laguna XS 2.1 (NIM)"
-
-[[entry.config.providers.nvidia-nim.models]]
-id = "nvidia/nemotron-3-ultra-550b-a55b"
-name = "Nemotron 3 Ultra (NIM)"
-
-[[entry.config.providers.nvidia-nim.models]]
-id = "meta/muse-glimmer-30b"
-name = "Muse Glimmer 30B (NIM)"
-
-[[entry.config.providers.nvidia-nim.models]]
-id = "mistralai/mistral-large-4-1t-a52b"
-name = "Mistral Large 4 (NIM)"
-
-[[entry.config.providers.nvidia-nim.models]]
-id = "nvidia/nemotron-3.5-super-vl-120b-a12b"
-name = "Nemotron 3.5 Super VL (NIM)"
+id = "moonshotai/kimi-k3.1-pro"
+name = "moonshotai/kimi-k3.1-pro"
+contextWindow = 1048576
 input = [ "text", "image" ]
+
+[entry.config.providers.nvidia-nim.models.reasoningEfforts]
+high = "high"
 
 [entry.config.providers.ark]
 displayName = "Ark Agent Plan"
@@ -711,6 +424,18 @@ high = "high"
 max = "max"
 
 [[entry.config.providers.ark.models]]
+id = "ark-code-latest"
+name = "Ark Code Latest (Auto)"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
 id = "deepseek-v4.1-flash"
 name = "DeepSeek V4.1 Flash"
 contextWindow = 1048576
@@ -718,6 +443,114 @@ maxTokens = 393216
 input = [ "text", "image" ]
 
 [entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4-pro"
+name = "DeepSeek V4 Pro"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "deepseek-v4-flash"
+name = "DeepSeek V4 Flash"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "doubao-seed-2.1-pro"
+name = "Doubao Seed 2.1 Pro"
+contextWindow = 1048576
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "doubao-seed-2.1-lite"
+name = "Doubao Seed 2.1 Lite"
+contextWindow = 1048576
+maxTokens = 262144
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "glm-5.4"
+name = "GLM-5.4"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "glm-5.3-flash"
+name = "GLM-5.3 Flash"
+contextWindow = 1048576
+maxTokens = 131072
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[[entry.config.providers.ark.models]]
+id = "kimi-k3.1-pro"
+name = "Kimi K3.1 Pro"
+contextWindow = 1048576
+maxTokens = 1048576
+input = [ "text", "image" ]
+
+[entry.config.providers.ark.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
+[entry.config.providers.open-design-go]
+displayName = "OpenDesign Go"
+apiKeyEnv = "OPEN_DESIGN_GO_API_KEY"
+api = "openai-completions"
+baseURL = "https://amr-link.open-design.ai/v1"
+reasoning = "max"
+
+[entry.config.providers.open-design-go.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+supportsReasoningEffort = true
+
+[[entry.config.providers.open-design-go.models]]
+id = "deepseek-v4.1-flash-eco"
+name = "DeepSeek V4.1 Flash Eco"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.open-design-go.models.reasoningEfforts]
 low = "low"
 high = "high"
 max = "max"
@@ -769,34 +602,19 @@ performanceUsage = "compact"
 id = "llm-deepseek"
 
 [entry.config]
-apiKeyEnv = "DEEPSEEK_API_KEY"
-    # 0.2.1 的 llm-deepseek（api-key provider）本身就是 Messages 协议
-    # （PUBLIC_BASE_URL = https://api.deepseek.com/anthropic），原 protocol 字段已删。
 thinking = "enabled"
-    # 线上 supported_levels = low/high/max，default high；新会话档位另由 agent-default-model 给
 reasoningEffort = "low"
+apiKeyEnv = "DEEPSEEK_API_KEY"
 
-    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
-    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
 [[entry.config.models]]
 id = "deepseek-flash"
 name = "DeepSeek-V4.1-Flash"
 contextWindow = 1048576
 maxTokens = 393216
-inputModalities = [ "text", "image" ]
 imagePixelBudget = 640000
-imageMaxBytes = 1048576
+imageTargetBytes = 1048576
 systemPromptUpdate = "in-history"
-
-    # 目录对齐线上 GET /models（2026-10-03 实测）：context 1048576、max_output 393216、
-    # effort low/high/max(默认 high)。flash 带图，v4-pro 仅文本（无 imagePixelBudget）。
-[[entry.config.models]]
-id = "deepseek-v4-pro"
-name = "DeepSeek-V4-Pro"
-description = "更强的 agentic 编码与难推理，质量优先/复杂任务用，成本更高；仅文本输入。"
-contextWindow = 1048576
-maxTokens = 393216
-inputModalities = [ "text" ]
+inputModalities = [ "text", "image" ]
 
 # 原 settings.yaml 的 shell.timeoutMs = 1800000（30 分钟）。落到实际执行器 bash-local 上，
 # 并同步抬高 maxTimeoutMs——默认上限 600000 会把请求钳回去。
@@ -813,18 +631,9 @@ id = "subagent-model-selection-settings"
 [entry.config]
 enabled = true
 
-[[entry.config.allowedModels]]
-provider = "opencode-go"
-model = "longcat-2.5-free"
-
-[[entry.config.allowedModels]]
-provider = "opencode-go"
-model = "hy4-flash-free"
-
-[[entry.config.allowedModels]]
-provider = "opencode-zen"
-model = "beam-free"
-
+# 2026-11-27 用户要求：删掉悬空路由（opencode-go/longcat-2.5-free、opencode-go/hy4-flash-free、
+# opencode-zen/beam-free）——这三个 provider/模型在 11-26 的 provider 收敛后已不存在，
+# 选到会撞 MODEL_ROUTE_NOT_ALLOWED。当前只留实际在用的 sensenova 路由。
 [[entry.config.allowedModels]]
 provider = "sensenova"
 model = "sensenova-6.8-flash"
@@ -922,13 +731,6 @@ disabled = true
 
 [[entry]]
 id = "dsh-blender-plugin"
-disabled = true
-
-# ── 2026-11-24 Windows 新设备：本机没有这些运行时/本机独有层，先停掉（对应 INSTALL §6/§7）──
-#   · ego-browser：egoBin 指向 Linux 本机包装与 Helium profile（INSTALL §6）
-# mcp-cbm / mcp-zvecgrep 保留启用——本机 codebase-memory-mcp 与 zg 都在 PATH 上。
-[[entry]]
-id = "ego-browser"
 disabled = true
 
 [[entry]]
@@ -1141,12 +943,10 @@ initialDelayMs = 5000
 maxDelayMs = 60000
 maxAttempts = 100000
 
-        # 2026-11-24（Windows 本机）：blender 从预设清单移除。
-        # 预设要求清单里每个子插件都真的启动；@dsh-external/dsh-blender-plugin 的 lib/ 是构建产物，
-        # 而它锁定的是 harness 0.1.x 的 API（src/host/context.ts 用 @deepseek-ai/dsh-tools 的
-        # ToolRegistry，0.2.2 已删除导出），在本机重建必然 typecheck 失败 → 该子插件 never started
-        # → 整个预设判 invalid → 网页端「新建会话」直接失败。
-        # 本机没装 Blender，这行本就不该在默认预设里；Linux 侧保留（那边有旧 lib/ 产物）。
+[[entry.insert.config.plugins]]
+id = "blender"
+name = "@dsh-external/dsh-blender-plugin"
+
 [[entry.insert.config.plugins]]
 id = "cua"
 name = "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native"
@@ -1271,14 +1071,6 @@ idleTimeoutMin = 0
 chromePath = "/opt/helium-browser-bin/helium"
 chromeArgs = "--load-extension=/usr/local/share/browser-themes/dracula --enable-features=VerticalTabs,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
 
-[[entry]]
-id = "agent-default-model"
-name = "@deepseek-ai/dsh-agent-default-model"
-
-[entry.config]
-provider = "nvidia-nim"
-model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
-
 # ── 2026-11-24 用户要求：停掉「配置」治理 ─────────────────────────────────────
 # 新会话区那个「配置: N」chip 与设置页里的「技能 / MCP / 工具配置」总览背后是
 # agent-configs：它按 ~/.dsh/agent-configs.yaml 给每个项目放行技能/MCP/工具，
@@ -1295,20 +1087,22 @@ disabled = true
 id = "ui-agent-config"
 disabled = true
 
-# ── 2026-11-24 修复：配额/余额类失败不再把一整轮对话悄悄卡死 ───────────────────
-# 现场取证（今天 16:13–17:30，4 个会话共 377 条 llm/retry）：
-#   · provider `deepseek-official` 余额为 0 → 402 Insufficient Balance（code QUOTA）
-#   · provider `ark`（Agent Plan）5 小时配额耗尽 → 429 AccountQuotaExceeded（code RATE_LIMIT）
-# dsh-llm-retry-schedule 默认 maxRetries=1000 + 60s 兜底，把一轮对话在后台拖了
-# 70 分钟还在重试，Web 上看起来就是「发出去没反应、会话像死了」。402 那条更糟：
-# 余额不会自己回来，重试等不到任何恢复。
-# 收敛策略：
-#   · 重试预算 30 次（5s×4 + 10s×15 + 60s×11 ≈ 14 分钟）后把真实错误抛给用户，
-#     让他换模型/换 provider —— 既还留着“provider 抽风自己恢复”的余地，又不会
-#     在 5 小时配额告罄时静默拖上一小时；
-#   · retryableCodes 去掉 QUOTA —— 402 余额不足是永久故障，重试无意义。
-# 要恢复原来的长预算（等 provider 抖动回来）：删掉这一节，bundle 层默认就是
-# 1000 次 / 60s 兜底。
+[[entry]]
+id = "agent-default-model"
+name = "@deepseek-ai/dsh-agent-default-model"
+
+[entry.config]
+provider = "sensenova"
+model = "deepseek-flash"
+
+# ── 2026-11-24 修复（2026-11-27 随 windows 分支合回 main，跨平台通用）──────────
+# 现场取证：`deepseek-official` 余额 0 → 402 Insufficient Balance（code QUOTA）；
+# provider `ark`（Agent Plan）5 小时配额耗尽 → 429 AccountQuotaExceeded（code RATE_LIMIT）。
+# dsh-llm-retry-schedule 默认 maxRetries=1000 + 60s 兜底，把一轮对话在后台拖了 70 分钟，
+# Web 上看起来就是「发出去没反应、会话像死了」；402 更是余额不会自己回来，重试等不到恢复。
+# 收敛策略：重试预算 30 次（5s×4 + 10s×15 + 60s×11 ≈ 14 分钟）后把真实错误抛给用户；
+# retryableCodes 去掉 QUOTA（402 余额不足是永久故障）。
+# 要恢复长预算：删掉这一节，bundle 层默认就是 1000 次 / 60s 兜底。
 [[entry]]
 id = "llm-retry-schedule"
 

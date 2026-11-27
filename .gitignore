@@ -46,10 +46,6 @@ bin/*
 # 2026-11-17：ego 标签页看门狗与工作区迁移脚本是配置层的一部分，换机也要有。
 !bin/ego-tab-janitor.mjs
 !bin/migrate-workspaces.py
-!bin/opencode-zen-bridge.py
-# 2026-11-21：bridge 伪装免费层所需的 opencode 客户端系统提示（非密钥），换机也要有。
-!bin/opencode-zen-system.txt
-!bin/opencode-zen-bridge.test.py
 # 2026-10-23：这两个是本机运行链路的一部分（profile 的 MCP command 直接指 zg-autoidx），
 # 必须入库，否则换机/回滚后 zvec 自动建索引与 scope 清理就没了。
 !bin/zg-autoidx.mjs
@@ -117,6 +113,11 @@ deploy/systemd-user/headroom-*.service
 
 # taskbar 插件的运行态（Turso 本地库，含 -wal/-shm），属本机状态
 taskbar.db*
+
+# ── 红队预设（dsh-purge 种下）：技能随仓库跟踪，运行态由插件启动时重建 ────
+redteam/engagements/
+redteam/preset-declare.json
+redteam/setup.sh
 
 # Windows 本机：zg 的 MCP stdio 垫片（DSH 在 Windows 上 cmd /c 逐参数加引号，子命令必须收进脚本）
 !bin/zg-mcp.cmd
