@@ -1030,3 +1030,22 @@ maxRetries = 30
 retryableCodes = [
   "EMPTY_RESPONSE", "RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT",
 ]
+
+# ── 2026-11-28 会话存储切到 Turso 单库 ─────────────────────────────────────
+# 关闭 base 的 JSONL 后端（patch 没有 remove 操作，后层按 id 单键覆盖 disabled 即可），
+# 再挂 Turso：一个 sessions.db 存全部会话，不压缩。旧 sessions/ 目录原地保留当回滚副本。
+# 回滚：删掉这两段 + 挪走 sessions.db，即回到 JSONL。
+# 见 docs/adr/0016-turso-session-store.md 与 docs/functional/turso-session-store.md。
+[[entry]]
+id = "session-persistence-jsonl"
+disabled = true
+
+# 空的 [[entry]] 开一条「只有 insert」的 patch：insert 必须挂在无 id 的 patch 上才落根列表，
+# 挂在上面那条带 id 的 patch 下会被当成「插进该 group」，而它不是 group。
+[[entry]]
+[[entry.insert]]
+id = "session-persistence-turso"
+name = "@deepseek-ai/dsh-session-persistence-turso"
+
+[entry.insert.config]
+path = "js:dshHomePath('sessions.db')"

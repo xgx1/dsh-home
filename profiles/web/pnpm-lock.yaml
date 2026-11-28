@@ -17,6 +17,9 @@ importers:
       '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native':
         specifier: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
         version: link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native
+      '@deepseek-ai/dsh-session-persistence-turso':
+        specifier: link:../../../projects/MyAI/deepseek-harness-dev/packages/session/session-persistence-turso
+        version: link:../../../projects/MyAI/deepseek-harness-dev/packages/session/session-persistence-turso
       '@dsh-external/dsh-blender-plugin':
         specifier: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
         version: link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin
@@ -46,7 +49,7 @@ importers:
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-perf-mode
       dsh-purge-community:
         specifier: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
-        version: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
+        version: file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz
       dsh-resume-sessions:
         specifier: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-resume-sessions
         version: link:../../../projects/MyAI/dsh-extensions/plugins/dsh-resume-sessions
@@ -124,8 +127,11 @@ packages:
       '@openviking/dsh-memory-plugin':
         optional: true
 
-  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
-    resolution: {tarball: file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz}
+  dsh-purge-community@file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+    resolution: {integrity: sha512-yXBFQufiE44kFHQj9RpLorcmYfTPOCE/JWENJuskKhS8GlVw1SRccPSx7+mgceKqIHRqoBAO0vl/glM1idF+vw==, tarball: file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz}
+    version: 1.7.20
+    engines: {node: '>=18'}
+    hasBin: true
     peerDependencies:
       '@deepseek-ai/cordis': ^4.0.1
 
@@ -161,7 +167,7 @@ snapshots:
     optionalDependencies:
       '@openviking/dsh-memory-plugin': link:../../../projects/MyAI/dsh-extensions/vendor/OpenViking/examples/dsh-memory-plugin
 
-  dsh-purge-community@file:/home/sx/.dsh-dev/dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
+  dsh-purge-community@file:../../dsh-purge-community/archives/dsh-purge-community-1.7.20.tgz:
     dependencies:
       yaml: 2.9.1
 

@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@deepseek-ai/dsh-browser-use": "link:../../../projects/MyAI/deepseek-harness-dev/packages/browser-use/browser-use",
+    "@deepseek-ai/dsh-session-persistence-turso": "link:../../../projects/MyAI/deepseek-harness-dev/packages/session/session-persistence-turso",
     "@deepseek-ai/dsh-computer-use": "link:../../../projects/MyAI/deepseek-harness-dev/packages/computer-use/computer-use",
     "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": "link:../../../projects/MyAI/deepseek-harness-dev/packages/experimental/computer-use-cua-driver-native",
     "@dsh-external/dsh-blender-plugin": "link:../../../projects/MyAI/dsh-extensions/vendor/dsh-blender-plugin",

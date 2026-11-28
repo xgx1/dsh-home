@@ -13,6 +13,8 @@ attachments/
 cache/
 storages/
 session-search.db*
+# Turso 单库会话存储（含 -shm / -wal）
+sessions.db*
 task-manager/
 llm-deepseek/
 
