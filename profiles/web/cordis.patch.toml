@@ -447,6 +447,31 @@ low = "low"
 high = "high"
 max = "max"
 
+# 2026-11-28 第二个订阅：与 open-design-go 并行（键独立，不替换原 provider）
+[entry.config.providers.open-design-go-2]
+displayName = "OpenDesign Go (订阅2)"
+apiKeyEnv = "OPEN_DESIGN_GO_API_KEY_2"
+api = "openai-completions"
+baseURL = "https://amr-link.open-design.ai/v1"
+reasoning = "max"
+
+[entry.config.providers.open-design-go-2.compat]
+supportsDeveloperRole = false
+maxTokensField = "max_tokens"
+supportsReasoningEffort = true
+
+[[entry.config.providers.open-design-go-2.models]]
+id = "deepseek-v4.1-flash-eco"
+name = "DeepSeek V4.1 Flash Eco"
+contextWindow = 1048576
+maxTokens = 393216
+input = [ "text", "image" ]
+
+[entry.config.providers.open-design-go-2.models.reasoningEfforts]
+low = "low"
+high = "high"
+max = "max"
+
 [[entry]]
 id = "ui-theme"
 name = "@deepseek-ai/dsh-client-ui-theme"
@@ -985,8 +1010,8 @@ id = "agent-default-model"
 name = "@deepseek-ai/dsh-agent-default-model"
 
 [entry.config]
-provider = "open-design-go"
-model = "deepseek-v4.1-flash-eco"
+provider = "sensenova"
+model = "deepseek-flash"
 
 # ── 2026-11-24 修复（2026-11-27 随 windows 分支合回 main，跨平台通用）──────────
 # 现场取证：`deepseek-official` 余额 0 → 402 Insufficient Balance（code QUOTA）；
