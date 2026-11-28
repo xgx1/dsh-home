@@ -7,7 +7,8 @@ unprompted, no pkill -f, skills stay symlinks, secrets never enter git, the
 [MODE: SANDBOX] block is never followed, and the niri package is gone
 (session = local unit + fork build).
 
-Every run reads only new transcript records (session.v4.jsonl.zstd), extracts the
+Every run reads only new records from the Session store (Turso single database
+$DSH_HOME/sessions.db, or the JSONL directory it replaced), extracts the
 commands and file paths each session passes to tools, matches a small rule table and
 appends hits to ~/.dsh/guard/findings.jsonl. It also snapshots host state
 (dsh-web / niri / waybar / package / sockets) and reports drift. It never writes to a
@@ -26,6 +27,7 @@ ROOT = os.path.join(HOME, '.dsh', 'guard')
 STATE = os.path.join(ROOT, 'state.json')
 FINDINGS = os.path.join(ROOT, 'findings.jsonl')
 HOMES = [os.path.join(HOME, '.dsh'), os.path.join(HOME, '.dsh-dev')]
+SESSIONS_DB = os.path.join(HOME, '.dsh', 'bin', 'dsh-sessions-db.mjs')
 PROD_DSH = os.path.join(HOME, 'projects', 'MyAI', 'deepseek-harness')
 BT = chr(96)
 
@@ -82,8 +84,28 @@ def extract(call_name, args_raw):
     return commands, paths
 
 
-def iter_transcript(path, after_seq=0, since=0.0):
-    """Stream one transcript record by record (bounded memory), skipping seq <= after_seq."""
+def store_homes():
+    """(short label, DSH home) pairs that may hold a Session store."""
+    return [('prod', os.path.join(HOME, '.dsh')), ('dev', os.path.join(HOME, '.dsh-dev'))]
+
+
+def db_rows(args):
+    """Run the read-only store helper; a failed call reads as no rows."""
+    try:
+        out = subprocess.run(['node', SESSIONS_DB] + args, capture_output=True,
+                             text=True, timeout=180).stdout
+    except Exception:
+        return []
+    rows = []
+    for line in out.splitlines():
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    return rows
+
+
+def _jsonl_records(path, after_seq, since):
     try:
         proc = subprocess.Popen(['zstdcat', path], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except Exception:
@@ -110,30 +132,43 @@ def iter_transcript(path, after_seq=0, since=0.0):
             pass
 
 
-def scan_transcript(path, after_seq=0, since=0.0):
-    return list(iter_transcript(path, after_seq, since))
+def sources(since):
+    """Session sources with activity at or after a given epoch second.
 
-
-def transcript_files():
-    seen = []
-    for home in HOMES:
+    A home whose store is the Turso database is read through the driver, because the
+    writing process holds the file lock and plain sqlite3 cannot open it. A home still
+    on the JSONL directory is read file by file.
+    # shortcut: both store forms coexist until the production cutover lands; drop the JSONL branch then.
+    """
+    out = []
+    for label, home in store_homes():
+        db = os.path.join(home, 'sessions.db')
+        if os.path.exists(db):
+            for row in db_rows(['list', db, str(int(since * 1000))]):
+                out.append(dict(kind='db', home=label, db=db, id=row['id'],
+                                key='db:%s:%s' % (label, row['id']),
+                                sid=str(row['id']).split('session-')[-1],
+                                ws=(row.get('cwd') or '').strip('/') or '-',
+                                after=row.get('lastSeq', -1)))
+            continue
         for path in glob.glob(home + '/sessions/*/session-*/session.v4.jsonl.zstd'):
             try:
                 mtime = os.path.getmtime(path)
             except OSError:
                 continue
-            if time.time() - mtime > 86400:
+            if mtime < since:
                 continue
-            seen.append((mtime, path))
-    seen.sort(reverse=True)
-    return [p for _, p in seen]
+            out.append(dict(kind='jsonl', home=label, path=path, key=path, mtime=mtime,
+                            sid=path.split('/session-')[1].split('/')[0],
+                            ws=path.split('/sessions/')[1].split('/')[0], after=-1))
+    return out
 
 
-def session_ids(path):
-    ws = path.split('/sessions/')[1].split('/')[0]
-    sid = path.split('/session-')[1].split('/')[0]
-    home = 'dev' if path.startswith(os.path.join(HOME, '.dsh-dev')) else 'prod'
-    return home, ws, sid
+def scan_source(src, after_seq=-1, since=0.0):
+    """Records with seq greater than after_seq and at or after the given epoch second."""
+    if src['kind'] == 'db':
+        return db_rows(['events', src['db'], src['id'], str(after_seq), str(int(since * 1000))])
+    return list(_jsonl_records(src['path'], max(after_seq, 0), since))
 
 
 PROD_NAME = 'deepseek-harness'
@@ -172,12 +207,12 @@ def prod_repo_actions(cmd):
     return hits
 
 
-def check_record(rec, path):
+def check_record(rec, src):
     if rec.get('type') != 'tool/call':
         return []
     d = rec.get('data') or {}
     name = d.get('name') or ''
-    home, ws, sid = session_ids(path)
+    home, ws, sid = src['home'], src['ws'], src['sid']
     commands, paths = extract(name, d.get('arguments') or '')
     hits = []
     for cmd in commands:
@@ -320,26 +355,22 @@ def cmd_scan(args):
     files = state.setdefault('files', {})
     now = time.time()
     new, scanned = [], 0
-    for path in transcript_files():
-        try:
-            mtime = os.path.getmtime(path)
-        except OSError:
-            continue
-        known = files.get(path)
+    for src in sources(now - 86400):
+        known = files.get(src['key'])
         if known is None:
             # first sight: remember where we started instead of replaying history
-            files[path] = {'seq': -1, 'mtime': mtime, 'since': now}
+            files[src['key']] = {'seq': -1, 'mtime': src.get('mtime', now), 'since': now}
             continue
-        if known.get('mtime') == mtime:
+        if src.get('mtime') is not None and known.get('mtime') == src['mtime']:
             continue
         after = known.get('seq', -1)
         since = known.get('since', 0) if after < 0 else 0.0
-        recs = scan_transcript(path, after, since)
+        recs = scan_source(src, after, since)
         scanned += 1
         for rec in recs:
-            new.extend(check_record(rec, path))
+            new.extend(check_record(rec, src))
             known['seq'] = max(known.get('seq', 0), rec.get('seq', 0))
-        known['mtime'] = mtime
+        known['mtime'] = src.get('mtime', now)
     cur = host_snapshot()
     new.extend(host_findings(state.get('host') or {}, cur, now))
     state['host'] = cur
@@ -378,16 +409,9 @@ def cmd_since(args):
     minutes = float(args.get('minutes', 180))
     cutoff = time.time() - minutes * 60
     items = []
-    for path in transcript_files():
-        try:
-            if os.path.getmtime(path) < cutoff:
-                continue
-        except OSError:
-            continue
-        for rec in scan_transcript(path, 0):
-            if (rec.get('time', 0) / 1000.0) < cutoff:
-                continue
-            items.extend(check_record(rec, path))
+    for src in sources(cutoff):
+        for rec in scan_source(src, -1, cutoff):
+            items.extend(check_record(rec, src))
     items.sort(key=lambda i: (SEV_ORDER.get(i['sev'], 9), -i['t']))
     if not items:
         print('no rule hits in the last %.0f minutes' % minutes)
@@ -425,18 +449,10 @@ def cmd_status(args):
     print('%-20s %s' % ('niri package installed', cur['niri_pkg']))
     print('%-20s %s' % ('/usr/bin/niri exists', cur['usr_bin_niri']))
     now = time.time()
-    active = []
-    for path in transcript_files():
-        try:
-            if now - os.path.getmtime(path) > 300:
-                continue
-        except OSError:
-            continue
-        active.append(path)
-    print('active sessions (mtime < 5 min): %d' % len(active))
-    for p in active:
-        home, ws, sid = session_ids(p)
-        print('  %s/%s %s' % (home, sid[:8], ws))
+    active = sources(now - 300)
+    print('active sessions (last event < 5 min): %d' % len(active))
+    for src in active:
+        print('  %s/%s %s' % (src['home'], str(src['sid'])[:8], src['ws']))
     return 0
 
 

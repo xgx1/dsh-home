@@ -224,14 +224,26 @@ def capture_window_shots(env, windows, ts):
 
 
 def active_sessions(max_age=300):
-    """最近还在动的 DSH 会话（id + 工作区目录）。"""
+    """最近还在动的 DSH 会话（id + 工作区目录）。
+
+    库后端（Turso 单库）由 dsh-sessions-db.mjs 只读查询；仍是 JSONL 目录的 home 照旧按文件
+    mtime 判活跃。# shortcut: 两种形态并存到生产切换为止，切换后删掉 JSONL 分支。
+    """
     now = now_ts()
     found = []
-    for root in (os.path.join(DSH, 'sessions'),
-                 os.path.join(os.path.expanduser('~'), '.dsh-dev', 'sessions')):
+    for label, home_dir in (('prod', DSH), ('dev', os.path.join(os.path.expanduser('~'), '.dsh-dev'))):
+        db = os.path.join(home_dir, 'sessions.db')
+        if os.path.exists(db):
+            for row in sessions_db_rows(['list', db, str(int((now - max_age) * 1000))]):
+                cwd = (row.get('cwd') or '').strip('/')
+                found.append({'home': label, 'session': str(row['id']).split('session-')[-1],
+                              'workspace_dir': cwd.replace('/', '-') or '-',
+                              'cwd': cwd or '-',
+                              'idle_s': int(now - (row.get('lastTime') or 0) / 1000.0)})
+            continue
+        root = os.path.join(home_dir, 'sessions')
         if not os.path.isdir(root):
             continue
-        home = 'prod' if root.startswith(DSH + os.sep) else 'dev'
         for ws in sorted(os.listdir(root)):
             wsdir = os.path.join(root, ws)
             if not os.path.isdir(wsdir):
@@ -249,11 +261,27 @@ def active_sessions(max_age=300):
                 if now - mtime > max_age:
                     continue
                 sid = sess.split('session-')[-1]
-                found.append({'home': home, 'session': sid, 'workspace_dir': ws,
+                found.append({'home': label, 'session': sid, 'workspace_dir': ws,
                               'cwd': ws.strip('-').replace('-', '/'),
                               'idle_s': int(now - mtime)})
     found.sort(key=lambda r: r['idle_s'])
     return found
+
+
+def sessions_db_rows(args):
+    """只读取库辅助脚本的输出（一行一条 JSON）；失败当作没有会话。"""
+    helper = os.path.join(DSH, 'bin', 'dsh-sessions-db.mjs')
+    try:
+        out = subprocess.run(['node', helper] + args, capture_output=True, text=True, timeout=120).stdout
+    except Exception:
+        return []
+    rows = []
+    for line in out.splitlines():
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    return rows
 
 
 def windows_doc(env):

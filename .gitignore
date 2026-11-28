@@ -23,6 +23,8 @@ cache/
 storages/
 # 含 -shm / -wal 两个 SQLite 伴随文件
 session-search.db*
+# 会话库（Turso 单库，同样带 -shm / -wal）
+sessions.db*
 # dsh-guard 的运行状态（findings/state），只在本机有意义
 guard/
 # dsh-observe / dsh-desktops 的运行产物（截图、lastest.json、事件流），纯本机数据
@@ -46,6 +48,9 @@ bin/*
 # 2026-11-17：ego 标签页看门狗与工作区迁移脚本是配置层的一部分，换机也要有。
 !bin/ego-tab-janitor.mjs
 !bin/migrate-workspaces.py
+# 2026-11-29：dsh-guard / dsh-observe 从 sessions.db 只读查会话的公共入口
+# （writer 持排他锁，python sqlite3 读不到，只有 turso 驱动能并发读），两个脚本都依赖它。
+!bin/dsh-sessions-db.mjs
 # 2026-10-23：这两个是本机运行链路的一部分（profile 的 MCP command 直接指 zg-autoidx），
 # 必须入库，否则换机/回滚后 zvec 自动建索引与 scope 清理就没了。
 !bin/zg-autoidx.mjs
